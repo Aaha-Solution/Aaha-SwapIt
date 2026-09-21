@@ -1,0 +1,67 @@
+@import './prototype.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Additional utility overrides */
+.main-layout {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 20px 32px 48px;
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.header-container {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+/* Fix modal backdrop to be visible and functional whenever rendered */
+.modal-backdrop,
+.modal-backdrop.show,
+.modal-backdrop.active {
+  display: flex !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(15, 23, 42, 0.6) !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+  z-index: 9999 !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.modal-dialog {
+  background: #ffffff !important;
+  border-radius: 20px !important;
+  width: 100% !important;
+  max-width: 480px !important;
+  padding: 26px !important;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25) !important;
+  position: relative !important;
+  z-index: 10000 !important;
+  max-height: 90vh !important;
+  overflow-y: auto !important;
+}
+
+.modal-dialog.ad-details-dialog {
+  max-width: 860px !important;
+  padding: 28px !important;
+}
+
+.modal-dialog.post-ad-dialog {
+  max-width: 640px !important;
+  padding: 28px !important;
+}
