@@ -3,11 +3,12 @@ import { Server, Socket } from 'socket.io';
 import { ENV } from '../config/env.config.js';
 import { logger } from '../shared/logger.js';
 import { prisma } from '../shared/prisma.js';
+import { inMemoryMessages, saveMessageToStore, MOCK_USERS, MOCK_PRODUCTS, getSmartSellerReply, StoredMessage } from '../services/chat-service/chat.store.js';
 
 export const setupSocketIO = (httpServer: HttpServer) => {
   const io = new Server(httpServer, {
     cors: {
-      origin: [ENV.CLIENT_URL, 'http://localhost:5173', 'http://localhost:3000'],
+      origin: [ENV.CLIENT_URL, 'http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173'],
       methods: ['GET', 'POST'],
       credentials: true,
     },
@@ -36,21 +37,84 @@ export const setupSocketIO = (httpServer: HttpServer) => {
       message: string;
     }) => {
       try {
-        const savedMessage = await prisma.chatMessage.create({
-          data: {
-            senderId: data.senderId,
-            receiverId: data.receiverId,
-            productId: data.productId,
-            message: data.message,
-          },
-        });
+        const messagePayload: StoredMessage = {
+          id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+          senderId: data.senderId,
+          receiverId: data.receiverId,
+          productId: data.productId || null,
+          message: data.message,
+          read: false,
+          createdAt: new Date().toISOString(),
+        };
 
-        // Emit to recipient's private room
-        io.to(`user:${data.receiverId}`).emit('receive_chat_message', savedMessage);
+        // 1. Save in persisted store
+        saveMessageToStore(messagePayload);
+
+        // 2. Try saving to database (if db connected)
+        try {
+          const dbSaved = await prisma.chatMessage.create({
+            data: {
+              senderId: data.senderId,
+              receiverId: data.receiverId,
+              productId: data.productId,
+              message: data.message,
+            },
+          });
+          messagePayload.id = dbSaved.id;
+        } catch {
+          // In-memory fallback
+        }
+
+        // 3. Emit to recipient's private room
+        io.to(`user:${data.receiverId}`).emit('receive_chat_message', messagePayload);
         // Also emit back to sender confirmation
-        socket.emit('message_sent_ack', savedMessage);
+        socket.emit('message_sent_ack', messagePayload);
+
+        // 4. Smart Instant Seller Bot Simulation
+        // If recipient is a demo seller, simulate automated contextual reply
+        const sellerProfile = MOCK_USERS[data.receiverId] || { name: 'Seller' };
+        const productSnapshot = data.productId ? MOCK_PRODUCTS[data.productId] : null;
+
+        setTimeout(async () => {
+          const replyText = getSmartSellerReply(
+            data.message,
+            sellerProfile.name,
+            productSnapshot?.title
+          );
+
+          const replyPayload: StoredMessage = {
+            id: `msg-reply-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+            senderId: data.receiverId,
+            receiverId: data.senderId,
+            productId: data.productId || null,
+            message: replyText,
+            read: false,
+            createdAt: new Date().toISOString(),
+          };
+
+          // Save reply in persisted store
+          saveMessageToStore(replyPayload);
+
+          // Try save in DB
+          try {
+            await prisma.chatMessage.create({
+              data: {
+                senderId: data.receiverId,
+                receiverId: data.senderId,
+                productId: data.productId,
+                message: replyText,
+              },
+            });
+          } catch {
+            // Memory fallback
+          }
+
+          // Emit reply to buyer's room once
+          io.to(`user:${data.senderId}`).emit('receive_chat_message', replyPayload);
+        }, 1400);
+
       } catch (err) {
-        logger.error({ err }, 'Error saving socket chat message');
+        logger.error({ err }, 'Error handling socket chat message');
       }
     });
 

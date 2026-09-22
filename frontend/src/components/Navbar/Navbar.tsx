@@ -20,9 +20,11 @@ import {
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
-import { setSelectedCategory } from '../../store/slices/userSlice';
+import { setSelectedCategory, setMessagesCount } from '../../store/slices/userSlice';
 import { useWishlist } from '../../hooks/useWishlist';
 import { useAuth } from '../../hooks/useAuth';
+import { chatApi } from '../../api/chat.api';
+import { getSocket, joinUserRoom } from '../../api/socket';
 
 interface NavItem {
   id: string;
@@ -50,7 +52,45 @@ export const Navbar: React.FC = () => {
   const dispatch = useDispatch();
   const { selectedCategory, myAdsCount, messagesCount } = useSelector((state: RootState) => state.user);
   const { count: wishlistCount } = useWishlist();
-  const { isAuthenticated, openLoginModal } = useAuth();
+  const { isAuthenticated, user, openLoginModal } = useAuth();
+
+  // Keep unread messages count synchronized
+  React.useEffect(() => {
+    if (!isAuthenticated || !user?.id) return;
+
+    joinUserRoom(user.id);
+
+    // Initial fetch of unread messages count
+    async function fetchUnread() {
+      try {
+        const res = await chatApi.getConversations();
+        if (res.success && res.data) {
+          const totalUnread = res.data.reduce(
+            (acc, c) => acc + (c.unreadCount || (c.unread ? 1 : 0)),
+            0
+          );
+          dispatch(setMessagesCount(totalUnread));
+        }
+      } catch (err) {
+        // Silently catch
+      }
+    }
+
+    fetchUnread();
+
+    const socket = getSocket();
+    const handleIncoming = () => {
+      // If not currently on messages page, refresh unread count
+      if (window.location.pathname !== '/messages') {
+        fetchUnread();
+      }
+    };
+
+    socket.on('receive_chat_message', handleIncoming);
+    return () => {
+      socket.off('receive_chat_message', handleIncoming);
+    };
+  }, [isAuthenticated, user?.id, dispatch]);
 
   const handleCategoryClick = (slug: string) => {
     dispatch(setSelectedCategory(slug));
@@ -187,24 +227,26 @@ export const Navbar: React.FC = () => {
         {/* Messages */}
         <button
           type="button"
-          onClick={() => handleProtectedNav('/profile')}
-          className="nav-item"
-          style={{ width: '100%', justifyContent: 'space-between', border: 'none', background: 'transparent', cursor: 'pointer' }}
+          onClick={() => handleProtectedNav('/messages')}
+          className={`nav-item ${window.location.pathname === '/messages' ? 'active' : ''}`}
+          style={{ width: '100%', justifyContent: 'space-between', border: 'none', background: window.location.pathname === '/messages' ? 'var(--sidebar-active-bg)' : 'transparent', cursor: 'pointer' }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <MessageSquare className="nav-icon" />
             <span>Messages</span>
           </div>
-          <span style={{
-            background: '#ef4444',
-            color: '#ffffff',
-            fontSize: '10px',
-            fontWeight: 700,
-            padding: '1px 6px',
-            borderRadius: '9999px',
-          }}>
-            {messagesCount}
-          </span>
+          {messagesCount > 0 && (
+            <span style={{
+              background: '#ef4444',
+              color: '#ffffff',
+              fontSize: '10px',
+              fontWeight: 700,
+              padding: '1px 6px',
+              borderRadius: '9999px',
+            }}>
+              {messagesCount}
+            </span>
+          )}
         </button>
       </nav>
     </aside>

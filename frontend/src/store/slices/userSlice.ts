@@ -20,8 +20,8 @@ const initialState: UserState = {
   selectedCategory: 'all',
   priceRange: 'all',
   sortBy: 'featured',
-  myAdsCount: 2,
-  messagesCount: 1,
+  myAdsCount: 0,
+  messagesCount: 0,
   isAuthModalOpen: false,
   authModalTab: 'login',
   isPostAdModalOpen: false,
@@ -46,6 +46,12 @@ export const userSlice = createSlice({
     },
     setSortBy: (state, action: PayloadAction<'featured' | 'price-asc' | 'price-desc' | 'newest'>) => {
       state.sortBy = action.payload;
+    },
+    setMessagesCount: (state, action: PayloadAction<number>) => {
+      state.messagesCount = action.payload;
+    },
+    setMyAdsCount: (state, action: PayloadAction<number>) => {
+      state.myAdsCount = action.payload;
     },
     openAuthModal: (state, action: PayloadAction<'login' | 'signup' | undefined>) => {
       state.isAuthModalOpen = true;
@@ -81,6 +87,8 @@ export const {
   setSelectedCategory,
   setPriceRange,
   setSortBy,
+  setMessagesCount,
+  setMyAdsCount,
   openAuthModal,
   closeAuthModal,
   openPostAdModal,

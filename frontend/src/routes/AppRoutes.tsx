@@ -6,6 +6,7 @@ import { ProductDetails } from '../pages/ProductDetails/ProductDetails';
 import { Sell } from '../pages/Sell/Sell';
 import { Wishlist } from '../pages/Wishlist/Wishlist';
 import { Profile } from '../pages/Profile/Profile';
+import { Messages } from '../pages/Messages/Messages';
 import { Login } from '../pages/Login/Login';
 import { Signup } from '../pages/Signup/Signup';
 import { ProtectedRoute } from './ProtectedRoute';
@@ -29,6 +30,14 @@ export const AppRoutes: React.FC = () => {
         element={
           <ProtectedRoute>
             <Wishlist />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/messages"
+        element={
+          <ProtectedRoute>
+            <Messages />
           </ProtectedRoute>
         }
       />

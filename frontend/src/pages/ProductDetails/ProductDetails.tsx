@@ -17,6 +17,7 @@ import { formatINR } from '../../utils/helpers';
 import { productApi } from '../../api/product.api';
 import { useWishlist } from '../../hooks/useWishlist';
 import { useAuth } from '../../hooks/useAuth';
+import { ChatModal } from '../../components/ChatModal/ChatModal';
 
 interface ProductDetailsProps {
   productId?: string;
@@ -36,7 +37,7 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showPhone, setShowPhone] = useState(false);
-  const [chatMessageSent, setChatMessageSent] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const { isWishlisted, toggle } = useWishlist();
   const { isAuthenticated, openLoginModal } = useAuth();
@@ -86,8 +87,12 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
       openLoginModal();
       return;
     }
-    setChatMessageSent(true);
-    setTimeout(() => setChatMessageSent(false), 3000);
+    if (onClose) {
+      onClose();
+    }
+    const sellerId = product.seller?.id || (product as any).sellerId || 'usr-1';
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    navigate(`/messages?userId=${sellerId}&productId=${product.id}`);
   };
 
   const content = (
@@ -213,7 +218,7 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
                 className="flex items-center justify-center gap-2 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all active:scale-[0.98]"
               >
                 <MessageCircle className="w-4 h-4" />
-                <span>{chatMessageSent ? 'Message Sent!' : 'Chat with Seller'}</span>
+                <span>Chat with Seller</span>
               </button>
 
               <button
@@ -236,6 +241,11 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Real-time Interactive Chat Modal */}
+      {isChatOpen && (
+        <ChatModal product={product} onClose={() => setIsChatOpen(false)} />
+      )}
     </div>
   );
 
