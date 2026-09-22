@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   Home,
   LayoutGrid,
@@ -49,10 +49,20 @@ const CATEGORY_ITEMS: NavItem[] = [
 
 export const Navbar: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
   const { selectedCategory, myAdsCount, messagesCount } = useSelector((state: RootState) => state.user);
   const { count: wishlistCount } = useWishlist();
   const { isAuthenticated, user, openLoginModal } = useAuth();
+
+  const pathname = location.pathname;
+
+  // Active state calculations
+  const isHomeActive = pathname === '/' && selectedCategory === 'all';
+  const isAllProductsActive = pathname === '/products' && selectedCategory === 'all';
+  const isMyAdsActive = pathname === '/profile' || pathname === '/my-ads';
+  const isFavoritesActive = pathname === '/wishlist';
+  const isMessagesActive = pathname === '/messages';
 
   // Keep unread messages count synchronized
   React.useEffect(() => {
@@ -101,6 +111,8 @@ export const Navbar: React.FC = () => {
     if (!isAuthenticated) {
       openLoginModal();
     } else {
+      // Clear category filter on direct account page navigation so category doesn't stay highlighted
+      dispatch(setSelectedCategory('all'));
       navigate(path);
     }
   };
@@ -111,9 +123,10 @@ export const Navbar: React.FC = () => {
         {/* Home */}
         <NavLink
           to="/"
-          className={({ isActive }) =>
-            `nav-item ${isActive && selectedCategory === 'all' ? 'active' : ''}`
-          }
+          className={`nav-item ${isHomeActive ? 'active' : ''}`}
+          style={{
+            background: isHomeActive ? 'var(--sidebar-active-bg)' : 'transparent',
+          }}
           onClick={() => dispatch(setSelectedCategory('all'))}
         >
           <Home className="nav-icon" />
@@ -127,54 +140,67 @@ export const Navbar: React.FC = () => {
             dispatch(setSelectedCategory('all'));
             navigate('/products');
           }}
-          className={`nav-item ${
-            selectedCategory === 'all' && window.location.pathname === '/products'
-              ? 'active'
-              : ''
-          }`}
-          style={{ width: '100%', justifyContent: 'space-between' }}
+          className={`nav-item ${isAllProductsActive ? 'active' : ''}`}
+          style={{
+            width: '100%',
+            justifyContent: 'space-between',
+            border: 'none',
+            background: isAllProductsActive ? 'var(--sidebar-active-bg)' : 'transparent',
+            cursor: 'pointer',
+          }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <LayoutGrid className="nav-icon" />
             <span>All Products</span>
           </div>
-          <span style={{
-            background: '#4f46e5',
-            color: '#ffffff',
-            fontSize: '9.5px',
-            fontWeight: 700,
-            padding: '2px 7px',
-            borderRadius: '9999px',
-            textTransform: 'uppercase',
-            letterSpacing: '0.3px',
-          }}>
+          <span
+            style={{
+              background: '#4f46e5',
+              color: '#ffffff',
+              fontSize: '9.5px',
+              fontWeight: 700,
+              padding: '2px 7px',
+              borderRadius: '9999px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.3px',
+            }}
+          >
             Explore
           </span>
         </button>
 
         {/* Categories Header */}
-        <div style={{
-          fontSize: '10.5px',
-          fontWeight: 700,
-          color: '#94a3b8',
-          textTransform: 'uppercase',
-          letterSpacing: '0.5px',
-          padding: '14px 14px 4px',
-        }}>
+        <div
+          style={{
+            fontSize: '10.5px',
+            fontWeight: 700,
+            color: '#94a3b8',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+            padding: '14px 14px 4px',
+          }}
+        >
           Categories
         </div>
 
         {/* Category Items */}
         {CATEGORY_ITEMS.map((item) => {
           const Icon = item.icon;
-          const isSelected = selectedCategory === item.slug;
+          // Highlight category ONLY when on /products or home AND that category is selected
+          const isSelected = (pathname === '/products' || pathname === '/') && selectedCategory === item.slug;
           return (
             <button
               key={item.id}
               type="button"
               onClick={() => handleCategoryClick(item.slug)}
               className={`nav-item ${isSelected ? 'active' : ''}`}
-              style={{ width: '100%', border: 'none', background: isSelected ? 'var(--sidebar-active-bg)' : 'transparent', textAlign: 'left', cursor: 'pointer' }}
+              style={{
+                width: '100%',
+                border: 'none',
+                background: isSelected ? 'var(--sidebar-active-bg)' : 'transparent',
+                textAlign: 'left',
+                cursor: 'pointer',
+              }}
             >
               <Icon className="nav-icon" />
               <span>{item.name}</span>
@@ -183,16 +209,18 @@ export const Navbar: React.FC = () => {
         })}
 
         {/* My Account Divider & Section */}
-        <div style={{
-          fontSize: '10.5px',
-          fontWeight: 700,
-          color: '#94a3b8',
-          textTransform: 'uppercase',
-          letterSpacing: '0.5px',
-          padding: '14px 14px 4px',
-          marginTop: '6px',
-          borderTop: '1px solid #f1f5f9',
-        }}>
+        <div
+          style={{
+            fontSize: '10.5px',
+            fontWeight: 700,
+            color: '#94a3b8',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+            padding: '14px 14px 4px',
+            marginTop: '6px',
+            borderTop: '1px solid #f1f5f9',
+          }}
+        >
           My Account
         </div>
 
@@ -200,50 +228,86 @@ export const Navbar: React.FC = () => {
         <button
           type="button"
           onClick={() => handleProtectedNav('/profile')}
-          className="nav-item"
-          style={{ width: '100%', justifyContent: 'space-between', border: 'none', background: 'transparent', cursor: 'pointer' }}
+          className={`nav-item ${isMyAdsActive ? 'active' : ''}`}
+          style={{
+            width: '100%',
+            justifyContent: 'space-between',
+            border: 'none',
+            background: isMyAdsActive ? 'var(--sidebar-active-bg)' : 'transparent',
+            cursor: 'pointer',
+          }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Package className="nav-icon" />
             <span>My Ads</span>
           </div>
-          <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600 }}>{myAdsCount}</span>
+          <span
+            style={{
+              fontSize: '11px',
+              color: isMyAdsActive ? 'var(--sidebar-active-text)' : '#94a3b8',
+              fontWeight: 600,
+            }}
+          >
+            {myAdsCount}
+          </span>
         </button>
 
         {/* Favorites */}
         <button
           type="button"
           onClick={() => handleProtectedNav('/wishlist')}
-          className="nav-item"
-          style={{ width: '100%', justifyContent: 'space-between', border: 'none', background: 'transparent', cursor: 'pointer' }}
+          className={`nav-item ${isFavoritesActive ? 'active' : ''}`}
+          style={{
+            width: '100%',
+            justifyContent: 'space-between',
+            border: 'none',
+            background: isFavoritesActive ? 'var(--sidebar-active-bg)' : 'transparent',
+            cursor: 'pointer',
+          }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Heart className="nav-icon" />
             <span>Favorites</span>
           </div>
-          <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600 }}>{wishlistCount}</span>
+          <span
+            style={{
+              fontSize: '11px',
+              color: isFavoritesActive ? 'var(--sidebar-active-text)' : '#94a3b8',
+              fontWeight: 600,
+            }}
+          >
+            {wishlistCount}
+          </span>
         </button>
 
         {/* Messages */}
         <button
           type="button"
           onClick={() => handleProtectedNav('/messages')}
-          className={`nav-item ${window.location.pathname === '/messages' ? 'active' : ''}`}
-          style={{ width: '100%', justifyContent: 'space-between', border: 'none', background: window.location.pathname === '/messages' ? 'var(--sidebar-active-bg)' : 'transparent', cursor: 'pointer' }}
+          className={`nav-item ${isMessagesActive ? 'active' : ''}`}
+          style={{
+            width: '100%',
+            justifyContent: 'space-between',
+            border: 'none',
+            background: isMessagesActive ? 'var(--sidebar-active-bg)' : 'transparent',
+            cursor: 'pointer',
+          }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <MessageSquare className="nav-icon" />
             <span>Messages</span>
           </div>
           {messagesCount > 0 && (
-            <span style={{
-              background: '#ef4444',
-              color: '#ffffff',
-              fontSize: '10px',
-              fontWeight: 700,
-              padding: '1px 6px',
-              borderRadius: '9999px',
-            }}>
+            <span
+              style={{
+                background: '#ef4444',
+                color: '#ffffff',
+                fontSize: '10px',
+                fontWeight: 700,
+                padding: '1px 6px',
+                borderRadius: '9999px',
+              }}
+            >
               {messagesCount}
             </span>
           )}
