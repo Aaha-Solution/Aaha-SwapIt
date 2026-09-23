@@ -131,6 +131,7 @@ app.use('/api/wishlist', wishlistRouter);
 app.use('/api/payments', paymentRouter);
 app.use('/api/notifications', notificationRouter);
 app.use('/api/chat', chatRouter);
+// app.use('/api/ratings', ratingRouter);
 
 // 11. Centralized Error Handling
 app.use(errorHandler);
