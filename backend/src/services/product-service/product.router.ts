@@ -57,6 +57,24 @@ router.post('/', optionalAuth, productController.createProduct);
 /**
  * @openapi
  * /products/{id}:
+ *   put:
+ *     summary: Update product details
+ *     tags: [Products]
+ */
+router.put('/:id', optionalAuth, productController.updateProduct);
+
+/**
+ * @openapi
+ * /products/{id}/status:
+ *   patch:
+ *     summary: Update product status (active / sold)
+ *     tags: [Products]
+ */
+router.patch('/:id/status', optionalAuth, productController.updateProductStatus);
+
+/**
+ * @openapi
+ * /products/{id}:
  *   delete:
  *     summary: Delete a product listing
  *     tags: [Products]

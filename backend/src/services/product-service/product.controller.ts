@@ -360,6 +360,113 @@ export const productController = {
     }
   },
 
+  async updateProduct(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const { title, price, description, category, condition, city, status, imageUrl, images } = req.body;
+
+      const existing = await prisma.product.findUnique({ where: { id } });
+      if (!existing) {
+        return res.status(404).json({ success: false, message: 'Product not found' });
+      }
+
+      const updateData: any = {};
+      if (title !== undefined) updateData.title = title.trim();
+      if (price !== undefined) updateData.price = parseFloat(price);
+      if (description !== undefined) updateData.description = description.trim();
+      if (category !== undefined) {
+        updateData.categoryName = category;
+        const matchedCat = await prisma.category.findFirst({
+          where: { OR: [{ slug: category.toLowerCase() }, { name: category }] },
+        });
+        if (matchedCat) updateData.categoryId = matchedCat.id;
+      }
+      if (condition !== undefined) updateData.condition = condition;
+      if (city !== undefined) {
+        updateData.city = city;
+        updateData.location = `${city} • Updated recently`;
+      }
+      if (status !== undefined) updateData.status = status;
+      if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
+      if (images !== undefined) updateData.images = images;
+
+      const updated = await prisma.product.update({
+        where: { id },
+        data: updateData,
+        include: {
+          seller: {
+            select: {
+              id: true,
+              name: true,
+              phone: true,
+              avatarUrl: true,
+              memberSince: true,
+              verified: true,
+            },
+          },
+        },
+      });
+
+      await cache.delPattern('products:list:*');
+
+      return res.json({
+        success: true,
+        message: 'Product updated successfully',
+        data: {
+          id: updated.id,
+          title: updated.title,
+          price: updated.price,
+          description: updated.description,
+          category: updated.categoryName,
+          images: Array.isArray(updated.images) ? updated.images : [updated.imageUrl],
+          imageUrl: updated.imageUrl,
+          location: updated.location,
+          city: updated.city,
+          postedAt: updated.postedAt,
+          condition: updated.condition,
+          status: updated.status,
+          views: updated.views,
+          seller: updated.seller,
+        },
+      });
+    } catch (error: any) {
+      logger.error({ error }, 'Error updating product');
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Error updating product',
+      });
+    }
+  },
+
+  async updateProductStatus(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+
+      if (!['active', 'sold', 'inactive'].includes(status)) {
+        return res.status(400).json({ success: false, message: 'Invalid status' });
+      }
+
+      const updated = await prisma.product.update({
+        where: { id },
+        data: { status },
+      });
+
+      await cache.delPattern('products:list:*');
+
+      return res.json({
+        success: true,
+        message: `Product marked as ${status}`,
+        data: updated,
+      });
+    } catch (error: any) {
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Error updating status',
+      });
+    }
+  },
+
   async uploadImage(req: Request, res: Response) {
     try {
       const { fileName, fileContentBase64, mimeType } = req.body;

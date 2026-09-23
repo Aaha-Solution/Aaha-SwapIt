@@ -105,6 +105,60 @@ export const productApi = {
     }
   },
 
+  updateProduct: async (
+    id: string,
+    productData: Partial<Product>
+  ): Promise<ApiResponse<Product>> => {
+    try {
+      const response = await api.put(`/products/${id}`, productData);
+      return response.data;
+    } catch {
+      const idx = localProducts.findIndex((p) => p.id === id);
+      if (idx !== -1) {
+        localProducts[idx] = {
+          ...localProducts[idx],
+          ...productData,
+        };
+        return {
+          success: true,
+          data: localProducts[idx],
+        };
+      }
+      return {
+        success: false,
+        message: 'Product not found',
+        data: null as any,
+      };
+    }
+  },
+
+  updateProductStatus: async (
+    id: string,
+    status: 'active' | 'sold'
+  ): Promise<ApiResponse<Product>> => {
+    try {
+      const response = await api.patch(`/products/${id}/status`, { status });
+      return response.data;
+    } catch {
+      const idx = localProducts.findIndex((p) => p.id === id);
+      if (idx !== -1) {
+        localProducts[idx] = {
+          ...localProducts[idx],
+          status,
+        };
+        return {
+          success: true,
+          data: localProducts[idx],
+        };
+      }
+      return {
+        success: false,
+        message: 'Product not found',
+        data: null as any,
+      };
+    }
+  },
+
   deleteProduct: async (id: string): Promise<ApiResponse<boolean>> => {
     try {
       const response = await api.delete(`/products/${id}`);
