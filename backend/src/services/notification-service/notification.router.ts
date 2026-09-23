@@ -31,4 +31,40 @@ router.post('/send-push', notificationController.sendPushNotification);
  */
 router.get('/', optionalAuth, notificationController.getUserNotifications);
 
+/**
+ * @openapi
+ * /notifications/read-all:
+ *   put:
+ *     summary: Mark all notifications as read
+ *     tags: [Notifications]
+ */
+router.put('/read-all', optionalAuth, notificationController.markAllAsRead);
+
+/**
+ * @openapi
+ * /notifications/:id/read:
+ *   put:
+ *     summary: Mark single notification as read
+ *     tags: [Notifications]
+ */
+router.put('/:id/read', optionalAuth, notificationController.markAsRead);
+
+/**
+ * @openapi
+ * /notifications/:id:
+ *   delete:
+ *     summary: Delete a notification
+ *     tags: [Notifications]
+ */
+router.delete('/:id', optionalAuth, notificationController.deleteNotification);
+
+/**
+ * @openapi
+ * /notifications/create:
+ *   post:
+ *     summary: Create a notification and broadcast in real-time
+ *     tags: [Notifications]
+ */
+router.post('/create', optionalAuth, notificationController.createNotification);
+
 export const notificationRouter = router;

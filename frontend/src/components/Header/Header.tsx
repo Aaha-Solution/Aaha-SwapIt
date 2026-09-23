@@ -4,6 +4,7 @@ import { Plus, User as UserIcon, Heart, Package, LogOut } from 'lucide-react';
 import { useDispatch } from 'react-redux';
 import { useAuth } from '../../hooks/useAuth';
 import { SearchBar } from '../SearchBar/SearchBar';
+import { NotificationDropdown } from '../NotificationDropdown/NotificationDropdown';
 import { openPostAdModal } from '../../store/slices/userSlice';
 
 export const Header: React.FC = () => {
@@ -69,6 +70,8 @@ export const Header: React.FC = () => {
 
         {/* Right Actions */}
         <div className="header-actions">
+          {isAuthenticated && <NotificationDropdown />}
+
           {isAuthenticated && user ? (
             <div className="relative" ref={userMenuRef}>
               <button

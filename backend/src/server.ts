@@ -143,4 +143,5 @@ httpServer.listen(ENV.PORT, () => {
   logger.info(`⚡ Socket.IO real-time hub initialized`);
 });
 
+// Server instance
 export { app, httpServer, io };

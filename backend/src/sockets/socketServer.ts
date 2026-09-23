@@ -4,6 +4,7 @@ import { ENV } from '../config/env.config.js';
 import { logger } from '../shared/logger.js';
 import { prisma } from '../shared/prisma.js';
 import { inMemoryMessages, saveMessageToStore, MOCK_USERS, MOCK_PRODUCTS, getSmartSellerReply, StoredMessage } from '../services/chat-service/chat.store.js';
+import { addNotificationToStore, StoredNotification } from '../services/notification-service/notification.store.js';
 
 export const setupSocketIO = (httpServer: HttpServer) => {
   const io = new Server(httpServer, {
@@ -67,7 +68,24 @@ export const setupSocketIO = (httpServer: HttpServer) => {
 
         // 3. Emit to recipient's private room
         io.to(`user:${data.receiverId}`).emit('receive_chat_message', messagePayload);
-        // Also emit back to sender confirmation
+        
+        // Also push a live notification to receiver's notification feed
+        const senderUser = MOCK_USERS[data.senderId] || { name: 'User' };
+        const notif: StoredNotification = {
+          id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+          userId: data.receiverId,
+          title: `💬 New Message from ${senderUser.name}`,
+          message: data.message.length > 60 ? data.message.slice(0, 57) + '...' : data.message,
+          type: 'message',
+          read: false,
+          link: '/messages',
+          avatarUrl: senderUser.avatarUrl,
+          createdAt: new Date().toISOString(),
+        };
+        addNotificationToStore(notif);
+        io.to(`user:${data.receiverId}`).emit('receive_notification', notif);
+
+        // Confirmation to sender
         socket.emit('message_sent_ack', messagePayload);
 
         // 4. Smart Instant Seller Bot Simulation
@@ -111,6 +129,21 @@ export const setupSocketIO = (httpServer: HttpServer) => {
 
           // Emit reply to buyer's room once
           io.to(`user:${data.senderId}`).emit('receive_chat_message', replyPayload);
+
+          // Also push notification to buyer
+          const replyNotif: StoredNotification = {
+            id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+            userId: data.senderId,
+            title: `💬 Reply from ${sellerProfile.name}`,
+            message: replyText.length > 60 ? replyText.slice(0, 57) + '...' : replyText,
+            type: 'message',
+            read: false,
+            link: '/messages',
+            avatarUrl: sellerProfile.avatarUrl,
+            createdAt: new Date().toISOString(),
+          };
+          addNotificationToStore(replyNotif);
+          io.to(`user:${data.senderId}`).emit('receive_notification', replyNotif);
         }, 1400);
 
       } catch (err) {
