@@ -18,11 +18,13 @@ import {
 } from 'lucide-react';
 import { RootState } from '../../store/store';
 import { setMessagesCount } from '../../store/slices/userSlice';
-import { Conversation, ChatMessage } from '../../types/chat.types';
+import { Conversation, ChatMessage, parseOfferFromMessage, ChatOffer } from '../../types/chat.types';
 import { chatApi } from '../../api/chat.api';
 import { getSocket, joinUserRoom } from '../../api/socket';
 import { formatINR } from '../../utils/helpers';
 import { INITIAL_PRODUCTS } from '../../utils/constants';
+import { MakeOfferModal } from '../../components/MakeOfferModal/MakeOfferModal';
+import { ChatOfferCard } from '../../components/ChatOfferCard/ChatOfferCard';
 
 export const Messages: React.FC = () => {
   const navigate = useNavigate();
@@ -41,6 +43,7 @@ export const Messages: React.FC = () => {
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [mobileShowChat, setMobileShowChat] = useState(false);
+  const [isMakeOfferOpen, setIsMakeOfferOpen] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatStreamRef = useRef<HTMLDivElement>(null);
@@ -330,6 +333,46 @@ export const Messages: React.FC = () => {
     });
   };
 
+  const handleSendOffer = (amount: number, note?: string) => {
+    if (!selectedConversation?.product) return;
+    const offerPayload: ChatOffer = {
+      amount,
+      originalPrice: selectedConversation.product.price,
+      status: 'pending',
+      productId: selectedConversation.product.id,
+      productTitle: selectedConversation.product.title,
+      note,
+    };
+
+    const offerMessage = `[OFFER:${JSON.stringify(offerPayload)}] ${
+      note ? note : `I'd like to make an offer of ${formatINR(amount)} for this item.`
+    }`;
+
+    handleSendMessage(offerMessage);
+  };
+
+  const handleAcceptOffer = (offer: ChatOffer) => {
+    const acceptedPayload: ChatOffer = {
+      ...offer,
+      status: 'accepted',
+    };
+    const acceptMsg = `[OFFER:${JSON.stringify(acceptedPayload)}] Deal! I accept your offer of ${formatINR(
+      offer.amount
+    )}. Let's coordinate payment and pickup!`;
+    handleSendMessage(acceptMsg);
+  };
+
+  const handleDeclineOffer = (offer: ChatOffer) => {
+    const declinedPayload: ChatOffer = {
+      ...offer,
+      status: 'declined',
+    };
+    const declineMsg = `[OFFER:${JSON.stringify(declinedPayload)}] Thanks for the offer, but I cannot accept ${formatINR(
+      offer.amount
+    )} at this time.`;
+    handleSendMessage(declineMsg);
+  };
+
   const filteredConversations = conversations.filter((c) => {
     const nameMatch = c.peerUser.name.toLowerCase().includes(searchQuery.toLowerCase());
     const prodMatch = c.product?.title?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -571,10 +614,21 @@ export const Messages: React.FC = () => {
 
                 {/* Right Header Actions */}
                 <div className="flex items-center gap-2">
+                  {selectedConversation.product && (
+                    <button
+                      type="button"
+                      onClick={() => setIsMakeOfferOpen(true)}
+                      className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                    >
+                      <Tag className="w-3.5 h-3.5" />
+                      <span>Make an Offer</span>
+                    </button>
+                  )}
+
                   <button
                     type="button"
                     onClick={() => handleDeleteConversation(selectedConversation.peerUser.id)}
-                    className="p-2 rounded-xl border border-slate-200 bg-white hover:bg-red-50 hover:border-red-200 text-slate-500 hover:text-red-600 text-xs font-bold flex items-center gap-1.5 transition-all"
+                    className="p-2 rounded-xl border border-slate-200 bg-white hover:bg-red-50 hover:border-red-200 text-slate-500 hover:text-red-600 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
                     title="Delete this conversation"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -585,7 +639,7 @@ export const Messages: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => navigate(`/products/${selectedConversation.product?.id}`)}
-                      className="px-3.5 py-1.5 rounded-xl border border-indigo-200 bg-indigo-50/50 hover:bg-indigo-50 text-indigo-700 text-xs font-bold flex items-center gap-1.5 transition-all"
+                      className="px-3.5 py-1.5 rounded-xl border border-indigo-200 bg-indigo-50/50 hover:bg-indigo-50 text-indigo-700 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
                     >
                       <span>View Listing</span>
                       <ExternalLink className="w-3.5 h-3.5" />
@@ -617,9 +671,18 @@ export const Messages: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  <span className="text-[10px] text-slate-500 font-semibold bg-white px-2.5 py-1 rounded-lg border border-slate-200/60">
-                    Product In Discussion
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsMakeOfferOpen(true)}
+                      className="text-xs font-bold text-indigo-700 bg-indigo-100 hover:bg-indigo-200 px-3 py-1 rounded-lg transition-colors cursor-pointer"
+                    >
+                      🤝 Send Price Offer
+                    </button>
+                    <span className="text-[10px] text-slate-500 font-semibold bg-white px-2.5 py-1 rounded-lg border border-slate-200/60">
+                      Product In Discussion
+                    </span>
+                  </div>
                 </div>
               )}
 
@@ -653,21 +716,45 @@ export const Messages: React.FC = () => {
                     const isMine =
                       msg.senderId === user?.id ||
                       (selectedConversation && msg.senderId !== selectedConversation.peerUser.id);
+                    const { offer, cleanText } = parseOfferFromMessage(msg.message);
 
                     return (
                       <div
                         key={msg.id}
                         className={`flex flex-col ${isMine ? 'items-end' : 'items-start'}`}
                       >
-                        <div
-                          className={`max-w-[70%] px-4 py-3 rounded-2xl text-xs leading-relaxed shadow-sm ${
-                            isMine
-                              ? 'bg-indigo-600 text-white rounded-tr-none'
-                              : 'bg-white text-slate-800 border border-slate-200/80 rounded-tl-none'
-                          }`}
-                        >
-                          {msg.message}
-                        </div>
+                        {offer ? (
+                          <div>
+                            <ChatOfferCard
+                              offer={offer}
+                              isSender={isMine}
+                              onAcceptOffer={handleAcceptOffer}
+                              onDeclineOffer={handleDeclineOffer}
+                              onCounterOffer={() => setIsMakeOfferOpen(true)}
+                            />
+                            {cleanText && (
+                              <div
+                                className={`mt-1 max-w-[340px] px-4 py-2.5 rounded-2xl text-xs leading-relaxed shadow-sm ${
+                                  isMine
+                                    ? 'bg-indigo-600 text-white rounded-tr-none'
+                                    : 'bg-white text-slate-800 border border-slate-200/80 rounded-tl-none'
+                                }`}
+                              >
+                                {cleanText}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div
+                            className={`max-w-[70%] px-4 py-3 rounded-2xl text-xs leading-relaxed shadow-sm ${
+                              isMine
+                                ? 'bg-indigo-600 text-white rounded-tr-none'
+                                : 'bg-white text-slate-800 border border-slate-200/80 rounded-tl-none'
+                            }`}
+                          >
+                            {msg.message}
+                          </div>
+                        )}
                         <div className="flex items-center gap-1 mt-1 text-[10px] text-slate-400 px-1">
                           <Clock className="w-3 h-3 text-slate-400" />
                           <span>{formatMessageTime(msg.createdAt)}</span>
@@ -698,7 +785,7 @@ export const Messages: React.FC = () => {
                 <button
                   type="submit"
                   disabled={!inputValue.trim()}
-                  className="px-5 py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:hover:bg-indigo-600 text-white text-xs font-bold rounded-2xl shadow-md transition-all active:scale-95 flex items-center gap-2"
+                  className="px-5 py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:hover:bg-indigo-600 text-white text-xs font-bold rounded-2xl shadow-md transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
                 >
                   <span>Send</span>
                   <Send className="w-4 h-4" />
@@ -718,6 +805,16 @@ export const Messages: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Make Offer Modal */}
+      {isMakeOfferOpen && selectedConversation?.product && (
+        <MakeOfferModal
+          product={selectedConversation.product}
+          sellerName={selectedConversation.peerUser.name}
+          onClose={() => setIsMakeOfferOpen(false)}
+          onSubmitOffer={handleSendOffer}
+        />
+      )}
     </div>
   );
 };

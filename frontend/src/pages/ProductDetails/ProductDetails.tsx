@@ -38,6 +38,7 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [showPhone, setShowPhone] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [openWithOffer, setOpenWithOffer] = useState(false);
 
   const { isWishlisted, toggle } = useWishlist();
   const { isAuthenticated, openLoginModal } = useAuth();
@@ -54,6 +55,24 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
     }
     loadProduct();
   }, [id]);
+
+  const handleChatSeller = () => {
+    if (!isAuthenticated) {
+      openLoginModal();
+    } else {
+      setOpenWithOffer(false);
+      setIsChatOpen(true);
+    }
+  };
+
+  const handleMakeOffer = () => {
+    if (!isAuthenticated) {
+      openLoginModal();
+    } else {
+      setOpenWithOffer(true);
+      setIsChatOpen(true);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -81,19 +100,6 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
   }
 
   const wishlisted = isWishlisted(product.id);
-
-  const handleChatSeller = () => {
-    if (!isAuthenticated) {
-      openLoginModal();
-      return;
-    }
-    if (onClose) {
-      onClose();
-    }
-    const sellerId = product.seller?.id || (product as any).sellerId || 'usr-1';
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-    navigate(`/messages?userId=${sellerId}&productId=${product.id}`);
-  };
 
   const content = (
     <div className="w-full max-w-4xl bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100 relative max-h-[90vh] overflow-y-auto">
@@ -210,25 +216,35 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
               </span>
             </div>
 
-            {/* Contact Actions */}
-            <div className="grid grid-cols-2 gap-2 pt-1">
+            {/* Contact & Offer Actions */}
+            <div className="space-y-2 pt-1">
               <button
                 type="button"
-                onClick={handleChatSeller}
-                className="flex items-center justify-center gap-2 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all active:scale-[0.98]"
+                onClick={handleMakeOffer}
+                className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition-all active:scale-[0.98] cursor-pointer"
               >
-                <MessageCircle className="w-4 h-4" />
-                <span>Chat with Seller</span>
+                <span>🤝 Make an Offer</span>
               </button>
 
-              <button
-                type="button"
-                onClick={() => setShowPhone(!showPhone)}
-                className="flex items-center justify-center gap-2 py-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl shadow-sm transition-all"
-              >
-                <Phone className="w-4 h-4 text-emerald-600" />
-                <span>{showPhone ? product.seller.phone || '+91 98401 23456' : 'Show Phone'}</span>
-              </button>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={handleChatSeller}
+                  className="flex items-center justify-center gap-2 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-xl shadow-sm transition-all active:scale-[0.98] cursor-pointer"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  <span>Chat with Seller</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowPhone(!showPhone)}
+                  className="flex items-center justify-center gap-2 py-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl shadow-sm transition-all cursor-pointer"
+                >
+                  <Phone className="w-4 h-4 text-emerald-600" />
+                  <span>{showPhone ? product.seller.phone || '+91 98401 23456' : 'Show Phone'}</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -244,7 +260,11 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
 
       {/* Real-time Interactive Chat Modal */}
       {isChatOpen && (
-        <ChatModal product={product} onClose={() => setIsChatOpen(false)} />
+        <ChatModal
+          product={product}
+          onClose={() => setIsChatOpen(false)}
+          onOpenOffer={openWithOffer}
+        />
       )}
     </div>
   );

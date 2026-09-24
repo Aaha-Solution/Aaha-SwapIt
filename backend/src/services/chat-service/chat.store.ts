@@ -218,13 +218,52 @@ export function updateMessageInStore(predicate: (m: StoredMessage) => boolean, u
 }
 
 export function getSmartSellerReply(messageText: string, sellerName: string, productTitle?: string): string {
+  // Check if this message is a structured Make-an-Offer
+  if (messageText.includes('[OFFER:')) {
+    try {
+      const match = messageText.match(/\[OFFER:(.*?)\]/);
+      if (match && match[1]) {
+        const offer = JSON.parse(match[1]);
+        const offerAmt = offer.amount || 0;
+        const origPrice = offer.originalPrice || offerAmt;
+        const prodName = offer.productTitle || productTitle || 'this item';
+
+        if (offer.status === 'accepted') {
+          return `Awesome! I'm glad we reached an agreement on ₹${offerAmt.toLocaleString('en-IN')}. Let me know your preferred payment method or meetup time!`;
+        }
+
+        if (offerAmt >= origPrice * 0.8) {
+          // Accept offer
+          const acceptedOffer = {
+            ...offer,
+            status: 'accepted',
+          };
+          return `[OFFER:${JSON.stringify(acceptedOffer)}] That's a fair offer! I accept ₹${offerAmt.toLocaleString('en-IN')} for the ${prodName}. When would you like to collect it?`;
+        } else {
+          // Decline or counter
+          const counterAmt = Math.round(origPrice * 0.9);
+          const declinedOffer = {
+            ...offer,
+            status: 'declined',
+          };
+          return `[OFFER:${JSON.stringify(declinedOffer)}] Thanks for the offer of ₹${offerAmt.toLocaleString('en-IN')}, but that's a bit too low. The best price I can do is ₹${counterAmt.toLocaleString('en-IN')}. Would that work for you?`;
+        }
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
   const text = messageText.toLowerCase();
 
+  if (text.includes('offer') || text.includes('negotiate') || text.includes('lowest')) {
+    return `Feel free to use the "🤝 Make an Offer" button to send your price proposal directly!`;
+  }
   if (text.includes('available') || text.includes('still have') || text.includes('available?')) {
     return `Hi! Yes, ${productTitle ? `the ${productTitle}` : 'this item'} is still available and ready for pickup!`;
   }
-  if (text.includes('price') || text.includes('negotiable') || text.includes('discount') || text.includes('lowest') || text.includes('deal')) {
-    return `The price is slightly negotiable if you can pick it up in person today. What is your best offer?`;
+  if (text.includes('price') || text.includes('discount') || text.includes('deal')) {
+    return `The price is slightly negotiable. Click "Make an Offer" above to suggest your best price!`;
   }
   if (text.includes('meet') || text.includes('location') || text.includes('where') || text.includes('place')) {
     return `I am available to meet in Chennai near the city center or metro station. When are you free?`;

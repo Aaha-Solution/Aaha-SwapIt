@@ -1,23 +1,27 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, X, ShieldCheck, CheckCheck, Sparkles, AlertCircle } from 'lucide-react';
+import { Send, X, ShieldCheck, CheckCheck, Sparkles, Tag } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 import { Product } from '../../types/product.types';
-import { ChatMessage } from '../../types/chat.types';
+import { ChatMessage, parseOfferFromMessage, ChatOffer } from '../../types/chat.types';
 import { chatApi } from '../../api/chat.api';
 import { getSocket, joinUserRoom } from '../../api/socket';
 import { formatINR } from '../../utils/helpers';
+import { MakeOfferModal } from '../MakeOfferModal/MakeOfferModal';
+import { ChatOfferCard } from '../ChatOfferCard/ChatOfferCard';
 
 interface ChatModalProps {
   product: Product;
   onClose: () => void;
+  onOpenOffer?: boolean;
 }
 
-export const ChatModal: React.FC<ChatModalProps> = ({ product, onClose }) => {
+export const ChatModal: React.FC<ChatModalProps> = ({ product, onClose, onOpenOffer = false }) => {
   const { user } = useSelector((state: RootState) => state.auth);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [isMakeOfferOpen, setIsMakeOfferOpen] = useState(onOpenOffer);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
@@ -28,10 +32,8 @@ export const ChatModal: React.FC<ChatModalProps> = ({ product, onClose }) => {
   useEffect(() => {
     if (!user?.id || !sellerId) return;
 
-    // Join my private socket room to receive instant messages
     joinUserRoom(user.id);
 
-    // Fetch past message history
     async function loadHistory() {
       setIsLoading(true);
       try {
@@ -48,11 +50,9 @@ export const ChatModal: React.FC<ChatModalProps> = ({ product, onClose }) => {
 
     loadHistory();
 
-    // 2. Setup Socket.IO real-time listeners
     const socket = getSocket();
 
     const handleIncomingMessage = (newMsg: ChatMessage) => {
-      // If message is from this seller or peer, append it only if not already present
       if (newMsg.senderId === sellerId || (newMsg.senderId === user?.id && newMsg.receiverId === sellerId)) {
         setMessages((prev) => {
           if (prev.some((m) => m.id === newMsg.id || (m.id.startsWith('temp-') && m.message === newMsg.message))) {
@@ -66,7 +66,6 @@ export const ChatModal: React.FC<ChatModalProps> = ({ product, onClose }) => {
     };
 
     const handleSentAck = (savedMsg: ChatMessage) => {
-      // Confirm message was saved, replace temporary placeholder
       setMessages((prev) => {
         const tempIdx = prev.findIndex(
           (m) => m.id.startsWith('temp-') && m.message === savedMsg.message
@@ -90,7 +89,6 @@ export const ChatModal: React.FC<ChatModalProps> = ({ product, onClose }) => {
     };
   }, [user?.id, sellerId, product.id]);
 
-  // Auto scroll to bottom inside container only
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
@@ -101,9 +99,6 @@ export const ChatModal: React.FC<ChatModalProps> = ({ product, onClose }) => {
     const text = (textToSend || inputValue).trim();
     if (!text || !user?.id || !sellerId) return;
 
-    const socket = getSocket();
-
-    // Optimistically show message immediately
     const tempMessage: ChatMessage = {
       id: `temp-${Date.now()}`,
       senderId: user.id,
@@ -115,9 +110,9 @@ export const ChatModal: React.FC<ChatModalProps> = ({ product, onClose }) => {
     };
 
     setMessages((prev) => [...prev, tempMessage]);
-    setInputValue('');
+    if (!textToSend) setInputValue('');
 
-    // Emit live message to backend Socket.IO
+    const socket = getSocket();
     socket.emit('send_chat_message', {
       senderId: user.id,
       receiverId: sellerId,
@@ -126,101 +121,281 @@ export const ChatModal: React.FC<ChatModalProps> = ({ product, onClose }) => {
     });
   };
 
+  const handleSendOffer = (amount: number, note?: string) => {
+    const offerPayload: ChatOffer = {
+      amount,
+      originalPrice: product.price,
+      status: 'pending',
+      productId: product.id,
+      productTitle: product.title,
+      note,
+    };
+
+    const offerMessage = `[OFFER:${JSON.stringify(offerPayload)}] ${
+      note ? note : `I'd like to make an offer of ${formatINR(amount)} for this item.`
+    }`;
+
+    handleSendMessage(offerMessage);
+  };
+
+  const handleAcceptOffer = (offer: ChatOffer) => {
+    const acceptedPayload: ChatOffer = {
+      ...offer,
+      status: 'accepted',
+    };
+    const acceptMsg = `[OFFER:${JSON.stringify(acceptedPayload)}] Deal! I accept your offer of ${formatINR(
+      offer.amount
+    )}. Let's coordinate pickup!`;
+    handleSendMessage(acceptMsg);
+  };
+
+  const handleDeclineOffer = (offer: ChatOffer) => {
+    const declinedPayload: ChatOffer = {
+      ...offer,
+      status: 'declined',
+    };
+    const declineMsg = `[OFFER:${JSON.stringify(declinedPayload)}] Thanks for the offer, but I cannot accept ${formatINR(
+      offer.amount
+    )} at this time.`;
+    handleSendMessage(declineMsg);
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-      <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-100 flex flex-col h-[620px] overflow-hidden">
+    <div className="modal-backdrop show active" style={{ zIndex: 1100 }} onClick={onClose}>
+      <div
+        className="chat-modal-box"
+        style={{
+          width: '100%',
+          maxWidth: '520px',
+          height: '620px',
+          background: '#ffffff',
+          borderRadius: '24px',
+          boxShadow: '0 25px 60px -15px rgba(15, 23, 42, 0.3)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
-        <div className="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 text-white font-bold flex items-center justify-center text-sm shadow-md">
-                {sellerName.charAt(0)}
-              </div>
-              <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-slate-900 rounded-full"></span>
+        <div
+          style={{
+            padding: '16px 20px',
+            borderBottom: '1px solid #f1f5f9',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            background: '#ffffff',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div
+              style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                background: '#eef2ff',
+                color: '#4f46e5',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 800,
+                fontSize: '15px',
+              }}
+            >
+              {sellerName.charAt(0)}
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold tracking-tight">{sellerName}</h3>
-                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 font-semibold px-2 py-0.5 rounded-full">
-                  Online
-                </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a' }}>{sellerName}</span>
+                <span
+                  style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: '#10b981',
+                  }}
+                />
               </div>
-              <p className="text-[11px] text-slate-400">Usually replies within minutes</p>
+              <span style={{ fontSize: '11.5px', color: '#64748b' }}>
+                {product.seller?.memberSince || 'Verified Seller'}
+              </span>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              type="button"
+              onClick={() => setIsMakeOfferOpen(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 12px',
+                borderRadius: '9999px',
+                background: '#eef2ff',
+                color: '#4f46e5',
+                border: 'none',
+                fontSize: '11.5px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <Tag style={{ width: '13px', height: '13px' }} />
+              <span>Make Offer</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                background: '#f8fafc',
+                border: 'none',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#64748b',
+                cursor: 'pointer',
+              }}
+            >
+              <X style={{ width: '16px', height: '16px' }} />
+            </button>
+          </div>
         </div>
 
         {/* Product Snapshot Bar */}
-        <div className="px-4 py-3 bg-slate-50 border-b border-slate-100 flex items-center gap-3">
-          <img
-            src={product.imageUrl}
-            alt={product.title}
-            className="w-11 h-11 object-cover rounded-xl border border-slate-200"
-          />
-          <div className="flex-1 min-w-0">
-            <h4 className="text-xs font-bold text-slate-800 truncate">{product.title}</h4>
-            <span className="text-xs font-extrabold text-indigo-600">{formatINR(product.price)}</span>
+        <div
+          style={{
+            padding: '10px 18px',
+            background: '#f8fafc',
+            borderBottom: '1px solid #f1f5f9',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+            {product.imageUrl && (
+              <img
+                src={product.imageUrl}
+                alt={product.title}
+                style={{ width: '34px', height: '34px', borderRadius: '8px', objectFit: 'cover' }}
+              />
+            )}
+            <div style={{ minWidth: 0 }}>
+              <p style={{ margin: 0, fontSize: '12px', fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {product.title}
+              </p>
+              <span style={{ fontSize: '11px', color: '#64748b' }}>{formatINR(product.price)}</span>
+            </div>
           </div>
-          <span className="text-[10px] bg-indigo-50 text-indigo-700 font-bold px-2 py-1 rounded-lg">
+          <span style={{ fontSize: '10.5px', background: '#eef2ff', color: '#4f46e5', fontWeight: 700, padding: '2px 8px', borderRadius: '6px' }}>
             {product.condition}
           </span>
         </div>
 
         {/* Message Thread */}
-        <div ref={chatContainerRef} className="flex-1 p-4 overflow-y-auto space-y-3 bg-[#f8fafc]">
+        <div ref={chatContainerRef} style={{ flex: 1, padding: '16px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', background: '#f8fafc' }}>
           {/* Security Banner */}
-          <div className="flex items-center gap-2 p-2.5 rounded-xl bg-amber-50 text-amber-800 text-[11px] border border-amber-200/60">
-            <ShieldCheck className="w-4 h-4 text-amber-600 flex-shrink-0" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', borderRadius: '12px', background: '#fef3c7', color: '#92400e', fontSize: '11px', border: '1px solid #fde68a' }}>
+            <ShieldCheck style={{ width: '16px', height: '16px', color: '#d97706', flexShrink: 0 }} />
             <span>Never transfer money before inspecting the product in person.</span>
           </div>
 
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center h-48 space-y-2 text-slate-400">
-              <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-              <span className="text-xs">Connecting to secure chat...</span>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '180px', color: '#94a3b8' }}>
+              <div style={{ width: '24px', height: '24px', border: '2px solid #4f46e5', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+              <span style={{ fontSize: '12px', marginTop: '8px' }}>Connecting to secure chat...</span>
             </div>
           ) : messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-48 text-center px-6">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-2 shadow-sm">
-                <Sparkles className="w-6 h-6" />
+            <div style={{ textAlign: 'center', padding: '36px 16px', color: '#64748b' }}>
+              <div
+                style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '50%',
+                  background: '#eef2ff',
+                  color: '#4f46e5',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 12px',
+                }}
+              >
+                <Sparkles style={{ width: '22px', height: '22px' }} />
               </div>
-              <h4 className="text-xs font-bold text-slate-800 mb-1">Start a Conversation</h4>
-              <p className="text-[11px] text-slate-500">
-                Ask {sellerName} about availability, condition, or pick-up location.
+              <h4 style={{ margin: '0 0 4px', fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
+                Start a Conversation
+              </h4>
+              <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8' }}>
+                Ask {sellerName} about availability, condition, or make a price offer.
               </p>
             </div>
           ) : (
             messages.map((msg) => {
               const isMine = msg.senderId === user?.id;
+              const { offer, cleanText } = parseOfferFromMessage(msg.message);
+
               return (
                 <div
                   key={msg.id}
-                  className={`flex flex-col ${isMine ? 'items-end' : 'items-start'}`}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: isMine ? 'flex-end' : 'flex-start',
+                  }}
                 >
-                  <div
-                    className={`max-w-[78%] px-4 py-2.5 rounded-2xl text-xs leading-relaxed shadow-sm ${
-                      isMine
-                        ? 'bg-indigo-600 text-white rounded-tr-none'
-                        : 'bg-white text-slate-800 border border-slate-100 rounded-tl-none'
-                    }`}
-                  >
-                    {msg.message}
-                  </div>
-                  <div className="flex items-center gap-1 mt-1 text-[10px] text-slate-400 px-1">
-                    <span>
-                      {new Date(msg.createdAt).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
-                    {isMine && <CheckCheck className="w-3.5 h-3.5 text-indigo-500" />}
+                  {offer ? (
+                    <div>
+                      <ChatOfferCard
+                        offer={offer}
+                        isSender={isMine}
+                        onAcceptOffer={handleAcceptOffer}
+                        onDeclineOffer={handleDeclineOffer}
+                        onCounterOffer={() => setIsMakeOfferOpen(true)}
+                      />
+                      {cleanText && (
+                        <div
+                          style={{
+                            marginTop: '4px',
+                            padding: '8px 14px',
+                            borderRadius: '16px',
+                            background: isMine ? '#4f46e5' : '#ffffff',
+                            color: isMine ? '#ffffff' : '#1e293b',
+                            fontSize: '12px',
+                            maxWidth: '320px',
+                            border: isMine ? 'none' : '1px solid #e2e8f0',
+                          }}
+                        >
+                          {cleanText}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        padding: '10px 14px',
+                        borderRadius: isMine ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                        background: isMine ? '#4f46e5' : '#ffffff',
+                        color: isMine ? '#ffffff' : '#0f172a',
+                        fontSize: '13px',
+                        maxWidth: '78%',
+                        lineHeight: 1.45,
+                        wordBreak: 'break-word',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                        border: isMine ? 'none' : '1px solid #f1f5f9',
+                      }}
+                    >
+                      {msg.message}
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '3px', fontSize: '10px', color: '#94a3b8' }}>
+                    <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    {isMine && <CheckCheck style={{ width: '13px', height: '13px', color: '#6366f1' }} />}
                   </div>
                 </div>
               );
@@ -229,30 +404,83 @@ export const ChatModal: React.FC<ChatModalProps> = ({ product, onClose }) => {
           <div ref={messagesEndRef} />
         </div>
 
+        {/* Quick Suggestion Chips */}
+        <div style={{ padding: '6px 14px', background: '#ffffff', borderTop: '1px solid #f1f5f9', display: 'flex', gap: '6px', overflowX: 'auto' }}>
+          {['Is this still available?', 'What is your lowest price?', 'Can I inspect before buying?'].map((chip) => (
+            <button
+              key={chip}
+              type="button"
+              onClick={() => handleSendMessage(chip)}
+              style={{
+                padding: '4px 10px',
+                borderRadius: '9999px',
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                fontSize: '11px',
+                color: '#475569',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {chip}
+            </button>
+          ))}
+        </div>
+
         {/* Bottom Input Area */}
         <form
           onSubmit={(e) => {
             e.preventDefault();
             handleSendMessage();
           }}
-          className="p-3 bg-white border-t border-slate-100 flex items-center gap-2"
+          style={{ padding: '12px 16px', background: '#ffffff', borderTop: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: '8px' }}
         >
           <input
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder={`Message ${sellerName}...`}
-            className="flex-1 text-xs px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all text-slate-800"
+            style={{
+              flex: 1,
+              padding: '10px 16px',
+              borderRadius: '9999px',
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              fontSize: '13px',
+              outline: 'none',
+              color: '#0f172a',
+            }}
           />
           <button
             type="submit"
             disabled={!inputValue.trim()}
-            className="p-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:hover:bg-indigo-600 text-white rounded-2xl shadow-md transition-all active:scale-95 flex items-center justify-center"
+            style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '50%',
+              background: inputValue.trim() ? '#4f46e5' : '#e2e8f0',
+              color: '#ffffff',
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: inputValue.trim() ? 'pointer' : 'default',
+            }}
           >
-            <Send className="w-4 h-4" />
+            <Send style={{ width: '16px', height: '16px' }} />
           </button>
         </form>
       </div>
+
+      {/* Make Offer Modal */}
+      {isMakeOfferOpen && (
+        <MakeOfferModal
+          product={product}
+          sellerName={sellerName}
+          onClose={() => setIsMakeOfferOpen(false)}
+          onSubmitOffer={handleSendOffer}
+        />
+      )}
     </div>
   );
 };
