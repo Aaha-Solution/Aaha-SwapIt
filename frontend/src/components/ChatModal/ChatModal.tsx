@@ -80,12 +80,33 @@ export const ChatModal: React.FC<ChatModalProps> = ({ product, onClose, onOpenOf
       });
     };
 
+    const handleOfferStatusChanged = (data: { messageId: string; newStatus: 'accepted' | 'declined' }) => {
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (m.id === data.messageId) {
+            const match = m.message.match(/\[OFFER:(.*?)\]/);
+            if (match && match[1]) {
+              try {
+                const offerObj = JSON.parse(match[1]);
+                offerObj.status = data.newStatus;
+                const updatedMsg = m.message.replace(/\[OFFER:.*?\]/, `[OFFER:${JSON.stringify(offerObj)}]`);
+                return { ...m, message: updatedMsg };
+              } catch {}
+            }
+          }
+          return m;
+        })
+      );
+    };
+
     socket.on('receive_chat_message', handleIncomingMessage);
     socket.on('message_sent_ack', handleSentAck);
+    socket.on('offer_status_changed', handleOfferStatusChanged);
 
     return () => {
       socket.off('receive_chat_message', handleIncomingMessage);
       socket.off('message_sent_ack', handleSentAck);
+      socket.off('offer_status_changed', handleOfferStatusChanged);
     };
   }, [user?.id, sellerId, product.id]);
 
@@ -139,25 +160,51 @@ export const ChatModal: React.FC<ChatModalProps> = ({ product, onClose, onOpenOf
   };
 
   const handleAcceptOffer = (offer: ChatOffer) => {
-    const acceptedPayload: ChatOffer = {
-      ...offer,
-      status: 'accepted',
-    };
-    const acceptMsg = `[OFFER:${JSON.stringify(acceptedPayload)}] Deal! I accept your offer of ${formatINR(
-      offer.amount
-    )}. Let's coordinate pickup!`;
-    handleSendMessage(acceptMsg);
+    const msg = messages.find((m) => m.message.includes(`"amount":${offer.amount}`));
+    if (msg) {
+      const socket = getSocket();
+      socket.emit('update_offer_status', {
+        messageId: msg.id,
+        newStatus: 'accepted',
+        senderId: user?.id,
+        receiverId: sellerId,
+      });
+
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (m.id === msg.id) {
+            const acceptedOffer = { ...offer, status: 'accepted' as const };
+            const updatedMsg = m.message.replace(/\[OFFER:.*?\]/, `[OFFER:${JSON.stringify(acceptedOffer)}]`);
+            return { ...m, message: updatedMsg };
+          }
+          return m;
+        })
+      );
+    }
   };
 
   const handleDeclineOffer = (offer: ChatOffer) => {
-    const declinedPayload: ChatOffer = {
-      ...offer,
-      status: 'declined',
-    };
-    const declineMsg = `[OFFER:${JSON.stringify(declinedPayload)}] Thanks for the offer, but I cannot accept ${formatINR(
-      offer.amount
-    )} at this time.`;
-    handleSendMessage(declineMsg);
+    const msg = messages.find((m) => m.message.includes(`"amount":${offer.amount}`));
+    if (msg) {
+      const socket = getSocket();
+      socket.emit('update_offer_status', {
+        messageId: msg.id,
+        newStatus: 'declined',
+        senderId: user?.id,
+        receiverId: sellerId,
+      });
+
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (m.id === msg.id) {
+            const declinedOffer = { ...offer, status: 'declined' as const };
+            const updatedMsg = m.message.replace(/\[OFFER:.*?\]/, `[OFFER:${JSON.stringify(declinedOffer)}]`);
+            return { ...m, message: updatedMsg };
+          }
+          return m;
+        })
+      );
+    }
   };
 
   return (

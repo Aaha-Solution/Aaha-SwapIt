@@ -3,7 +3,7 @@ import { Server, Socket } from 'socket.io';
 import { ENV } from '../config/env.config.js';
 import { logger } from '../shared/logger.js';
 import { prisma } from '../shared/prisma.js';
-import { inMemoryMessages, saveMessageToStore, MOCK_USERS, MOCK_PRODUCTS, getSmartSellerReply, StoredMessage } from '../services/chat-service/chat.store.js';
+import { inMemoryMessages, saveMessageToStore, updateMessageInStore, MOCK_USERS, MOCK_PRODUCTS, StoredMessage } from '../services/chat-service/chat.store.js';
 import { addNotificationToStore, StoredNotification } from '../services/notification-service/notification.store.js';
 
 export const setupSocketIO = (httpServer: HttpServer) => {
@@ -87,67 +87,54 @@ export const setupSocketIO = (httpServer: HttpServer) => {
 
         // Confirmation to sender
         socket.emit('message_sent_ack', messagePayload);
-
-        // 4. Smart Instant Seller Bot Simulation
-        // If recipient is a demo seller, simulate automated contextual reply
-        const sellerProfile = MOCK_USERS[data.receiverId] || { name: 'Seller' };
-        const productSnapshot = data.productId ? MOCK_PRODUCTS[data.productId] : null;
-
-        setTimeout(async () => {
-          const replyText = getSmartSellerReply(
-            data.message,
-            sellerProfile.name,
-            productSnapshot?.title
-          );
-
-          const replyPayload: StoredMessage = {
-            id: `msg-reply-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
-            senderId: data.receiverId,
-            receiverId: data.senderId,
-            productId: data.productId || null,
-            message: replyText,
-            read: false,
-            createdAt: new Date().toISOString(),
-          };
-
-          // Save reply in persisted store
-          saveMessageToStore(replyPayload);
-
-          // Try save in DB
-          try {
-            await prisma.chatMessage.create({
-              data: {
-                senderId: data.receiverId,
-                receiverId: data.senderId,
-                productId: data.productId,
-                message: replyText,
-              },
-            });
-          } catch {
-            // Memory fallback
-          }
-
-          // Emit reply to buyer's room once
-          io.to(`user:${data.senderId}`).emit('receive_chat_message', replyPayload);
-
-          // Also push notification to buyer
-          const replyNotif: StoredNotification = {
-            id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
-            userId: data.senderId,
-            title: `💬 Reply from ${sellerProfile.name}`,
-            message: replyText.length > 60 ? replyText.slice(0, 57) + '...' : replyText,
-            type: 'message',
-            read: false,
-            link: '/messages',
-            avatarUrl: sellerProfile.avatarUrl,
-            createdAt: new Date().toISOString(),
-          };
-          addNotificationToStore(replyNotif);
-          io.to(`user:${data.senderId}`).emit('receive_notification', replyNotif);
-        }, 1400);
-
       } catch (err) {
         logger.error({ err }, 'Error handling socket chat message');
+      }
+    });
+
+    // Real-time offer status updates (Accept / Decline manually by seller)
+    socket.on('update_offer_status', async (data: {
+      messageId: string;
+      newStatus: 'accepted' | 'declined';
+      senderId: string;
+      receiverId: string;
+    }) => {
+      try {
+        let updatedMessageText = '';
+        updateMessageInStore(
+          (m) => m.id === data.messageId,
+          (m) => {
+            const match = m.message.match(/\[OFFER:(.*?)\]/);
+            if (match && match[1]) {
+              try {
+                const offerObj = JSON.parse(match[1]);
+                offerObj.status = data.newStatus;
+                m.message = m.message.replace(/\[OFFER:.*?\]/, `[OFFER:${JSON.stringify(offerObj)}]`);
+                updatedMessageText = m.message;
+              } catch {}
+            }
+          }
+        );
+
+        if (updatedMessageText) {
+          try {
+            await prisma.chatMessage.update({
+              where: { id: data.messageId },
+              data: { message: updatedMessageText },
+            });
+          } catch {}
+        }
+
+        io.to(`user:${data.receiverId}`).emit('offer_status_changed', {
+          messageId: data.messageId,
+          newStatus: data.newStatus,
+        });
+        io.to(`user:${data.senderId}`).emit('offer_status_changed', {
+          messageId: data.messageId,
+          newStatus: data.newStatus,
+        });
+      } catch (err) {
+        logger.error({ err }, 'Error handling offer status change');
       }
     });
 
