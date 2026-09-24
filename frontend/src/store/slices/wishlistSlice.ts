@@ -4,16 +4,29 @@ interface WishlistState {
   itemIds: string[];
 }
 
-const storedWishlist = localStorage.getItem('dealkart_wishlist');
+const getStoredWishlist = (): string[] => {
+  try {
+    const stored = localStorage.getItem('dealkart_wishlist');
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
 
 const initialState: WishlistState = {
-  itemIds: storedWishlist ? JSON.parse(storedWishlist) : ['prod-1', 'prod-3'], // default 2 favorites matching prototype!
+  itemIds: getStoredWishlist(),
 };
 
 export const wishlistSlice = createSlice({
   name: 'wishlist',
   initialState,
   reducers: {
+    setWishlist: (state, action: PayloadAction<string[]>) => {
+      state.itemIds = action.payload;
+      try {
+        localStorage.setItem('dealkart_wishlist', JSON.stringify(state.itemIds));
+      } catch {}
+    },
     toggleWishlist: (state, action: PayloadAction<string>) => {
       const id = action.payload;
       const index = state.itemIds.indexOf(id);
@@ -22,18 +35,24 @@ export const wishlistSlice = createSlice({
       } else {
         state.itemIds.push(id);
       }
-      localStorage.setItem('dealkart_wishlist', JSON.stringify(state.itemIds));
+      try {
+        localStorage.setItem('dealkart_wishlist', JSON.stringify(state.itemIds));
+      } catch {}
     },
     removeFromWishlist: (state, action: PayloadAction<string>) => {
       state.itemIds = state.itemIds.filter((id) => id !== action.payload);
-      localStorage.setItem('dealkart_wishlist', JSON.stringify(state.itemIds));
+      try {
+        localStorage.setItem('dealkart_wishlist', JSON.stringify(state.itemIds));
+      } catch {}
     },
     clearWishlist: (state) => {
       state.itemIds = [];
-      localStorage.removeItem('dealkart_wishlist');
+      try {
+        localStorage.removeItem('dealkart_wishlist');
+      } catch {}
     },
   },
 });
 
-export const { toggleWishlist, removeFromWishlist, clearWishlist } = wishlistSlice.actions;
+export const { setWishlist, toggleWishlist, removeFromWishlist, clearWishlist } = wishlistSlice.actions;
 export default wishlistSlice.reducer;

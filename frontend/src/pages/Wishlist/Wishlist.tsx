@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { Heart, ArrowLeft, ShoppingBag } from 'lucide-react';
 import { Product } from '../../types/product.types';
+import { wishlistApi } from '../../api/wishlist.api';
 import { productApi } from '../../api/product.api';
 import { useWishlist } from '../../hooks/useWishlist';
+import { setWishlist } from '../../store/slices/wishlistSlice';
 import { ProductCard } from '../../components/ProductCard/ProductCard';
 
 export const Wishlist: React.FC = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { itemIds } = useWishlist();
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -15,14 +19,32 @@ export const Wishlist: React.FC = () => {
   useEffect(() => {
     async function load() {
       setIsLoading(true);
-      const res = await productApi.getProducts();
-      if (res.success && res.data) {
-        setProducts(res.data.filter((p) => itemIds.includes(p.id)));
+      try {
+        const res = await wishlistApi.getWishlist();
+        if (res.success && res.data && res.data.length > 0) {
+          setProducts(res.data);
+          dispatch(setWishlist(res.data.map((p) => p.id)));
+        } else {
+          // If wishlistApi returns empty or standalone mode, match with productApi
+          const prodRes = await productApi.getProducts({ limit: 100 });
+          if (prodRes.success && prodRes.data) {
+            const matched = prodRes.data.filter((p) => itemIds.includes(p.id));
+            setProducts(matched);
+            dispatch(setWishlist(matched.map((p) => p.id)));
+          } else {
+            setProducts([]);
+          }
+        }
+      } catch {
+        setProducts([]);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     }
     load();
-  }, [itemIds]);
+  }, []);
+
+  const displayedProducts = products.filter((p) => itemIds.includes(p.id));
 
   return (
     <div className="space-y-6">
@@ -42,7 +64,7 @@ export const Wishlist: React.FC = () => {
               <Heart className="w-5 h-5 text-red-500 fill-red-500" />
             </h1>
             <p className="text-xs text-slate-500">
-              {products.length} {products.length === 1 ? 'item' : 'items'} saved to your wishlist
+              {displayedProducts.length} {displayedProducts.length === 1 ? 'item' : 'items'} saved to your wishlist
             </p>
           </div>
         </div>
@@ -55,7 +77,7 @@ export const Wishlist: React.FC = () => {
             <div key={i} className="h-64 bg-slate-100 rounded-2xl"></div>
           ))}
         </div>
-      ) : products.length === 0 ? (
+      ) : displayedProducts.length === 0 ? (
         <div className="bg-white rounded-3xl border border-slate-100 p-12 text-center my-6">
           <div className="w-16 h-16 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center mx-auto mb-4">
             <Heart className="w-8 h-8" />
@@ -75,7 +97,7 @@ export const Wishlist: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {products.map((product) => (
+          {displayedProducts.map((product) => (
             <ProductCard
               key={product.id}
               product={product}
