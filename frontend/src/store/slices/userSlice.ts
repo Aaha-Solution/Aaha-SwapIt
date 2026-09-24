@@ -1,11 +1,16 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+export type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'newest' | 'views-desc';
+
 interface UserState {
   selectedCity: string;
   searchQuery: string;
   selectedCategory: string;
   priceRange: string;
-  sortBy: 'featured' | 'price-asc' | 'price-desc' | 'newest';
+  customMinPrice: number | null;
+  customMaxPrice: number | null;
+  selectedCondition: string;
+  sortBy: SortOption;
   myAdsCount: number;
   messagesCount: number;
   isAuthModalOpen: boolean;
@@ -19,6 +24,9 @@ const initialState: UserState = {
   searchQuery: '',
   selectedCategory: 'all',
   priceRange: 'all',
+  customMinPrice: null,
+  customMaxPrice: null,
+  selectedCondition: 'all',
   sortBy: 'featured',
   myAdsCount: 0,
   messagesCount: 0,
@@ -43,8 +51,21 @@ export const userSlice = createSlice({
     },
     setPriceRange: (state, action: PayloadAction<string>) => {
       state.priceRange = action.payload;
+      state.customMinPrice = null;
+      state.customMaxPrice = null;
     },
-    setSortBy: (state, action: PayloadAction<'featured' | 'price-asc' | 'price-desc' | 'newest'>) => {
+    setCustomPriceRange: (
+      state,
+      action: PayloadAction<{ min: number | null; max: number | null }>
+    ) => {
+      state.customMinPrice = action.payload.min;
+      state.customMaxPrice = action.payload.max;
+      state.priceRange = 'custom';
+    },
+    setSelectedCondition: (state, action: PayloadAction<string>) => {
+      state.selectedCondition = action.payload;
+    },
+    setSortBy: (state, action: PayloadAction<SortOption>) => {
       state.sortBy = action.payload;
     },
     setMessagesCount: (state, action: PayloadAction<number>) => {
@@ -72,10 +93,37 @@ export const userSlice = createSlice({
     closeProductDetails: (state) => {
       state.activeDetailsProductId = null;
     },
+    clearFilter: (
+      state,
+      action: PayloadAction<'search' | 'category' | 'city' | 'condition' | 'price'>
+    ) => {
+      switch (action.payload) {
+        case 'search':
+          state.searchQuery = '';
+          break;
+        case 'category':
+          state.selectedCategory = 'all';
+          break;
+        case 'city':
+          state.selectedCity = 'all';
+          break;
+        case 'condition':
+          state.selectedCondition = 'all';
+          break;
+        case 'price':
+          state.priceRange = 'all';
+          state.customMinPrice = null;
+          state.customMaxPrice = null;
+          break;
+      }
+    },
     resetFilters: (state) => {
       state.searchQuery = '';
       state.selectedCategory = 'all';
       state.priceRange = 'all';
+      state.customMinPrice = null;
+      state.customMaxPrice = null;
+      state.selectedCondition = 'all';
       state.sortBy = 'featured';
     },
   },
@@ -86,6 +134,8 @@ export const {
   setSearchQuery,
   setSelectedCategory,
   setPriceRange,
+  setCustomPriceRange,
+  setSelectedCondition,
   setSortBy,
   setMessagesCount,
   setMyAdsCount,
@@ -95,6 +145,7 @@ export const {
   closePostAdModal,
   openProductDetails,
   closeProductDetails,
+  clearFilter,
   resetFilters,
 } = userSlice.actions;
 

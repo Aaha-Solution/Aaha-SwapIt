@@ -5,10 +5,9 @@ import { RootState } from '../../store/store';
 import { useProducts } from '../../hooks/useProducts';
 import { ProductCard } from '../../components/ProductCard/ProductCard';
 import { ProductDetails } from '../ProductDetails/ProductDetails';
+import { Filter } from '../../components/Filter/Filter';
 import {
   setSelectedCategory,
-  setPriceRange,
-  setSortBy,
   resetFilters,
 } from '../../store/slices/userSlice';
 import { Product } from '../../types/product.types';
@@ -30,22 +29,12 @@ const CATEGORY_PILLS = [
 export const Products: React.FC = () => {
   const dispatch = useDispatch();
   const { products, isLoading } = useProducts();
-  const { selectedCategory, priceRange, sortBy } = useSelector(
-    (state: RootState) => state.user
-  );
+  const { selectedCategory } = useSelector((state: RootState) => state.user);
 
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const handleCategorySelect = (catId: string) => {
     dispatch(setSelectedCategory(catId));
-  };
-
-  const handlePriceSelect = (range: string) => {
-    dispatch(setPriceRange(range));
-  };
-
-  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    dispatch(setSortBy(e.target.value as 'featured' | 'price-asc' | 'price-desc' | 'newest'));
   };
 
   return (
@@ -63,18 +52,17 @@ export const Products: React.FC = () => {
           <h1 className="view-title">
             Marketplace Products
             <span className="header-count-badge" id="productsTotalCount">
-              {products.length} items
+              {products.length} {products.length === 1 ? 'item' : 'items'}
             </span>
           </h1>
           <p className="view-subtitle">
-            Explore verified second-hand items with smart filters and instant seller chat
+            Explore verified second-hand items with smart filters, price ranges, and instant seller chat
           </p>
         </div>
       </div>
 
-      {/* 3. Filter & Control Toolbar Card */}
-      <div className="products-toolbar-card">
-        {/* Category Quick-Pills Scroll */}
+      {/* 3. Category Quick-Pills Scroll Bar */}
+      <div style={{ marginBottom: '16px', overflowX: 'auto', paddingBottom: '4px' }}>
         <div className="category-pills-bar" id="productsCategoryPills">
           {CATEGORY_PILLS.map((pill) => (
             <button
@@ -87,60 +75,10 @@ export const Products: React.FC = () => {
             </button>
           ))}
         </div>
-
-        {/* Secondary Filter Controls Row */}
-        <div className="products-controls-row">
-          {/* Price Range Pills */}
-          <div className="price-range-pills">
-            <span className="control-label">Price Range:</span>
-            <button
-              type="button"
-              onClick={() => handlePriceSelect('all')}
-              className={`price-pill ${priceRange === 'all' ? 'active' : ''}`}
-            >
-              All Prices
-            </button>
-            <button
-              type="button"
-              onClick={() => handlePriceSelect('under15k')}
-              className={`price-pill ${priceRange === 'under15k' ? 'active' : ''}`}
-            >
-              Under ₹15,000
-            </button>
-            <button
-              type="button"
-              onClick={() => handlePriceSelect('15k-50k')}
-              className={`price-pill ${priceRange === '15k-50k' ? 'active' : ''}`}
-            >
-              ₹15k - ₹50,000
-            </button>
-            <button
-              type="button"
-              onClick={() => handlePriceSelect('above50k')}
-              className={`price-pill ${priceRange === 'above50k' ? 'active' : ''}`}
-            >
-              ₹50,000+
-            </button>
-          </div>
-
-          {/* Sort Dropdown */}
-          <div className="sort-control-wrap">
-            <label htmlFor="productsSortSelect" className="control-label">
-              Sort by:
-            </label>
-            <select
-              id="productsSortSelect"
-              value={sortBy}
-              onChange={handleSortChange}
-              className="products-sort-select"
-            >
-              <option value="featured">Featured / Newest</option>
-              <option value="price-asc">Price: Low to High</option>
-              <option value="price-desc">Price: High to Low</option>
-            </select>
-          </div>
-        </div>
       </div>
+
+      {/* 4. Advanced Filter Toolbar Card */}
+      <Filter />
 
       {/* 4. All Products Grid: 5 columns exactly matching prototype */}
       {isLoading ? (

@@ -1,7 +1,7 @@
 import api from './axiosInstance';
-import { Product, ProductFilterOptions } from '../types/product.types';
+import { Product, ProductFilterOptions, SearchSuggestionResult } from '../types/product.types';
 import { ApiResponse } from '../types/api.types';
-import { INITIAL_PRODUCTS } from '../utils/constants';
+import { INITIAL_PRODUCTS, CATEGORIES } from '../utils/constants';
 
 // Local cache for products when running standalone
 let localProducts: Product[] = [...INITIAL_PRODUCTS];
@@ -15,12 +15,13 @@ export const productApi = {
       let filtered = [...localProducts];
 
       if (filters?.search) {
-        const q = filters.search.toLowerCase();
+        const q = filters.search.toLowerCase().trim();
         filtered = filtered.filter(
           (p) =>
             p.title.toLowerCase().includes(q) ||
             p.description.toLowerCase().includes(q) ||
-            p.category.toLowerCase().includes(q)
+            p.category.toLowerCase().includes(q) ||
+            p.city.toLowerCase().includes(q)
         );
       }
 
@@ -36,10 +37,28 @@ export const productApi = {
         );
       }
 
+      if (filters?.condition && filters.condition !== 'all') {
+        filtered = filtered.filter(
+          (p) => p.condition?.toLowerCase() === filters.condition?.toLowerCase()
+        );
+      }
+
+      if (filters?.minPrice !== undefined) {
+        filtered = filtered.filter((p) => p.price >= filters.minPrice!);
+      }
+
+      if (filters?.maxPrice !== undefined) {
+        filtered = filtered.filter((p) => p.price <= filters.maxPrice!);
+      }
+
       if (filters?.sortBy === 'price-asc') {
         filtered.sort((a, b) => a.price - b.price);
       } else if (filters?.sortBy === 'price-desc') {
         filtered.sort((a, b) => b.price - a.price);
+      } else if (filters?.sortBy === 'views-desc' || filters?.sortBy === 'views') {
+        filtered.sort((a, b) => (b.views || 0) - (a.views || 0));
+      } else if (filters?.sortBy === 'featured') {
+        filtered.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
       }
 
       return {
@@ -50,6 +69,54 @@ export const productApi = {
           page: filters?.page || 1,
           limit: filters?.limit || 12,
           totalPages: 1,
+        },
+      };
+    }
+  },
+
+  getSuggestions: async (q: string): Promise<ApiResponse<SearchSuggestionResult>> => {
+    try {
+      const response = await api.get('/products/suggestions', { params: { q } });
+      return response.data;
+    } catch {
+      const query = q.toLowerCase().trim();
+      if (!query) {
+        return { success: true, data: { products: [], categories: [] } };
+      }
+
+      const matchingProds = localProducts
+        .filter(
+          (p) =>
+            p.title.toLowerCase().includes(query) ||
+            p.description.toLowerCase().includes(query)
+        )
+        .slice(0, 6)
+        .map((p) => ({
+          id: p.id,
+          title: p.title,
+          price: p.price,
+          categoryName: p.category,
+          imageUrl: p.imageUrl,
+        }));
+
+      const matchingCats = CATEGORIES.filter(
+        (c) =>
+          c.name.toLowerCase().includes(query) ||
+          c.slug.toLowerCase().includes(query)
+      )
+        .slice(0, 4)
+        .map((c) => ({
+          id: c.id,
+          name: c.name,
+          slug: c.slug,
+          icon: c.iconName,
+        }));
+
+      return {
+        success: true,
+        data: {
+          products: matchingProds,
+          categories: matchingCats,
         },
       };
     }

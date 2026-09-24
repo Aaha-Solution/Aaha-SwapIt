@@ -56,7 +56,7 @@ export const productController = {
         where.city = { equals: city };
       }
 
-      if (condition) {
+      if (condition && condition !== 'all') {
         where.condition = condition;
       }
 
@@ -74,6 +74,10 @@ export const productController = {
         orderBy = { price: 'desc' };
       } else if (sortBy === 'featured') {
         orderBy = [{ featured: 'desc' }, { createdAt: 'desc' }];
+      } else if (sortBy === 'views-desc' || sortBy === 'views') {
+        orderBy = { views: 'desc' };
+      } else if (sortBy === 'newest') {
+        orderBy = { createdAt: 'desc' };
       }
 
       const [products, total] = await Promise.all([
@@ -495,4 +499,52 @@ export const productController = {
       });
     }
   },
+
+  async getSuggestions(req: Request, res: Response) {
+    try {
+      const q = (req.query.q as string || '').trim();
+      if (!q || q.length < 2) {
+        return res.json({ success: true, data: { titles: [], categories: [] } });
+      }
+
+      const [products, categories] = await Promise.all([
+        prisma.product.findMany({
+          where: {
+            status: 'active',
+            OR: [
+              { title: { contains: q } },
+              { description: { contains: q } },
+            ],
+          },
+          select: { id: true, title: true, price: true, categoryName: true, imageUrl: true },
+          take: 6,
+        }),
+        prisma.category.findMany({
+          where: {
+            OR: [
+              { name: { contains: q } },
+              { slug: { contains: q } },
+            ],
+          },
+          select: { id: true, name: true, slug: true, icon: true },
+          take: 4,
+        }),
+      ]);
+
+      return res.json({
+        success: true,
+        data: {
+          products,
+          categories,
+        },
+      });
+    } catch (error: any) {
+      logger.error({ error }, 'Error fetching suggestions');
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Error fetching suggestions',
+      });
+    }
+  },
 };
+

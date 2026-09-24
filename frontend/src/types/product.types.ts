@@ -31,9 +31,26 @@ export interface ProductFilterOptions {
   search?: string;
   category?: string;
   city?: string;
+  condition?: string;
   minPrice?: number;
   maxPrice?: number;
-  sortBy?: 'featured' | 'price-asc' | 'price-desc' | 'newest';
+  sortBy?: 'featured' | 'price-asc' | 'price-desc' | 'newest' | 'views-desc' | 'views';
   page?: number;
   limit?: number;
+}
+
+export interface SearchSuggestionResult {
+  products: {
+    id: string;
+    title: string;
+    price: number;
+    categoryName: string;
+    imageUrl: string;
+  }[];
+  categories: {
+    id: string;
+    name: string;
+    slug: string;
+    icon?: string;
+  }[];
 }

@@ -9,9 +9,16 @@ export function useProducts() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const { searchQuery, selectedCategory, selectedCity, sortBy, priceRange } = useSelector(
-    (state: RootState) => state.user
-  );
+  const {
+    searchQuery,
+    selectedCategory,
+    selectedCity,
+    sortBy,
+    priceRange,
+    customMinPrice,
+    customMaxPrice,
+    selectedCondition,
+  } = useSelector((state: RootState) => state.user);
 
   const fetchProducts = useCallback(async () => {
     setIsLoading(true);
@@ -20,7 +27,10 @@ export function useProducts() {
       let minPrice: number | undefined;
       let maxPrice: number | undefined;
 
-      if (priceRange === 'under15k' || priceRange === 'under-10k') {
+      if (priceRange === 'custom') {
+        minPrice = customMinPrice !== null ? customMinPrice : undefined;
+        maxPrice = customMaxPrice !== null ? customMaxPrice : undefined;
+      } else if (priceRange === 'under15k' || priceRange === 'under-10k') {
         maxPrice = 15000;
       } else if (priceRange === '15k-50k' || priceRange === '10k-50k') {
         minPrice = 15000;
@@ -30,9 +40,10 @@ export function useProducts() {
       }
 
       const response = await productApi.getProducts({
-        search: searchQuery || undefined,
+        search: searchQuery.trim() || undefined,
         category: selectedCategory !== 'all' ? selectedCategory : undefined,
         city: selectedCity !== 'all' ? selectedCity : undefined,
+        condition: selectedCondition !== 'all' ? selectedCondition : undefined,
         minPrice,
         maxPrice,
         sortBy,
@@ -46,7 +57,16 @@ export function useProducts() {
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery, selectedCategory, selectedCity, sortBy, priceRange]);
+  }, [
+    searchQuery,
+    selectedCategory,
+    selectedCity,
+    sortBy,
+    priceRange,
+    customMinPrice,
+    customMaxPrice,
+    selectedCondition,
+  ]);
 
   useEffect(() => {
     fetchProducts();

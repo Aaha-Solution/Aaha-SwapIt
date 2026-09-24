@@ -38,6 +38,15 @@ router.get('/', productController.getProducts);
 
 /**
  * @openapi
+ * /products/suggestions:
+ *   get:
+ *     summary: Retrieve instant search suggestions for products and categories
+ *     tags: [Products]
+ */
+router.get('/suggestions', productController.getSuggestions);
+
+/**
+ * @openapi
  * /products/{id}:
  *   get:
  *     summary: Get single product by ID
