@@ -94,9 +94,18 @@ router.delete('/:id', optionalAuth, productController.deleteProduct);
  * @openapi
  * /products/upload-image:
  *   post:
- *     summary: Upload product media image to AWS S3
+ *     summary: Upload single product media image
  *     tags: [Products]
  */
-router.post('/upload-image', requireAuth, productController.uploadImage);
+router.post('/upload-image', optionalAuth, productController.uploadImage);
+
+/**
+ * @openapi
+ * /products/upload-images:
+ *   post:
+ *     summary: Batch upload multiple product media images
+ *     tags: [Products]
+ */
+router.post('/upload-images', optionalAuth, productController.uploadImages);
 
 export const productRouter = router;

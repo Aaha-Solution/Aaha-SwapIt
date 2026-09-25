@@ -67,7 +67,7 @@ async function main() {
   console.log('\n🌐 2. GATEWAY & MICROSERVICES HEALTH API');
   await runTest('Gateway', 'GET /api/health', async () => {
     const res = await fetch(`${API_BASE}/health`);
-    const json = await res.json();
+    const json: any = await res.json();
     if (json.status !== 'healthy' || json.integrations.database.status !== 'connected') {
       throw new Error(`Unhealthy status: ${JSON.stringify(json)}`);
     }
@@ -79,7 +79,7 @@ async function main() {
   let testProductId = '';
   await runTest('Products', 'GET /api/products (Feed & Pagination)', async () => {
     const res = await fetch(`${API_BASE}/products?limit=5`);
-    const json = await res.json();
+    const json: any = await res.json();
     if (!json.success || !Array.isArray(json.data) || json.data.length === 0) {
       throw new Error('Failed to fetch products list');
     }
@@ -90,7 +90,7 @@ async function main() {
   await runTest('Products', 'GET /api/products/:id (Product Details)', async () => {
     if (!testProductId) throw new Error('No product ID available to test');
     const res = await fetch(`${API_BASE}/products/${testProductId}`);
-    const json = await res.json();
+    const json: any = await res.json();
     if (!json.success || !json.data || json.data.id !== testProductId) {
       throw new Error('Failed to fetch product details');
     }
@@ -99,7 +99,7 @@ async function main() {
 
   await runTest('Products', 'GET /api/products/suggestions?q=car', async () => {
     const res = await fetch(`${API_BASE}/products/suggestions?q=car`);
-    const json = await res.json();
+    const json: any = await res.json();
     if (!json.success || !json.data) {
       throw new Error('Failed to fetch search suggestions');
     }
@@ -110,7 +110,7 @@ async function main() {
   console.log('\n🏷️ 4. CATEGORIES & LOCATIONS');
   await runTest('Categories', 'GET /api/categories', async () => {
     const res = await fetch(`${API_BASE}/categories`);
-    const json = await res.json();
+    const json: any = await res.json();
     if (!json.success || !Array.isArray(json.data) || json.data.length === 0) {
       throw new Error('Failed to load categories');
     }
@@ -119,7 +119,7 @@ async function main() {
 
   await runTest('Locations', 'GET /api/locations', async () => {
     const res = await fetch(`${API_BASE}/locations`);
-    const json = await res.json();
+    const json: any = await res.json();
     if (!json.success || !Array.isArray(json.data) || json.data.length === 0) {
       throw new Error('Failed to load cities');
     }
@@ -130,7 +130,7 @@ async function main() {
   console.log('\n👤 5. USER & PROFILE SERVICE');
   await runTest('Users', 'GET /api/users/profile (Demo User)', async () => {
     const res = await fetch(`${API_BASE}/users/profile`);
-    const json = await res.json();
+    const json: any = await res.json();
     if (!json.success || !json.data) {
       throw new Error('Failed to fetch user profile');
     }
@@ -139,7 +139,7 @@ async function main() {
 
   await runTest('Users', 'GET /api/users/my-ads', async () => {
     const res = await fetch(`${API_BASE}/users/my-ads`);
-    const json = await res.json();
+    const json: any = await res.json();
     if (!json.success || !Array.isArray(json.data)) {
       throw new Error('Failed to fetch user listings');
     }
@@ -150,7 +150,7 @@ async function main() {
   console.log('\n⭐ 6. RATINGS & REVIEWS / TRUST SYSTEM');
   await runTest('Ratings', 'GET /api/ratings/user/:userId', async () => {
     const res = await fetch(`${API_BASE}/ratings/user/usr-demo-iyyanar`);
-    const json = await res.json();
+    const json: any = await res.json();
     if (!json.success || !json.data || !json.data.summary) {
       throw new Error('Failed to fetch ratings and summary');
     }
@@ -176,7 +176,7 @@ async function main() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    const json = await res.json();
+    const json: any = await res.json();
     if (!json.success || !json.data || !json.data.review) {
       throw new Error(`Failed to submit review: ${json.message}`);
     }
@@ -189,7 +189,7 @@ async function main() {
       const res = await fetch(`${API_BASE}/ratings/${createdReviewId}/helpful`, {
         method: 'POST',
       });
-      const json = await res.json();
+      const json: any = await res.json();
       if (!json.success || json.data.helpfulCount === undefined) {
         throw new Error('Failed to toggle helpful vote');
       }
@@ -201,7 +201,7 @@ async function main() {
   console.log('\n💬 7. CHAT & CONVERSATIONS MICROSERVICE');
   await runTest('Chat', 'GET /api/chat/conversations', async () => {
     const res = await fetch(`${API_BASE}/chat/conversations`);
-    const json = await res.json();
+    const json: any = await res.json();
     if (!json.success || !Array.isArray(json.data)) {
       throw new Error('Failed to fetch conversations');
     }
@@ -210,7 +210,7 @@ async function main() {
 
   await runTest('Chat', 'GET /api/chat/history/usr-1', async () => {
     const res = await fetch(`${API_BASE}/chat/history/usr-1`);
-    const json = await res.json();
+    const json: any = await res.json();
     if (!json.success || !Array.isArray(json.data)) {
       throw new Error('Failed to fetch chat history');
     }
@@ -221,7 +221,7 @@ async function main() {
   console.log('\n🔔 8. NOTIFICATIONS MICROSERVICE');
   await runTest('Notifications', 'GET /api/notifications', async () => {
     const res = await fetch(`${API_BASE}/notifications`);
-    const json = await res.json();
+    const json: any = await res.json();
     if (!json.success || !Array.isArray(json.data)) {
       throw new Error('Failed to fetch notifications');
     }

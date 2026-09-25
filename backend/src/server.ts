@@ -1,10 +1,13 @@
 import http from 'http';
+import path from 'path';
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import pinoHttp from 'pino-http';
 import swaggerUi from 'swagger-ui-express';
 import passport from 'passport';
+
+const uploadsDir = path.resolve(process.cwd(), 'public/uploads');
 
 import { ENV } from './config/env.config.js';
 import { initSentry } from './config/sentry.config.js';
@@ -67,6 +70,9 @@ app.use(
 // 5. Body Parsers
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// 5.1 Static Media Uploads
+app.use('/uploads', express.static(uploadsDir));
 
 // 6. Passport Authentication Middleware
 app.use(passport.initialize());

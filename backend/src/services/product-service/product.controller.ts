@@ -481,7 +481,8 @@ export const productController = {
         });
       }
 
-      const buffer = Buffer.from(fileContentBase64, 'base64');
+      const cleanBase64 = fileContentBase64.replace(/^data:image\/\w+;base64,/, '');
+      const buffer = Buffer.from(cleanBase64, 'base64');
       const uploaded = await s3Service.uploadFile(
         buffer,
         fileName,
@@ -495,7 +496,41 @@ export const productController = {
     } catch (error: any) {
       return res.status(500).json({
         success: false,
-        message: error.message || 'Error uploading image to S3',
+        message: error.message || 'Error uploading image',
+      });
+    }
+  },
+
+  async uploadImages(req: Request, res: Response) {
+    try {
+      const { files } = req.body; // Array of { fileName, fileContentBase64, mimeType }
+      if (!Array.isArray(files) || files.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'files array is required and must not be empty',
+        });
+      }
+
+      const uploadPromises = files.map(async (file: { fileName: string; fileContentBase64: string; mimeType?: string }) => {
+        const cleanBase64 = file.fileContentBase64.replace(/^data:image\/\w+;base64,/, '');
+        const buffer = Buffer.from(cleanBase64, 'base64');
+        return await s3Service.uploadFile(
+          buffer,
+          file.fileName || `photo_${Date.now()}.jpg`,
+          file.mimeType || 'image/jpeg'
+        );
+      });
+
+      const results = await Promise.all(uploadPromises);
+
+      return res.json({
+        success: true,
+        data: results,
+      });
+    } catch (error: any) {
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Error uploading batch images',
       });
     }
   },

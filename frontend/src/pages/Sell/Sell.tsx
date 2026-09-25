@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { Image, X, Tag, DollarSign, MapPin, CheckCircle } from 'lucide-react';
+import { Tag, MapPin, CheckCircle, X } from 'lucide-react';
 import { CATEGORIES, CITIES } from '../../utils/constants';
 import { productApi } from '../../api/product.api';
 import { closePostAdModal } from '../../store/slices/userSlice';
+import { ImageUploader } from '../../components/ImageUploader/ImageUploader';
 
 interface SellProps {
   isModal?: boolean;
@@ -23,19 +24,10 @@ export const Sell: React.FC<SellProps> = ({ isModal = false, onClose, onSuccess 
   const [condition, setCondition] = useState<'Brand New' | 'Like New' | 'Good' | 'Fair'>('Like New');
   const [phone, setPhone] = useState('+91 98401 23456');
   const [description, setDescription] = useState('');
-  const [selectedImage, setSelectedImage] = useState('/images/phone_purple.png');
+  const [images, setImages] = useState<string[]>(['/images/phone_purple.png']);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState('');
-
-  const sampleImages = [
-    { label: 'Mobile', path: '/images/phone_purple.png' },
-    { label: 'Laptop', path: '/images/laptop_macbook.png' },
-    { label: 'Car', path: '/images/car_red.png' },
-    { label: 'Bike', path: '/images/bike_yamaha.png' },
-    { label: 'Sofa', path: '/images/sofa_brown.png' },
-    { label: 'Camera', path: '/images/camera.png' },
-  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +44,10 @@ export const Sell: React.FC<SellProps> = ({ isModal = false, onClose, onSuccess 
       setError('Please provide a brief description');
       return;
     }
+    if (images.length === 0) {
+      setError('Please upload or select at least one photo for your listing');
+      return;
+    }
 
     setError('');
     setIsSubmitting(true);
@@ -64,7 +60,8 @@ export const Sell: React.FC<SellProps> = ({ isModal = false, onClose, onSuccess 
         city,
         condition,
         description,
-        imageUrl: selectedImage,
+        imageUrl: images[0],
+        images,
         seller: {
           id: 'usr-current',
           name: 'Iyyanar',
@@ -221,28 +218,14 @@ export const Sell: React.FC<SellProps> = ({ isModal = false, onClose, onSuccess 
               </div>
             </div>
 
-            {/* Choose / Mock Image Upload */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                Select Photo
-              </label>
-              <div className="grid grid-cols-6 gap-2">
-                {sampleImages.map((img) => (
-                  <button
-                    key={img.label}
-                    type="button"
-                    onClick={() => setSelectedImage(img.path)}
-                    className={`p-1.5 rounded-xl border flex flex-col items-center gap-1 transition-all ${
-                      selectedImage === img.path
-                        ? 'border-indigo-600 bg-indigo-50/50 ring-2 ring-indigo-200'
-                        : 'border-slate-200 hover:border-slate-300'
-                    }`}
-                  >
-                    <img src={img.path} alt={img.label} className="w-10 h-10 object-contain" />
-                    <span className="text-[10px] text-slate-600 font-medium">{img.label}</span>
-                  </button>
-                ))}
-              </div>
+            {/* Direct Multi-Image Uploader */}
+            <div className="pt-1">
+              <ImageUploader
+                images={images}
+                onChange={setImages}
+                maxImages={6}
+                maxSizeMB={5}
+              />
             </div>
 
             {/* Description */}

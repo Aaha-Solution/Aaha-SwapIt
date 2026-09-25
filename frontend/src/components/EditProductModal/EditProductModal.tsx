@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Save, AlertCircle, Sparkles, MapPin } from 'lucide-react';
 import { Product } from '../../types/product.types';
 import { productApi } from '../../api/product.api';
+import { ImageUploader } from '../ImageUploader/ImageUploader';
 
 interface EditProductModalProps {
   product: Product;
@@ -39,6 +40,9 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
     (product.status as 'active' | 'sold') || 'active'
   );
   const [description, setDescription] = useState(product.description || '');
+  const [images, setImages] = useState<string[]>(
+    product.images && product.images.length > 0 ? product.images : [product.imageUrl]
+  );
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,6 +58,10 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
       setError('Please enter a valid price');
       return;
     }
+    if (images.length === 0) {
+      setError('Please provide at least one photo for this listing');
+      return;
+    }
 
     setIsLoading(true);
     setError(null);
@@ -67,6 +75,8 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
         city: city.trim(),
         status,
         description: description.trim(),
+        imageUrl: images[0],
+        images,
       });
 
       if (res.success && res.data) {
@@ -234,6 +244,16 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                 className="w-full text-xs pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all text-slate-800"
               />
             </div>
+          </div>
+
+          {/* Photos */}
+          <div className="pt-1">
+            <ImageUploader
+              images={images}
+              onChange={setImages}
+              maxImages={6}
+              maxSizeMB={5}
+            />
           </div>
 
           {/* Description */}

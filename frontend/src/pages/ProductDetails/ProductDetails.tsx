@@ -14,6 +14,9 @@ import {
   MessageSquarePlus,
   Sparkles,
   Award,
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
 } from 'lucide-react';
 import { Product } from '../../types/product.types';
 import { formatINR } from '../../utils/helpers';
@@ -49,6 +52,10 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [openWithOffer, setOpenWithOffer] = useState(false);
 
+  // Multi-image gallery states
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+
   // Reviews & Rating states
   const [isReviewsModalOpen, setIsReviewsModalOpen] = useState(false);
   const [isWriteReviewModalOpen, setIsWriteReviewModalOpen] = useState(false);
@@ -65,6 +72,7 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
       const res = await productApi.getProductById(id);
       if (res.success && res.data) {
         setProduct(res.data);
+        setActiveImageIndex(0);
         // Load seller ratings
         if (res.data.seller?.id) {
           const ratingRes = await ratingApi.getUserReviews(res.data.seller.id);
@@ -138,6 +146,19 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
   const wishlisted = isWishlisted(product.id);
   const averageRating = sellerRatingSummary?.averageRating || product.seller.rating || 4.9;
   const totalReviewsCount = sellerRatingSummary?.totalReviews ?? sellerReviews.length;
+  const galleryImages =
+    product.images && product.images.length > 0 ? product.images : [product.imageUrl];
+  const activeImage = galleryImages[activeImageIndex] || product.imageUrl;
+
+  const handlePrevImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActiveImageIndex((prev) => (prev > 0 ? prev - 1 : galleryImages.length - 1));
+  };
+
+  const handleNextImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActiveImageIndex((prev) => (prev < galleryImages.length - 1 ? prev + 1 : 0));
+  };
 
   const content = (
     <div className="w-full max-w-4xl bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100 relative max-h-[90vh] overflow-y-auto space-y-8">
@@ -154,18 +175,32 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
 
       {/* Main Product Two-Column Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Left Column: Images */}
+        {/* Left Column: Multi-Image Interactive Gallery */}
         <div className="space-y-3">
-          <div className="relative w-full h-80 bg-slate-50 rounded-2xl overflow-hidden flex items-center justify-center p-6 border border-slate-100">
+          {/* Active Main Viewport */}
+          <div
+            onClick={() => setIsLightboxOpen(true)}
+            className="group relative w-full h-80 bg-slate-50 rounded-2xl overflow-hidden flex items-center justify-center p-6 border border-slate-100 cursor-zoom-in transition-all shadow-inner"
+          >
             <img
-              src={product.imageUrl}
+              src={activeImage}
               alt={product.title}
-              className="w-full h-full object-contain hover:scale-105 transition-transform duration-300"
+              className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 select-none"
             />
+
+            {/* Top Controls: Lightbox indicator & Wishlist */}
+            <div className="absolute top-3 left-3 bg-slate-900/60 backdrop-blur-sm text-white text-[11px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
+              <Maximize2 className="w-3 h-3" />
+              <span>Click to Expand</span>
+            </div>
+
             <button
               type="button"
-              onClick={() => toggle(product.id)}
-              className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white shadow-md hover:bg-slate-50 flex items-center justify-center transition-all cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggle(product.id);
+              }}
+              className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center transition-all cursor-pointer"
             >
               <Heart
                 className={`w-5 h-5 ${
@@ -173,7 +208,58 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
                 }`}
               />
             </button>
+
+            {/* Left / Right Carousel Arrows */}
+            {galleryImages.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={handlePrevImage}
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 hover:bg-white text-slate-800 shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity active:scale-95"
+                  title="Previous image"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNextImage}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 hover:bg-white text-slate-800 shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity active:scale-95"
+                  title="Next image"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+
+                {/* Counter Pill */}
+                <div className="absolute bottom-3 right-3 bg-slate-900/70 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  {activeImageIndex + 1} / {galleryImages.length}
+                </div>
+              </>
+            )}
           </div>
+
+          {/* Thumbnail Strip */}
+          {galleryImages.length > 1 && (
+            <div className="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-thin">
+              {galleryImages.map((thumbUrl, idx) => (
+                <button
+                  key={`${thumbUrl}-${idx}`}
+                  type="button"
+                  onClick={() => setActiveImageIndex(idx)}
+                  className={`w-16 h-16 rounded-xl border-2 overflow-hidden bg-slate-50 flex items-center justify-center p-1 transition-all shrink-0 cursor-pointer ${
+                    activeImageIndex === idx
+                      ? 'border-indigo-600 ring-2 ring-indigo-200 scale-105 shadow-sm'
+                      : 'border-slate-200 hover:border-slate-300 opacity-70 hover:opacity-100'
+                  }`}
+                >
+                  <img
+                    src={thumbUrl}
+                    alt={`Thumb ${idx + 1}`}
+                    className="w-full h-full object-contain"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Right Column: Details & Actions */}
@@ -427,6 +513,94 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
           onClose={() => setIsWriteReviewModalOpen(false)}
           onSuccess={handleReviewSuccess}
         />
+      )}
+      {/* Fullscreen High-Resolution Lightbox Modal */}
+      {isLightboxOpen && (
+        <div
+          className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-between p-4 sm:p-6 animate-fade-in"
+          onClick={() => setIsLightboxOpen(false)}
+        >
+          {/* Lightbox Top Header */}
+          <div
+            className="w-full max-w-5xl flex items-center justify-between text-white pb-2"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div>
+              <h3 className="text-sm font-bold truncate max-w-md">{product.title}</h3>
+              <span className="text-xs text-slate-400">
+                Photo {activeImageIndex + 1} of {galleryImages.length}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsLightboxOpen(false)}
+              className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+              title="Close Fullscreen (Esc)"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Lightbox Main Image & Arrows */}
+          <div
+            className="relative flex-1 w-full max-w-5xl flex items-center justify-center p-2"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={activeImage}
+              alt={product.title}
+              className="max-h-[75vh] max-w-full object-contain rounded-2xl shadow-2xl transition-all"
+            />
+
+            {galleryImages.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={handlePrevImage}
+                  className="absolute left-2 sm:left-4 p-3 rounded-full bg-slate-900/70 hover:bg-slate-900 text-white shadow-xl transition-all active:scale-95"
+                  title="Previous photo"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNextImage}
+                  className="absolute right-2 sm:right-4 p-3 rounded-full bg-slate-900/70 hover:bg-slate-900 text-white shadow-xl transition-all active:scale-95"
+                  title="Next photo"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Lightbox Bottom Thumbnail Strip */}
+          {galleryImages.length > 1 && (
+            <div
+              className="flex items-center gap-2 overflow-x-auto py-2 px-4 bg-slate-900/80 rounded-2xl border border-slate-800"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {galleryImages.map((thumb, idx) => (
+                <button
+                  key={`lightbox-${thumb}-${idx}`}
+                  type="button"
+                  onClick={() => setActiveImageIndex(idx)}
+                  className={`w-14 h-14 rounded-xl border-2 overflow-hidden bg-slate-900 flex items-center justify-center p-1 transition-all ${
+                    activeImageIndex === idx
+                      ? 'border-indigo-500 scale-105 ring-2 ring-indigo-400'
+                      : 'border-slate-700 opacity-60 hover:opacity-100'
+                  }`}
+                >
+                  <img
+                    src={thumb}
+                    alt={`Thumb ${idx + 1}`}
+                    className="w-full h-full object-contain"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

@@ -1,5 +1,68 @@
 [
   {
+    "id": "rev-5dfce05e",
+    "targetUserId": "usr-demo-iyyanar",
+    "reviewerId": "usr-demo-iyyanar",
+    "reviewerName": "SwapIt User",
+    "reviewerAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80",
+    "rating": 5,
+    "comment": "Automated integration test review: Verified fast exchange and genuine seller!",
+    "tags": [
+      "Fast Delivery",
+      "Item as Described",
+      "Smooth Swap"
+    ],
+    "productId": "prod-14",
+    "productTitle": "Automated Test Product",
+    "helpfulCount": 1,
+    "helpfulUserIds": [
+      "usr-demo-iyyanar"
+    ],
+    "createdAt": "2026-09-25T11:42:07.064Z"
+  },
+  {
+    "id": "rev-193968d6",
+    "targetUserId": "usr-demo-iyyanar",
+    "reviewerId": "usr-demo-iyyanar",
+    "reviewerName": "SwapIt User",
+    "reviewerAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80",
+    "rating": 5,
+    "comment": "Automated integration test review: Verified fast exchange and genuine seller!",
+    "tags": [
+      "Fast Delivery",
+      "Item as Described",
+      "Smooth Swap"
+    ],
+    "productId": "prod-14",
+    "productTitle": "Automated Test Product",
+    "helpfulCount": 1,
+    "helpfulUserIds": [
+      "usr-demo-iyyanar"
+    ],
+    "createdAt": "2026-09-25T06:44:16.236Z"
+  },
+  {
+    "id": "rev-ba41db91",
+    "targetUserId": "usr-demo-iyyanar",
+    "reviewerId": "usr-demo-iyyanar",
+    "reviewerName": "SwapIt User",
+    "reviewerAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80",
+    "rating": 5,
+    "comment": "Automated integration test review: Verified fast exchange and genuine seller!",
+    "tags": [
+      "Fast Delivery",
+      "Item as Described",
+      "Smooth Swap"
+    ],
+    "productId": "prod-14",
+    "productTitle": "Automated Test Product",
+    "helpfulCount": 1,
+    "helpfulUserIds": [
+      "usr-demo-iyyanar"
+    ],
+    "createdAt": "2026-09-25T06:03:09.004Z"
+  },
+  {
     "id": "rev-f9b5dc77",
     "targetUserId": "usr-demo-iyyanar",
     "reviewerId": "usr-demo-iyyanar",

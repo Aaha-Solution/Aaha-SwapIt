@@ -235,4 +235,44 @@ export const productApi = {
       return { success: true, data: true };
     }
   },
+
+  uploadImage: async (payload: {
+    fileName: string;
+    fileContentBase64: string;
+    mimeType?: string;
+  }): Promise<ApiResponse<{ url: string; key: string }>> => {
+    try {
+      const response = await api.post('/products/upload-image', payload);
+      return response.data;
+    } catch {
+      // Fallback in-memory data URI for standalone frontend
+      const dataUri = `data:${payload.mimeType || 'image/jpeg'};base64,${payload.fileContentBase64}`;
+      return {
+        success: true,
+        data: {
+          url: dataUri,
+          key: `local-${Date.now()}`,
+        },
+      };
+    }
+  },
+
+  uploadImages: async (
+    files: Array<{ fileName: string; fileContentBase64: string; mimeType?: string }>
+  ): Promise<ApiResponse<Array<{ url: string; key: string }>>> => {
+    try {
+      const response = await api.post('/products/upload-images', { files });
+      return response.data;
+    } catch {
+      // Fallback in-memory data URIs
+      const data = files.map((f, i) => ({
+        url: `data:${f.mimeType || 'image/jpeg'};base64,${f.fileContentBase64}`,
+        key: `local-${Date.now()}-${i}`,
+      }));
+      return {
+        success: true,
+        data,
+      };
+    }
+  },
 };
