@@ -1,0 +1,92 @@
+[
+  {
+    "id": "rev-f9b5dc77",
+    "targetUserId": "usr-demo-iyyanar",
+    "reviewerId": "usr-demo-iyyanar",
+    "reviewerName": "SwapIt User",
+    "reviewerAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80",
+    "rating": 5,
+    "comment": "Fantastic swap experience, authentic item!",
+    "tags": [
+      "Item as Described",
+      "Smooth Swap"
+    ],
+    "helpfulCount": 0,
+    "helpfulUserIds": [],
+    "createdAt": "2026-09-25T05:32:24.685Z"
+  },
+  {
+    "id": "rev-1",
+    "targetUserId": "usr-demo-iyyanar",
+    "reviewerId": "usr-buyer-priya",
+    "reviewerName": "Priya Sharma",
+    "reviewerAvatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80",
+    "rating": 5,
+    "comment": "Super fast communication! The item condition was exactly as described, properly packed and tested. Deal went very smooth.",
+    "tags": [
+      "Item as Described",
+      "Fast Delivery",
+      "Great Communication"
+    ],
+    "productId": "prod-1",
+    "productTitle": "Apple MacBook Air M1",
+    "helpfulCount": 4,
+    "helpfulUserIds": [],
+    "createdAt": "2026-09-22T05:31:10.807Z"
+  },
+  {
+    "id": "rev-2",
+    "targetUserId": "usr-demo-iyyanar",
+    "reviewerId": "usr-buyer-arun",
+    "reviewerName": "Arun Kumar",
+    "reviewerAvatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80",
+    "rating": 5,
+    "comment": "Very polite and punctual seller. Even provided the original bill and warranty card. Highly recommended for genuine deals!",
+    "tags": [
+      "Verified Genuine",
+      "Punctual",
+      "Fair Price"
+    ],
+    "productId": "prod-2",
+    "productTitle": "Sony WH-1000XM4 Headphones",
+    "helpfulCount": 2,
+    "helpfulUserIds": [],
+    "createdAt": "2026-09-18T05:31:10.807Z"
+  },
+  {
+    "id": "rev-3",
+    "targetUserId": "usr-demo-iyyanar",
+    "reviewerId": "usr-buyer-kavitha",
+    "reviewerName": "Kavitha Raman",
+    "reviewerAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80",
+    "rating": 4,
+    "comment": "Good transaction overall. Answered all my questions promptly and accepted a reasonable offer.",
+    "tags": [
+      "Quick Responder",
+      "Friendly Seller"
+    ],
+    "productId": "prod-3",
+    "productTitle": "Canon EOS 1500D DSLR Camera",
+    "helpfulCount": 1,
+    "helpfulUserIds": [],
+    "createdAt": "2026-09-11T05:31:10.807Z"
+  },
+  {
+    "id": "rev-4",
+    "targetUserId": "usr-seller-2",
+    "reviewerId": "usr-demo-iyyanar",
+    "reviewerName": "Iyyanar",
+    "reviewerAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80",
+    "rating": 5,
+    "comment": "Awesome experience swapping devices. Everything was clean and ready to use.",
+    "tags": [
+      "Seamless Swap",
+      "Item as Described"
+    ],
+    "productId": "prod-4",
+    "productTitle": "iPad Air 5th Gen",
+    "helpfulCount": 3,
+    "helpfulUserIds": [],
+    "createdAt": "2026-09-20T05:31:10.807Z"
+  }
+]

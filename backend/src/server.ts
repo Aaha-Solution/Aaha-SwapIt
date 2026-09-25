@@ -26,6 +26,7 @@ import { wishlistRouter } from './services/wishlist-service/wishlist.router.js';
 import { paymentRouter } from './services/payment-service/payment.router.js';
 import { notificationRouter } from './services/notification-service/notification.router.js';
 import { chatRouter } from './services/chat-service/chat.router.js';
+import { ratingRouter } from './services/rating-service/rating.router.js';
 
 // 1. Initialize Sentry error monitoring
 initSentry();
@@ -131,7 +132,7 @@ app.use('/api/wishlist', wishlistRouter);
 app.use('/api/payments', paymentRouter);
 app.use('/api/notifications', notificationRouter);
 app.use('/api/chat', chatRouter);
-// app.use('/api/ratings', ratingRouter);
+app.use('/api/ratings', ratingRouter);
 
 // 11. Centralized Error Handling
 app.use(errorHandler);

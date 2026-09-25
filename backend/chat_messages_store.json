@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "id": "msg-1790247945447-mkl0f3",
+    "senderId": "usr-login-user",
+    "receiverId": "usr-1",
+    "productId": "prod-14",
+    "message": "[OFFER:{\"amount\":76500,\"originalPrice\":85000,\"status\":\"pending\",\"productId\":\"prod-14\",\"productTitle\":\"Senior Frontend React / TypeScript Developer\",\"note\":\"Ready to pick up today!\"}] Ready to pick up today!",
+    "read": false,
+    "createdAt": "2026-09-24T11:05:45.447Z"
+  },
+  {
+    "id": "msg-1790254640073-spzpre",
+    "senderId": "usr-login-user",
+    "receiverId": "usr-1",
+    "productId": "prod-1",
+    "message": "[OFFER:{\"amount\":360000,\"originalPrice\":450000,\"status\":\"pending\",\"productId\":\"prod-1\",\"productTitle\":\"Maruti Swift 2019\",\"note\":\"Ready to pick up today!\"}] Ready to pick up today!",
+    "read": false,
+    "createdAt": "2026-09-24T12:57:20.073Z"
+  }
+]
