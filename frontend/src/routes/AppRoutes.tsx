@@ -9,12 +9,9 @@ import { Profile } from '../pages/Profile/Profile';
 import { Messages } from '../pages/Messages/Messages';
 import { Login } from '../pages/Login/Login';
 import { Signup } from '../pages/Signup/Signup';
-<<<<<<< Updated upstream
 import { PrivacyPolicy } from '../pages/PrivacyPolicy/PrivacyPolicy';
 import { TermsConditions } from '../pages/TermsConditions/TermsConditions';
-=======
 import { AdminPanel } from '../pages/Admin/AdminPanel';
->>>>>>> Stashed changes
 import { ProtectedRoute } from './ProtectedRoute';
 
 export const AppRoutes: React.FC = () => {
