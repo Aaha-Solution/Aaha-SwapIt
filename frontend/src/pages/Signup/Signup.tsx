@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { User, Mail, Phone, Lock, MapPin, X, Zap } from 'lucide-react';
+import { useDispatch } from 'react-redux';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { CITIES } from '../../utils/constants';
+import { authApi } from '../../api/auth.api';
+import { loginSuccess } from '../../store/slices/authSlice';
 
 interface SignupProps {
   isModal?: boolean;
@@ -16,6 +19,7 @@ export const Signup: React.FC<SignupProps> = ({
   onSwitchToLogin,
 }) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { quickDemoLogin, isLoading } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -24,8 +28,9 @@ export const Signup: React.FC<SignupProps> = ({
   const [city, setCity] = useState('Chennai');
   const [agreeTerms, setAgreeTerms] = useState(true);
   const [validationError, setValidationError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
       setValidationError('Please enter your full name');
@@ -48,13 +53,34 @@ export const Signup: React.FC<SignupProps> = ({
       return;
     }
 
-    quickDemoLogin();
-    if (onClose) onClose();
-    else navigate('/');
+    setIsSubmitting(true);
+    setValidationError('');
+
+    try {
+      const res = await authApi.signup({
+        name,
+        email,
+        phone,
+        city,
+        password,
+      });
+
+      if (res.success && res.data) {
+        dispatch(loginSuccess(res.data));
+        if (onClose) onClose();
+        else navigate('/');
+      } else {
+        setValidationError(res.message || 'Registration failed');
+      }
+    } catch (err: any) {
+      setValidationError(err?.response?.data?.message || 'Error creating account');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleDemoClick = () => {
-    quickDemoLogin();
+    quickDemoLogin('customer');
     if (onClose) onClose();
     else navigate('/');
   };
@@ -101,18 +127,20 @@ export const Signup: React.FC<SignupProps> = ({
       </div>
 
       {/* Title */}
-      <div className="mb-6">
+      <div className="mb-4">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-md text-[10.5px] font-bold mb-2">
+          <span>Customer Account Registration</span>
+        </div>
         <h2 className="text-xl font-extrabold text-slate-900">Join SwapIt today</h2>
         <p className="text-xs text-slate-500 mt-1">
-          Create your verified account in 30 seconds to buy and sell safely.
+          Create your verified customer account to browse, chat with sellers, and buy safely.
         </p>
-      </div>
 
-      {validationError && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600">
-          {validationError}
+        {/* Note on Sellers */}
+        <div className="mt-3 p-2.5 bg-amber-50/80 border border-amber-200/80 rounded-xl text-[11px] text-amber-800">
+          <strong>Selling on SwapIt:</strong> In SwapIt, selling accounts are authorized and created directly by the Administrator. If you represent a business or dealer, please contact Admin for a Seller Login.
         </div>
-      )}
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-3.5">
         <div>
@@ -217,10 +245,10 @@ export const Signup: React.FC<SignupProps> = ({
         <button
           type="button"
           onClick={handleDemoClick}
-          className="w-full flex items-center justify-center gap-2 py-2 bg-indigo-50/60 border border-dashed border-indigo-300 rounded-xl text-xs font-bold text-indigo-700 hover:bg-indigo-100/60 transition-colors"
+          className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-50/70 border border-dashed border-blue-300 rounded-xl text-xs font-bold text-blue-700 hover:bg-blue-100/70 transition-colors cursor-pointer"
         >
-          <Zap className="w-4 h-4 text-indigo-600 fill-indigo-600" />
-          <span>Quick Demo Login (Iyyanar)</span>
+          <Zap className="w-4 h-4 text-blue-600 fill-blue-600" />
+          <span>⚡ Quick Demo Login (Customer - Vignesh)</span>
         </button>
       </div>
 

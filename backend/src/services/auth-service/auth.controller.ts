@@ -36,7 +36,7 @@ export const authController = {
           phone: phone || null,
           location: city || 'Chennai',
           verified: true,
-          role: 'user',
+          role: 'customer',
           memberSince: 'Just now',
         },
         select: {
@@ -80,7 +80,7 @@ export const authController = {
 
   async login(req: Request, res: Response) {
     try {
-      const { emailOrPhone, password } = req.body;
+      const { emailOrPhone, password, role } = req.body;
 
       if (!emailOrPhone || !password) {
         return res.status(400).json({
@@ -99,7 +99,7 @@ export const authController = {
       if (!user) {
         return res.status(401).json({
           success: false,
-          message: 'Invalid credentials',
+          message: 'Invalid credentials. User not found.',
         });
       }
 
@@ -107,7 +107,22 @@ export const authController = {
       if (!isPasswordValid) {
         return res.status(401).json({
           success: false,
-          message: 'Invalid credentials',
+          message: 'Invalid credentials. Incorrect password.',
+        });
+      }
+
+      // Check role constraints if specific login role tab was selected
+      if (role === 'admin' && user.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied. Administrator privileges required for Admin Login.',
+        });
+      }
+
+      if (role === 'seller' && user.role !== 'seller' && user.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: 'This account is registered as a Customer. Selling accounts must be created and authorized by Admin.',
         });
       }
 

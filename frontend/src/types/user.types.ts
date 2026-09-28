@@ -1,3 +1,5 @@
+export type UserRole = 'customer' | 'seller' | 'admin';
+
 export interface User {
   id: string;
   name: string;
@@ -7,6 +9,15 @@ export interface User {
   location?: string;
   memberSince?: string;
   verified?: boolean;
+  role?: UserRole | string;
+}
+
+export interface SellerAccountInput {
+  name: string;
+  email: string;
+  password?: string;
+  phone?: string;
+  location?: string;
 }
 
 export interface AuthState {

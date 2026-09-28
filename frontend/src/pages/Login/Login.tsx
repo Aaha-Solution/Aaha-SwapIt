@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, Eye, EyeOff, Zap, X } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Zap, X, Shield, Store, User as UserIcon, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 
@@ -7,20 +7,43 @@ interface LoginProps {
   isModal?: boolean;
   onClose?: () => void;
   onSwitchToSignup?: () => void;
+  initialRole?: 'customer' | 'seller' | 'admin';
 }
 
 export const Login: React.FC<LoginProps> = ({
   isModal = false,
   onClose,
   onSwitchToSignup,
+  initialRole = 'customer',
 }) => {
   const navigate = useNavigate();
   const { login, quickDemoLogin, isLoading, error } = useAuth();
-  const [emailOrPhone, setEmailOrPhone] = useState('iyyanar@example.com');
-  const [password, setPassword] = useState('password123');
+
+  // Role selection: 'customer' | 'seller' | 'admin'
+  const [selectedRole, setSelectedRole] = useState<'customer' | 'seller' | 'admin'>(initialRole);
+
+  // Form states per role
+  const [emailOrPhone, setEmailOrPhone] = useState('customer@swapit.com');
+  const [password, setPassword] = useState('Password@123');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [validationError, setValidationError] = useState('');
+
+  // Switch role tab and auto-fill helpful demo credentials
+  const handleRoleChange = (role: 'customer' | 'seller' | 'admin') => {
+    setSelectedRole(role);
+    setValidationError('');
+    if (role === 'admin') {
+      setEmailOrPhone('admin@swapit.com');
+      setPassword('Password@123');
+    } else if (role === 'seller') {
+      setEmailOrPhone('seller@swapit.com');
+      setPassword('Password@123');
+    } else {
+      setEmailOrPhone('customer@swapit.com');
+      setPassword('Password@123');
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,17 +56,35 @@ export const Login: React.FC<LoginProps> = ({
       return;
     }
     setValidationError('');
-    const res = await login({ emailOrPhone, password });
+
+    const res = await login({
+      emailOrPhone,
+      password,
+      role: selectedRole,
+    });
+
     if (res.success) {
-      if (onClose) onClose();
-      else navigate('/');
+      if (onClose) {
+        onClose();
+      }
+      if (selectedRole === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
     }
   };
 
   const handleDemoClick = () => {
-    quickDemoLogin();
-    if (onClose) onClose();
-    else navigate('/');
+    quickDemoLogin(selectedRole);
+    if (onClose) {
+      onClose();
+    }
+    if (selectedRole === 'admin') {
+      navigate('/admin');
+    } else {
+      navigate('/');
+    }
   };
 
   const content = (
@@ -60,18 +101,18 @@ export const Login: React.FC<LoginProps> = ({
       )}
 
       {/* Header Logo */}
-      <div className="flex items-center gap-2 mb-6">
+      <div className="flex items-center gap-2 mb-5">
         <svg className="w-8 h-8" viewBox="0 0 32 32" fill="none">
           <circle cx="11" cy="16" r="8" stroke="#3b82f6" strokeWidth="4.5" strokeLinecap="round" />
           <circle cx="21" cy="16" r="8" stroke="#7c3aed" strokeWidth="4.5" strokeLinecap="round" />
         </svg>
-        <span className="text-xl font-extrabold text-slate-900">
+        <span className="text-xl font-extrabold text-slate-900 tracking-tight">
           Swap<span className="text-indigo-600 italic">It</span>
         </span>
       </div>
 
-      {/* Tab Switcher */}
-      <div className="flex p-1 bg-slate-100 rounded-xl mb-6">
+      {/* Primary Tab Switcher (Sign In vs New Account) */}
+      <div className="flex p-1 bg-slate-100 rounded-xl mb-4">
         <button
           type="button"
           className="flex-1 py-2 text-xs font-bold rounded-lg bg-white shadow-sm text-slate-900 transition-all"
@@ -81,33 +122,109 @@ export const Login: React.FC<LoginProps> = ({
         <button
           type="button"
           onClick={onSwitchToSignup || (() => navigate('/signup'))}
-          className="flex-1 py-2 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-all"
+          className="flex-1 py-2 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-all cursor-pointer"
         >
           New Account
         </button>
       </div>
 
-      {/* Welcome Title */}
-      <div className="mb-6">
-        <h2 className="text-xl font-extrabold text-slate-900">Welcome back!</h2>
+      {/* Role Selection Switcher: Customer | Seller | Admin */}
+      <div className="mb-4">
+        <div className="flex p-1 bg-slate-50 border border-slate-200/80 rounded-xl">
+          <button
+            type="button"
+            onClick={() => handleRoleChange('customer')}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-[11.5px] font-bold rounded-lg transition-all cursor-pointer ${
+              selectedRole === 'customer'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <UserIcon className="w-3.5 h-3.5" />
+            <span>Customer</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleRoleChange('seller')}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-[11.5px] font-bold rounded-lg transition-all cursor-pointer ${
+              selectedRole === 'seller'
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <Store className="w-3.5 h-3.5" />
+            <span>Seller Login</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleRoleChange('admin')}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-[11.5px] font-bold rounded-lg transition-all cursor-pointer ${
+              selectedRole === 'admin'
+                ? 'bg-indigo-700 text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <Shield className="w-3.5 h-3.5" />
+            <span>Admin</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Welcome Title & Role Guidance */}
+      <div className="mb-4">
+        <h2 className="text-xl font-extrabold text-slate-900">
+          {selectedRole === 'admin'
+            ? 'Administrator Login'
+            : selectedRole === 'seller'
+            ? 'Seller Account Login'
+            : 'Welcome back!'}
+        </h2>
         <p className="text-xs text-slate-500 mt-1">
-          Sign in to manage your listings, chat with buyers, and save favorite deals.
+          {selectedRole === 'admin' &&
+            'Sign in with administrator credentials to manage platform, listings, and create sellers.'}
+          {selectedRole === 'seller' &&
+            'Sign in to manage inventory and post ads. (Selling accounts are created and authorized by Admin)'}
+          {selectedRole === 'customer' &&
+            'Sign in to browse listings, chat with buyers and sellers, and save favorite deals.'}
         </p>
+
+        {selectedRole === 'seller' && (
+          <div className="mt-2.5 p-2 bg-emerald-50 border border-emerald-200/80 rounded-xl text-[11px] text-emerald-800 flex items-center gap-2">
+            <Store className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+            <span>
+              <strong>Note:</strong> Like OLX, Seller accounts are created directly by the Admin.
+            </span>
+          </div>
+        )}
+
+        {selectedRole === 'admin' && (
+          <div className="mt-2.5 p-2 bg-indigo-50 border border-indigo-200/80 rounded-xl text-[11px] text-indigo-800 flex items-center gap-2">
+            <Shield className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+            <span>Admin portal access to onboard sellers and manage platform operations.</span>
+          </div>
+        )}
       </div>
 
       {/* Error Message */}
       {(validationError || error) && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600">
-          {validationError || error}
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600 flex items-start gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+          <span>{validationError || error}</span>
         </div>
       )}
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-3.5">
         {/* Email or Phone */}
         <div>
           <label className="block text-xs font-semibold text-slate-700 mb-1">
-            Email or Phone Number
+            {selectedRole === 'admin'
+              ? 'Admin Email'
+              : selectedRole === 'seller'
+              ? 'Seller Email / Phone'
+              : 'Email or Phone Number'}
           </label>
           <div className="relative flex items-center">
             <Mail className="w-4 h-4 text-slate-400 absolute left-3" />
@@ -115,7 +232,13 @@ export const Login: React.FC<LoginProps> = ({
               type="text"
               value={emailOrPhone}
               onChange={(e) => setEmailOrPhone(e.target.value)}
-              placeholder="e.g. iyyanar@example.com"
+              placeholder={
+                selectedRole === 'admin'
+                  ? 'admin@swapit.com'
+                  : selectedRole === 'seller'
+                  ? 'seller@swapit.com'
+                  : 'customer@swapit.com'
+              }
               className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition-colors"
             />
           </div>
@@ -141,7 +264,7 @@ export const Login: React.FC<LoginProps> = ({
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 text-slate-400 hover:text-slate-600"
+              className="absolute right-3 text-slate-400 hover:text-slate-600 cursor-pointer"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -166,28 +289,40 @@ export const Login: React.FC<LoginProps> = ({
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md hover:shadow-lg transition-all active:scale-[0.99] disabled:opacity-50"
+          className={`w-full py-2.5 text-white font-bold text-xs rounded-xl shadow-md hover:shadow-lg transition-all active:scale-[0.99] disabled:opacity-50 cursor-pointer ${
+            selectedRole === 'admin'
+              ? 'bg-indigo-700 hover:bg-indigo-800'
+              : selectedRole === 'seller'
+              ? 'bg-emerald-600 hover:bg-emerald-700'
+              : 'bg-indigo-600 hover:bg-indigo-700'
+          }`}
         >
-          {isLoading ? 'Signing In...' : 'Sign In'}
+          {isLoading
+            ? 'Signing In...'
+            : selectedRole === 'admin'
+            ? 'Sign In as Admin'
+            : selectedRole === 'seller'
+            ? 'Sign In as Seller'
+            : 'Sign In'}
         </button>
       </form>
 
       {/* Social / Demo Login Dividers */}
-      <div className="relative my-5">
+      <div className="relative my-4">
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-slate-100"></div>
         </div>
-        <div className="relative flex justify-center text-[11px] uppercase tracking-wider text-slate-400">
+        <div className="relative flex justify-center text-[10.5px] uppercase tracking-wider text-slate-400">
           <span className="bg-white px-2">Or continue with</span>
         </div>
       </div>
 
-      <div className="space-y-2.5">
+      <div className="space-y-2">
         {/* Google Login */}
         <button
           type="button"
           onClick={handleDemoClick}
-          className="w-full flex items-center justify-center gap-2 py-2.5 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+          className="w-full flex items-center justify-center gap-2 py-2.5 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24">
             <path
@@ -210,24 +345,34 @@ export const Login: React.FC<LoginProps> = ({
           <span>Continue with Google</span>
         </button>
 
-        {/* Quick Demo Login */}
+        {/* Quick Demo Login button dynamically adapted to selected role */}
         <button
           type="button"
           onClick={handleDemoClick}
-          className="w-full flex items-center justify-center gap-2 py-2.5 bg-indigo-50/60 border border-dashed border-indigo-300 rounded-xl text-xs font-bold text-indigo-700 hover:bg-indigo-100/60 transition-colors"
+          className={`w-full flex items-center justify-center gap-2 py-2.5 border border-dashed rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            selectedRole === 'admin'
+              ? 'bg-indigo-50/70 border-indigo-300 text-indigo-800 hover:bg-indigo-100/70'
+              : selectedRole === 'seller'
+              ? 'bg-emerald-50/70 border-emerald-300 text-emerald-800 hover:bg-emerald-100/70'
+              : 'bg-blue-50/70 border-blue-300 text-blue-800 hover:bg-blue-100/70'
+          }`}
         >
-          <Zap className="w-4 h-4 text-indigo-600 fill-indigo-600" />
-          <span>Quick Demo Login (Iyyanar)</span>
+          <Zap className="w-4 h-4 fill-current shrink-0" />
+          <span>
+            {selectedRole === 'admin' && '⚡ Quick Demo Login (Admin - Iyyanar)'}
+            {selectedRole === 'seller' && '⚡ Quick Demo Login (Seller - Karthik)'}
+            {selectedRole === 'customer' && '⚡ Quick Demo Login (Customer - Vignesh)'}
+          </span>
         </button>
       </div>
 
       {/* Footer */}
-      <p className="text-center text-xs text-slate-500 mt-6">
+      <p className="text-center text-xs text-slate-500 mt-5">
         Don't have an account?{' '}
         <button
           type="button"
           onClick={onSwitchToSignup || (() => navigate('/signup'))}
-          className="font-bold text-indigo-600 hover:underline"
+          className="font-bold text-indigo-600 hover:underline cursor-pointer"
         >
           Create one for free
         </button>

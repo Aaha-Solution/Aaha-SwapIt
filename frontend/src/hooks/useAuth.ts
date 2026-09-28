@@ -9,12 +9,12 @@ export function useAuth() {
   const { user, isAuthenticated, isLoading, error } = useSelector((state: RootState) => state.auth);
   const { isAuthModalOpen, authModalTab } = useSelector((state: RootState) => state.user);
 
-  const handleQuickDemoLogin = () => {
-    dispatch(quickDemoLogin());
+  const handleQuickDemoLogin = (role?: 'admin' | 'seller' | 'customer') => {
+    dispatch(quickDemoLogin(role));
     dispatch(closeAuthModal());
   };
 
-  const handleLogin = async (credentials: { emailOrPhone: string; password: string }) => {
+  const handleLogin = async (credentials: { emailOrPhone: string; password: string; role?: string }) => {
     dispatch(loginStart());
     try {
       const res = await authApi.login(credentials);
@@ -23,11 +23,13 @@ export function useAuth() {
         dispatch(closeAuthModal());
         return { success: true };
       }
-      dispatch(loginFailure(res.message || 'Login failed'));
-      return { success: false, error: res.message };
-    } catch {
-      dispatch(loginFailure('An error occurred during login'));
-      return { success: false, error: 'Login error' };
+      const errMsg = res.message || 'Login failed';
+      dispatch(loginFailure(errMsg));
+      return { success: false, error: errMsg };
+    } catch (err: any) {
+      const errMsg = err?.response?.data?.message || 'Invalid credentials or server error';
+      dispatch(loginFailure(errMsg));
+      return { success: false, error: errMsg };
     }
   };
 

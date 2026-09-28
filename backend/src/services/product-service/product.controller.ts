@@ -327,8 +327,16 @@ export const productController = {
         });
       }
 
-      // Default to demo user if unauthenticated in preview mode
-      const sellerId = userId || 'usr-demo-iyyanar';
+      const authUser = (req as any).user;
+      if (authUser && authUser.role === 'customer') {
+        return res.status(403).json({
+          success: false,
+          message: 'Only authorized Sellers can post ads on SwapIt. Seller accounts are created by Admin.',
+        });
+      }
+
+      // Default to demo seller if unauthenticated in preview mode
+      const sellerId = authUser?.id || 'usr-demo-seller';
 
       // Find or link category
       const matchedCat = await prisma.category.findFirst({
