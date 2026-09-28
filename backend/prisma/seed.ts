@@ -85,13 +85,21 @@ async function main() {
     { id: 'usr-4', name: 'Deepak Nathan', email: 'deepak@example.com', phone: '+91 99620 11984', location: 'Chennai', role: 'seller' },
     { id: 'usr-5', name: 'Apex Realtors', email: 'apex@example.com', phone: '+91 98410 99882', location: 'Chennai', role: 'seller' },
     { id: 'usr-6', name: 'Pravin Studio', email: 'pravin@example.com', phone: '+91 91760 33419', location: 'Chennai', role: 'seller' },
-    { id: 'usr-7', name: 'Balaji S', email: 'balaji@example.com', phone: '+91 90030 45612', location: 'Chennai', role: 'seller' },
+    { id: 'usr-7', name: 'Madras Bikers', email: 'madrasbikers@example.com', phone: '+91 98402 11223', location: 'Chennai', role: 'seller' },
+    { id: 'usr-8', name: 'Balaji S', email: 'balaji@example.com', phone: '+91 90030 45612', location: 'Chennai', role: 'seller' },
+    { id: 'usr-9', name: 'Vogue Boutique', email: 'vogue@example.com', phone: '+91 98403 33445', location: 'Chennai', role: 'seller' },
+    { id: 'usr-10', name: 'Aqua Reef Pets', email: 'aquareef@example.com', phone: '+91 98404 55667', location: 'Chennai', role: 'seller' },
+    { id: 'usr-11', name: 'Chennai Clean Pro', email: 'cleanpro@example.com', phone: '+91 98405 77889', location: 'Chennai', role: 'seller' },
   ];
 
   for (const s of sellers) {
+    const existingByEmail = await prisma.user.findUnique({ where: { email: s.email } });
+    if (existingByEmail && existingByEmail.id !== s.id) {
+      await prisma.user.delete({ where: { id: existingByEmail.id } });
+    }
     await prisma.user.upsert({
-      where: { email: s.email },
-      update: { name: s.name, phone: s.phone, location: s.location, role: s.role },
+      where: { id: s.id },
+      update: { name: s.name, email: s.email, phone: s.phone, location: s.location, role: s.role },
       create: {
         id: s.id,
         email: s.email,
