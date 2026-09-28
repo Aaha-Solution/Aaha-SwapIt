@@ -97,10 +97,32 @@ export const Home: React.FC = () => {
 
       {/* 2. Latest Listings Section */}
       <section className="listings-section" style={{ marginBottom: '24px' }}>
-        <div className="section-title-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-          <h2 className="section-title" style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.3px' }}>
-            Latest Listings
-          </h2>
+        <div className="section-title-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <h2 className="section-title" style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.3px' }}>
+              Latest Listings
+            </h2>
+            <button
+              type="button"
+              onClick={() => navigate('/products?view=map')}
+              style={{
+                fontSize: '11px',
+                fontWeight: 700,
+                color: '#db2777',
+                background: '#fdf2f8',
+                border: '1px solid #fbcfe8',
+                padding: '3px 10px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                boxShadow: '0 1px 3px rgba(219, 39, 119, 0.1)',
+              }}
+            >
+              <span>📍 Deals Near Me (Map)</span>
+            </button>
+          </div>
           <button
             type="button"
             onClick={() => navigate('/products')}
