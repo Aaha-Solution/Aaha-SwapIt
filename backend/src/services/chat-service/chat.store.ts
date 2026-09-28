@@ -229,7 +229,7 @@ export function getSmartSellerReply(messageText: string, sellerName: string, pro
         const prodName = offer.productTitle || productTitle || 'this item';
 
         if (offer.status === 'accepted') {
-          return `Awesome! I'm glad we reached an agreement on ₹${offerAmt.toLocaleString('en-IN')}. Let me know your preferred payment method or meetup time!`;
+          return `Awesome! I'm glad we reached an agreement on ₹${offerAmt.toLocaleString('en-IN')}. Let's finalize the pickup location and time!`;
         }
 
         if (offerAmt >= origPrice * 0.8) {
@@ -254,6 +254,21 @@ export function getSmartSellerReply(messageText: string, sellerName: string, pro
     }
   }
 
+  // Handle Deal Agreement / Reservation tag
+  if (messageText.includes('[DEAL_AGREED:')) {
+    return `🤝 Perfect! Deal is locked in. Looking forward to meeting you for the exchange.`;
+  }
+
+  // Handle Location Share tag
+  if (messageText.includes('[LOCATION:')) {
+    return `📍 Location received! I know that spot well. I'll see you there.`;
+  }
+
+  // Handle Image attachment tag
+  if (messageText.includes('[IMAGE:')) {
+    return `📸 Thanks for sharing the photo! Everything looks in great order.`;
+  }
+
   const text = messageText.toLowerCase();
 
   if (text.includes('offer') || text.includes('negotiate') || text.includes('lowest')) {
@@ -266,7 +281,7 @@ export function getSmartSellerReply(messageText: string, sellerName: string, pro
     return `The price is slightly negotiable. Click "Make an Offer" above to suggest your best price!`;
   }
   if (text.includes('meet') || text.includes('location') || text.includes('where') || text.includes('place')) {
-    return `I am available to meet in Chennai near the city center or metro station. When are you free?`;
+    return `I am available to meet in Chennai near the city center or Phoenix Marketcity. When are you free?`;
   }
   if (text.includes('condition') || text.includes('working') || text.includes('warranty') || text.includes('bill')) {
     return `It is in fantastic working condition without any defects. You are welcome to test it thoroughly before buying!`;

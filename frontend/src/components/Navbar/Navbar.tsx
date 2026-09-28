@@ -18,6 +18,7 @@ import {
   Heart,
   MessageSquare,
   Shield,
+  MapPin,
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
@@ -142,12 +143,12 @@ export const Navbar: React.FC = () => {
             dispatch(setSelectedCategory('all'));
             navigate('/products');
           }}
-          className={`nav-item ${isAllProductsActive ? 'active' : ''}`}
+          className={`nav-item ${isAllProductsActive && !location.search.includes('view=map') ? 'active' : ''}`}
           style={{
             width: '100%',
             justifyContent: 'space-between',
             border: 'none',
-            background: isAllProductsActive ? 'var(--sidebar-active-bg)' : 'transparent',
+            background: isAllProductsActive && !location.search.includes('view=map') ? 'var(--sidebar-active-bg)' : 'transparent',
             cursor: 'pointer',
           }}
         >
@@ -168,6 +169,42 @@ export const Navbar: React.FC = () => {
             }}
           >
             Explore
+          </span>
+        </button>
+
+        {/* Deals Near Me (Map View) */}
+        <button
+          type="button"
+          onClick={() => {
+            dispatch(setSelectedCategory('all'));
+            navigate('/products?view=map');
+          }}
+          className={`nav-item ${pathname === '/products' && location.search.includes('view=map') ? 'active' : ''}`}
+          style={{
+            width: '100%',
+            justifyContent: 'space-between',
+            border: 'none',
+            background: pathname === '/products' && location.search.includes('view=map') ? 'var(--sidebar-active-bg)' : 'transparent',
+            cursor: 'pointer',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <MapPin className="nav-icon" style={{ color: '#db2777' }} />
+            <span>Deals Near Me</span>
+          </div>
+          <span
+            style={{
+              background: '#db2777',
+              color: '#ffffff',
+              fontSize: '9.5px',
+              fontWeight: 700,
+              padding: '2px 7px',
+              borderRadius: '6px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.3px',
+            }}
+          >
+            Live Map
           </span>
         </button>
 

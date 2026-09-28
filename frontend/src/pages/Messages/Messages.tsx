@@ -7,6 +7,7 @@ import {
   MessageSquare,
   ShieldCheck,
   CheckCheck,
+  Check,
   Clock,
   ArrowLeft,
   ExternalLink,
@@ -15,16 +16,47 @@ import {
   Sparkles,
   ShoppingBag,
   Trash2,
+  Image as ImageIcon,
+  Handshake,
+  Zap,
+  Smile,
+  X,
+  Plus,
 } from 'lucide-react';
 import { RootState } from '../../store/store';
 import { setMessagesCount } from '../../store/slices/userSlice';
-import { Conversation, ChatMessage, parseOfferFromMessage, ChatOffer } from '../../types/chat.types';
+import {
+  Conversation,
+  ChatMessage,
+  parseOfferFromMessage,
+  parseDealAgreedFromMessage,
+  parseLocationFromMessage,
+  parseImageFromMessage,
+  ChatOffer,
+  DealAgreement,
+  LocationShare,
+  ImageAttachment,
+} from '../../types/chat.types';
 import { chatApi } from '../../api/chat.api';
 import { getSocket, joinUserRoom } from '../../api/socket';
 import { formatINR } from '../../utils/helpers';
 import { INITIAL_PRODUCTS } from '../../utils/constants';
 import { MakeOfferModal } from '../../components/MakeOfferModal/MakeOfferModal';
 import { ChatOfferCard } from '../../components/ChatOfferCard/ChatOfferCard';
+import { ChatDealAgreedCard } from '../../components/ChatDealCards/ChatDealAgreedCard';
+import { ChatLocationCard } from '../../components/ChatDealCards/ChatLocationCard';
+import { ChatImageCard } from '../../components/ChatDealCards/ChatImageCard';
+import { AgreeDealModal } from '../../components/ChatDealCards/AgreeDealModal';
+import { ShareLocationModal } from '../../components/ChatDealCards/ShareLocationModal';
+
+const QUICK_INQUIRIES = [
+  'Is this still available?',
+  'What is your final price?',
+  'Can we meet today?',
+  'Is condition like new?',
+];
+
+const EMOJI_REACTIONS = ['👍', '❤️', '🤝', '🔥', '💰', '❓'];
 
 export const Messages: React.FC = () => {
   const navigate = useNavigate();
@@ -43,15 +75,28 @@ export const Messages: React.FC = () => {
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [mobileShowChat, setMobileShowChat] = useState(false);
+
+  // Modals & interactive panels
   const [isMakeOfferOpen, setIsMakeOfferOpen] = useState(false);
+  const [isAgreeDealOpen, setIsAgreeDealOpen] = useState(false);
+  const [isShareLocationOpen, setIsShareLocationOpen] = useState(false);
+  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState<string | null>(null); // messageId or null
+
+  // Typing state
+  const [isPeerTyping, setIsPeerTyping] = useState(false);
+  const [typingPeerName, setTypingPeerName] = useState('Seller');
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Image Attachment preview state
+  const [selectedImageFile, setSelectedImageFile] = useState<string | null>(null);
+  const [imageCaption, setImageCaption] = useState('');
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatStreamRef = useRef<HTMLDivElement>(null);
 
   const handleDeleteConversation = async (peerId: string, e?: React.MouseEvent) => {
-    if (e) {
-      e.stopPropagation();
-    }
+    if (e) e.stopPropagation();
     if (!window.confirm('Delete this conversation?')) return;
     try {
       await chatApi.deleteConversation(peerId);
@@ -101,7 +146,7 @@ export const Messages: React.FC = () => {
         if (res.success && res.data) {
           setConversations(res.data);
 
-          // If navigated with query params (e.g. from a product details page), select matching conversation
+          // If navigated with query params, select matching conversation
           if (queryUserId) {
             const found = res.data.find((c) => c.peerUser.id === queryUserId);
             if (found) {
@@ -159,7 +204,7 @@ export const Messages: React.FC = () => {
     loadConversations();
   }, [user?.id, queryUserId, queryProductId]);
 
-  // 2. Fetch messages when selectedConversation changes
+  // 2. Fetch messages when selectedConversation changes & mark as read
   useEffect(() => {
     if (!user?.id || !selectedConversation?.peerUser?.id) return;
 
@@ -173,7 +218,7 @@ export const Messages: React.FC = () => {
         if (res.success && res.data) {
           setMessages(res.data);
 
-          // Mark current conversation as read in state
+          // Mark current conversation as read in state & notify server over socket
           setConversations((prev) =>
             prev.map((c) =>
               c.peerUser.id === selectedConversation!.peerUser.id
@@ -181,6 +226,14 @@ export const Messages: React.FC = () => {
                 : c
             )
           );
+
+          if (user?.id) {
+            const socket = getSocket();
+            socket.emit('mark_messages_read', {
+              readerId: user.id,
+              senderId: selectedConversation!.peerUser.id,
+            });
+          }
         }
       } catch (err) {
         console.error('Failed to load chat history:', err);
@@ -190,9 +243,10 @@ export const Messages: React.FC = () => {
     }
 
     loadMessages();
+    setIsPeerTyping(false);
   }, [selectedConversation?.peerUser?.id, selectedConversation?.productId, user?.id]);
 
-  // 3. Socket.IO Real-Time incoming message listeners
+  // 3. Socket.IO Real-Time incoming message listeners, typing indicators, read receipts & reactions
   useEffect(() => {
     if (!user?.id) return;
 
@@ -204,6 +258,7 @@ export const Messages: React.FC = () => {
         selectedConversation &&
         (newMsg.senderId === selectedConversation.peerUser.id || newMsg.senderId === user.id)
       ) {
+        setIsPeerTyping(false);
         setMessages((prev) => {
           if (prev.some((m) => m.id === newMsg.id || (m.id.startsWith('temp-') && m.message === newMsg.message))) {
             return prev.map((m) =>
@@ -212,6 +267,14 @@ export const Messages: React.FC = () => {
           }
           return [...prev, newMsg];
         });
+
+        // If from peer while chat is open, immediately mark as read
+        if (newMsg.senderId === selectedConversation.peerUser.id) {
+          socket.emit('mark_messages_read', {
+            readerId: user.id,
+            senderId: newMsg.senderId,
+          });
+        }
       }
 
       // Update conversations list
@@ -284,14 +347,66 @@ export const Messages: React.FC = () => {
       );
     };
 
+    // Typing handlers
+    const handleUserTypingStart = (data: { userId: string; userName: string }) => {
+      if (selectedConversation && data.userId === selectedConversation.peerUser.id) {
+        setIsPeerTyping(true);
+        setTypingPeerName(data.userName || selectedConversation.peerUser.name);
+      }
+    };
+
+    const handleUserTypingStop = (data: { userId: string }) => {
+      if (selectedConversation && data.userId === selectedConversation.peerUser.id) {
+        setIsPeerTyping(false);
+      }
+    };
+
+    // Read receipt update handler
+    const handleMessagesReadUpdate = (data: { readerId: string }) => {
+      if (selectedConversation && data.readerId === selectedConversation.peerUser.id) {
+        setMessages((prev) => prev.map((m) => ({ ...m, read: true })));
+      }
+    };
+
+    // Reaction update handler
+    const handleReactionUpdate = (data: { messageId: string; emoji: string; userId: string }) => {
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (m.id === data.messageId) {
+            const currentReactions = { ...(m.reactions || {}) };
+            const users = currentReactions[data.emoji] || [];
+            if (users.includes(data.userId)) {
+              // Remove reaction if already reacted
+              currentReactions[data.emoji] = users.filter((u) => u !== data.userId);
+              if (currentReactions[data.emoji].length === 0) {
+                delete currentReactions[data.emoji];
+              }
+            } else {
+              currentReactions[data.emoji] = [...users, data.userId];
+            }
+            return { ...m, reactions: currentReactions };
+          }
+          return m;
+        })
+      );
+    };
+
     socket.on('receive_chat_message', handleIncomingMessage);
     socket.on('message_sent_ack', handleSentAck);
     socket.on('offer_status_changed', handleOfferStatusChanged);
+    socket.on('user_typing_start', handleUserTypingStart);
+    socket.on('user_typing_stop', handleUserTypingStop);
+    socket.on('messages_read_update', handleMessagesReadUpdate);
+    socket.on('message_reaction_update', handleReactionUpdate);
 
     return () => {
       socket.off('receive_chat_message', handleIncomingMessage);
       socket.off('message_sent_ack', handleSentAck);
       socket.off('offer_status_changed', handleOfferStatusChanged);
+      socket.off('user_typing_start', handleUserTypingStart);
+      socket.off('user_typing_stop', handleUserTypingStop);
+      socket.off('messages_read_update', handleMessagesReadUpdate);
+      socket.off('message_reaction_update', handleReactionUpdate);
     };
   }, [user?.id, selectedConversation]);
 
@@ -305,15 +420,59 @@ export const Messages: React.FC = () => {
     if (chatStreamRef.current) {
       chatStreamRef.current.scrollTop = chatStreamRef.current.scrollHeight;
     }
-  }, [messages, isLoadingMessages]);
+  }, [messages, isLoadingMessages, isPeerTyping]);
+
+  // Handle Typing event emitter
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value);
+
+    if (!user?.id || !selectedConversation) return;
+    const socket = getSocket();
+
+    socket.emit('typing_start', {
+      senderId: user.id,
+      receiverId: selectedConversation.peerUser.id,
+      senderName: user.name || 'User',
+    });
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    typingTimeoutRef.current = setTimeout(() => {
+      socket.emit('typing_stop', {
+        senderId: user.id,
+        receiverId: selectedConversation.peerUser.id,
+      });
+    }, 1500);
+  };
 
   // Handle Send Message
   const handleSendMessage = (textToSend?: string) => {
     const text = (textToSend || inputValue).trim();
-    if (!text || !user?.id || !selectedConversation) return;
+    if (!text && !selectedImageFile) return;
+    if (!user?.id || !selectedConversation) return;
 
     const socket = getSocket();
     const peerId = selectedConversation.peerUser.id;
+
+    // If an image is attached, format as [IMAGE:...] tag
+    let finalPayloadText = text;
+    if (selectedImageFile) {
+      const imgPayload: ImageAttachment = {
+        url: selectedImageFile,
+        caption: imageCaption.trim() || undefined,
+      };
+      finalPayloadText = `[IMAGE:${JSON.stringify(imgPayload)}] ${text}`.trim();
+      setSelectedImageFile(null);
+      setImageCaption('');
+    }
+
+    // Clear typing
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    socket.emit('typing_stop', { senderId: user.id, receiverId: peerId });
 
     // Optimistic message
     const tempMessage: ChatMessage = {
@@ -321,7 +480,7 @@ export const Messages: React.FC = () => {
       senderId: user.id,
       receiverId: peerId,
       productId: selectedConversation.productId,
-      message: text,
+      message: finalPayloadText,
       read: false,
       createdAt: new Date().toISOString(),
     };
@@ -334,7 +493,7 @@ export const Messages: React.FC = () => {
       senderId: user.id,
       receiverId: peerId,
       productId: selectedConversation.productId,
-      message: text,
+      message: finalPayloadText,
     });
 
     // Update conversation list preview
@@ -344,7 +503,7 @@ export const Messages: React.FC = () => {
         const updated = [...prev];
         const target = {
           ...updated[idx],
-          lastMessage: text,
+          lastMessage: finalPayloadText,
           lastMessageAt: new Date().toISOString(),
         };
         updated.splice(idx, 1);
@@ -354,6 +513,7 @@ export const Messages: React.FC = () => {
     });
   };
 
+  // Handle Offer creation
   const handleSendOffer = (amount: number, note?: string) => {
     if (!selectedConversation?.product) return;
     const offerPayload: ChatOffer = {
@@ -370,6 +530,58 @@ export const Messages: React.FC = () => {
     }`;
 
     handleSendMessage(offerMessage);
+  };
+
+  // Quick Preset Offers (-5%, -10%, -15%)
+  const handleQuickPresetOffer = (discountPercent: number) => {
+    if (!selectedConversation?.product) return;
+    const basePrice = selectedConversation.product.price;
+    const discountedPrice = Math.round(basePrice * (1 - discountPercent / 100));
+    handleSendOffer(
+      discountedPrice,
+      `Quick Offer: ${discountPercent}% discount (${formatINR(discountedPrice)})`
+    );
+  };
+
+  // Handle Deal Agreement Locking
+  const handleSendDealAgreement = (deal: DealAgreement) => {
+    const dealMsg = `[DEAL_AGREED:${JSON.stringify(deal)}] Deal locked for ${formatINR(
+      deal.agreedPrice
+    )} at ${deal.meetLocation}!`;
+    handleSendMessage(dealMsg);
+  };
+
+  // Handle Location Sharing
+  const handleSendLocation = (loc: LocationShare) => {
+    const locMsg = `[LOCATION:${JSON.stringify(loc)}] Shared meetup location: ${loc.name}`;
+    handleSendMessage(locMsg);
+  };
+
+  // Handle Message Reactions
+  const handleToggleReaction = (messageId: string, emoji: string) => {
+    if (!user?.id || !selectedConversation) return;
+    const socket = getSocket();
+    socket.emit('message_reaction', {
+      messageId,
+      emoji,
+      userId: user.id,
+      receiverId: selectedConversation.peerUser.id,
+    });
+    setIsEmojiPickerOpen(null);
+  };
+
+  // Handle Image File selection
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          setSelectedImageFile(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleAcceptOffer = (offer: ChatOffer) => {
@@ -459,10 +671,10 @@ export const Messages: React.FC = () => {
         <div>
           <h1 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
             <MessageSquare className="w-6 h-6 text-indigo-600" />
-            Messages & Conversations
+            Messages & Live Deal Negotiations
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Chat in real-time with verified buyers and sellers across DealKart
+            Real-time chat, in-chat offers, deal locking, and secure exchange verification
           </p>
         </div>
 
@@ -470,7 +682,7 @@ export const Messages: React.FC = () => {
           <button
             type="button"
             onClick={handleClearAllChats}
-            className="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-red-50 hover:border-red-200 hover:text-red-600 text-slate-600 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+            className="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-red-50 hover:border-red-200 hover:text-red-600 text-slate-600 text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
           >
             <Trash2 className="w-3.5 h-3.5" />
             <span>Clear All Chats</span>
@@ -479,7 +691,7 @@ export const Messages: React.FC = () => {
       </div>
 
       {/* Main Dual-Pane Inbox Card */}
-      <div className="w-full bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex h-[740px]">
+      <div className="w-full bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex h-[760px]">
         {/* Left Column: Conversations List */}
         <div
           className={`w-full md:w-[320px] lg:w-[360px] flex-shrink-0 border-r border-slate-100 flex flex-col bg-white transition-all ${
@@ -519,7 +731,7 @@ export const Messages: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => navigate('/products')}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm flex items-center gap-1.5"
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
                 >
                   <ShoppingBag className="w-3.5 h-3.5" />
                   Explore Products
@@ -548,7 +760,7 @@ export const Messages: React.FC = () => {
                           className="w-11 h-11 rounded-2xl object-cover border border-slate-200"
                         />
                       ) : (
-                        <div className="w-11 h-11 rounded-2xl bg-blue-600 text-white font-black text-sm flex items-center justify-center shadow-sm">
+                        <div className="w-11 h-11 rounded-2xl bg-indigo-600 text-white font-black text-sm flex items-center justify-center shadow-xs">
                           {conv.peerUser.name?.charAt(0) || 'U'}
                         </div>
                       )}
@@ -576,7 +788,7 @@ export const Messages: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Product snapshot chip if available */}
+                      {/* Product snapshot chip */}
                       {conv.product && (
                         <div className="flex items-center gap-1.5 mb-1">
                           <span className="text-[9.5px] bg-indigo-50 text-indigo-700 font-semibold px-2 py-0.5 rounded-md truncate max-w-[190px] flex items-center gap-1 border border-indigo-100">
@@ -591,7 +803,15 @@ export const Messages: React.FC = () => {
                           conv.unread ? 'font-bold text-slate-900' : 'text-slate-500'
                         }`}
                       >
-                        {conv.lastMessage}
+                        {conv.lastMessage.includes('[OFFER:')
+                          ? '🏷️ Price Offer'
+                          : conv.lastMessage.includes('[DEAL_AGREED:')
+                          ? '🤝 Deal Locked'
+                          : conv.lastMessage.includes('[LOCATION:')
+                          ? '📍 Meetup Location'
+                          : conv.lastMessage.includes('[IMAGE:')
+                          ? '📸 Shared Image'
+                          : conv.lastMessage}
                       </p>
                     </div>
 
@@ -615,7 +835,7 @@ export const Messages: React.FC = () => {
           {selectedConversation ? (
             <>
               {/* Chat Top Bar */}
-              <div className="px-6 py-4 bg-white border-b border-slate-100 flex items-center justify-between">
+              <div className="px-6 py-3.5 bg-white border-b border-slate-100 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
@@ -633,7 +853,7 @@ export const Messages: React.FC = () => {
                         className="w-11 h-11 rounded-2xl object-cover border border-slate-200"
                       />
                     ) : (
-                      <div className="w-11 h-11 rounded-2xl bg-blue-600 text-white font-black text-sm flex items-center justify-center shadow-md">
+                      <div className="w-11 h-11 rounded-2xl bg-indigo-600 text-white font-black text-sm flex items-center justify-center shadow-md">
                         {selectedConversation.peerUser.name?.charAt(0) || 'U'}
                       </div>
                     )}
@@ -646,7 +866,7 @@ export const Messages: React.FC = () => {
                         {selectedConversation.peerUser.name}
                       </h2>
                       <span className="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
+                        <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
                         Online
                       </span>
                     </div>
@@ -661,34 +881,31 @@ export const Messages: React.FC = () => {
 
                 {/* Right Header Actions */}
                 <div className="flex items-center gap-2">
-                  {selectedConversation.product && (
-                    <button
-                      type="button"
-                      onClick={() => setIsMakeOfferOpen(true)}
-                      className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
-                    >
-                      <Tag className="w-3.5 h-3.5" />
-                      <span>Make an Offer</span>
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => setIsAgreeDealOpen(true)}
+                    className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                  >
+                    <Handshake className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Lock Deal</span>
+                  </button>
 
                   <button
                     type="button"
-                    onClick={() => handleDeleteConversation(selectedConversation.peerUser.id)}
-                    className="p-2 rounded-xl border border-slate-200 bg-white hover:bg-red-50 hover:border-red-200 text-slate-500 hover:text-red-600 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-                    title="Delete this conversation"
+                    onClick={() => setIsShareLocationOpen(true)}
+                    className="px-3 py-1.5 rounded-xl border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Delete Chat</span>
+                    <MapPin className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Share Spot</span>
                   </button>
 
                   {selectedConversation.product && (
                     <button
                       type="button"
                       onClick={() => navigate(`/products/${selectedConversation.product?.id}`)}
-                      className="px-3.5 py-1.5 rounded-xl border border-indigo-200 bg-indigo-50/50 hover:bg-indigo-50 text-indigo-700 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                      className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                      title="View Product Details"
                     >
-                      <span>View Listing</span>
                       <ExternalLink className="w-3.5 h-3.5" />
                     </button>
                   )}
@@ -697,7 +914,7 @@ export const Messages: React.FC = () => {
 
               {/* Product Reference Sticky Banner */}
               {selectedConversation.product && (
-                <div className="px-6 py-2.5 bg-indigo-50/40 border-b border-indigo-100/60 flex items-center justify-between">
+                <div className="px-6 py-2.5 bg-indigo-50/50 border-b border-indigo-100/70 flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-3">
                     <img
                       src={selectedConversation.product.imageUrl}
@@ -705,7 +922,7 @@ export const Messages: React.FC = () => {
                       className="w-10 h-10 object-cover rounded-xl border border-indigo-200"
                     />
                     <div>
-                      <h3 className="text-xs font-bold text-slate-800 truncate max-w-sm">
+                      <h3 className="text-xs font-bold text-slate-800 truncate max-w-xs">
                         {selectedConversation.product.title}
                       </h3>
                       <div className="flex items-center gap-2 mt-0.5">
@@ -718,17 +935,34 @@ export const Messages: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+
+                  {/* Quick Offer Presets */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-bold text-slate-500 hidden sm:inline">Quick Offer:</span>
+                    <button
+                      type="button"
+                      onClick={() => handleQuickPresetOffer(5)}
+                      className="text-[11px] font-bold text-indigo-700 bg-white hover:bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-200 transition-colors cursor-pointer"
+                      title="Offer 5% off"
+                    >
+                      -5%
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleQuickPresetOffer(10)}
+                      className="text-[11px] font-bold text-indigo-700 bg-white hover:bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-200 transition-colors cursor-pointer"
+                      title="Offer 10% off"
+                    >
+                      -10%
+                    </button>
                     <button
                       type="button"
                       onClick={() => setIsMakeOfferOpen(true)}
-                      className="text-xs font-bold text-indigo-700 bg-indigo-100 hover:bg-indigo-200 px-3 py-1 rounded-lg transition-colors cursor-pointer"
+                      className="text-[11px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1 rounded-lg transition-colors cursor-pointer shadow-xs flex items-center gap-1"
                     >
-                      Send Price Offer
+                      <Tag className="w-3 h-3" />
+                      <span>Custom Offer</span>
                     </button>
-                    <span className="text-[10px] text-slate-500 font-semibold bg-white px-2.5 py-1 rounded-lg border border-slate-200/60">
-                      Product In Discussion
-                    </span>
                   </div>
                 </div>
               )}
@@ -736,10 +970,10 @@ export const Messages: React.FC = () => {
               {/* Messages Thread Stream */}
               <div ref={chatStreamRef} className="flex-1 p-6 overflow-y-auto space-y-4">
                 {/* Safety Tips Banner */}
-                <div className="flex items-center gap-2.5 p-3 rounded-2xl bg-amber-50 border border-amber-200/60 text-amber-900 text-xs shadow-sm">
+                <div className="flex items-center gap-2.5 p-3 rounded-2xl bg-amber-50 border border-amber-200/60 text-amber-900 text-xs shadow-xs">
                   <ShieldCheck className="w-4 h-4 text-amber-600 flex-shrink-0" />
                   <span>
-                    DealKart Safety Tip: Meet in public places and inspect the product in person before making full payment.
+                    SwapIt Trust Tip: Meet at verified public landmarks, inspect item condition in person, and use the 4-digit handshake code upon exchange.
                   </span>
                 </div>
 
@@ -750,12 +984,14 @@ export const Messages: React.FC = () => {
                   </div>
                 ) : messages.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-64 text-center px-6">
-                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-2 shadow-sm">
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-2 shadow-xs">
                       <Sparkles className="w-6 h-6" />
                     </div>
-                    <h3 className="text-xs font-bold text-slate-800 mb-1">Start chatting with {selectedConversation.peerUser.name}</h3>
+                    <h3 className="text-xs font-bold text-slate-800 mb-1">
+                      Start chatting with {selectedConversation.peerUser.name}
+                    </h3>
                     <p className="text-xs text-slate-500 max-w-sm">
-                      Send a message or select one of the quick suggestions below to begin the conversation.
+                      Send a message or select one of the quick suggestions below to begin negotiating.
                     </p>
                   </div>
                 ) : (
@@ -763,76 +999,268 @@ export const Messages: React.FC = () => {
                     const isMine =
                       msg.senderId === user?.id ||
                       (selectedConversation && msg.senderId !== selectedConversation.peerUser.id);
-                    const { offer, cleanText } = parseOfferFromMessage(msg.message);
+
+                    // Parse rich payload cards
+                    const { offer, cleanText: offerCleanText } = parseOfferFromMessage(msg.message);
+                    const { deal, cleanText: dealCleanText } = parseDealAgreedFromMessage(msg.message);
+                    const { location, cleanText: locCleanText } = parseLocationFromMessage(msg.message);
+                    const { imageAttachment, cleanText: imgCleanText } = parseImageFromMessage(msg.message);
+
+                    const effectiveText = offer
+                      ? offerCleanText
+                      : deal
+                      ? dealCleanText
+                      : location
+                      ? locCleanText
+                      : imageAttachment
+                      ? imgCleanText
+                      : msg.message;
 
                     return (
                       <div
                         key={msg.id}
-                        className={`flex flex-col ${isMine ? 'items-end' : 'items-start'}`}
+                        className={`flex flex-col group relative ${isMine ? 'items-end' : 'items-start'}`}
                       >
-                        {offer ? (
-                          <div>
-                            <ChatOfferCard
-                              offer={offer}
-                              isSender={isMine}
-                              onAcceptOffer={handleAcceptOffer}
-                              onDeclineOffer={handleDeclineOffer}
-                              onCounterOffer={() => setIsMakeOfferOpen(true)}
-                            />
-                            {cleanText && (
+                        {/* Hover Emoji Reaction Trigger */}
+                        <div
+                          className={`opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 mb-1 ${
+                            isMine ? 'flex-row-reverse' : 'flex-row'
+                          }`}
+                        >
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setIsEmojiPickerOpen(isEmojiPickerOpen === msg.id ? null : msg.id)
+                              }
+                              className="p-1 rounded-full bg-white hover:bg-slate-100 border border-slate-200 text-slate-400 hover:text-slate-600 shadow-xs text-xs"
+                              title="React to message"
+                            >
+                              <Smile className="w-3.5 h-3.5" />
+                            </button>
+
+                            {/* Floating Emoji Picker */}
+                            {isEmojiPickerOpen === msg.id && (
                               <div
-                                className={`mt-1 max-w-[340px] px-4 py-2.5 rounded-2xl text-xs leading-relaxed shadow-sm ${
-                                  isMine
-                                    ? 'bg-indigo-600 text-white rounded-tr-none'
-                                    : 'bg-white text-slate-800 border border-slate-200/80 rounded-tl-none'
+                                className={`absolute z-30 bottom-full mb-1 bg-white p-1.5 rounded-2xl shadow-xl border border-slate-200 flex items-center gap-1 animate-scale-in ${
+                                  isMine ? 'right-0' : 'left-0'
                                 }`}
                               >
-                                {cleanText}
+                                {EMOJI_REACTIONS.map((emoji) => (
+                                  <button
+                                    key={emoji}
+                                    type="button"
+                                    onClick={() => handleToggleReaction(msg.id, emoji)}
+                                    className="text-base p-1.5 hover:bg-slate-100 rounded-xl transition-transform hover:scale-125 cursor-pointer"
+                                  >
+                                    {emoji}
+                                  </button>
+                                ))}
                               </div>
                             )}
                           </div>
-                        ) : (
+                        </div>
+
+                        {/* Rich Offer Card */}
+                        {offer && (
+                          <ChatOfferCard
+                            offer={offer}
+                            isSender={isMine}
+                            onAcceptOffer={handleAcceptOffer}
+                            onDeclineOffer={handleDeclineOffer}
+                            onCounterOffer={() => setIsMakeOfferOpen(true)}
+                          />
+                        )}
+
+                        {/* Rich Deal Agreement Card */}
+                        {deal && <ChatDealAgreedCard deal={deal} isSender={isMine} />}
+
+                        {/* Rich Location Card */}
+                        {location && <ChatLocationCard location={location} />}
+
+                        {/* Rich Image Attachment Card */}
+                        {imageAttachment && (
+                          <ChatImageCard imageAttachment={imageAttachment} isMine={isMine} />
+                        )}
+
+                        {/* Standard Message Bubble */}
+                        {effectiveText && (
                           <div
-                            className={`max-w-[70%] px-4 py-3 rounded-2xl text-xs leading-relaxed shadow-sm ${
+                            className={`max-w-[75%] px-4 py-3 rounded-2xl text-xs leading-relaxed shadow-xs ${
                               isMine
-                                ? 'bg-indigo-600 text-white rounded-tr-none'
-                                : 'bg-white text-slate-800 border border-slate-200/80 rounded-tl-none'
+                                ? 'bg-indigo-600 text-white rounded-tr-none font-medium'
+                                : 'bg-white text-slate-800 border border-slate-200/80 rounded-tl-none font-medium'
                             }`}
                           >
-                            {msg.message}
+                            {effectiveText}
                           </div>
                         )}
+
+                        {/* Message Reactions Badges */}
+                        {msg.reactions && Object.keys(msg.reactions).length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {Object.entries(msg.reactions).map(([emoji, userIds]) => (
+                              <span
+                                key={emoji}
+                                onClick={() => handleToggleReaction(msg.id, emoji)}
+                                className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border cursor-pointer transition-all ${
+                                  user?.id && userIds.includes(user.id)
+                                    ? 'bg-indigo-50 border-indigo-200 text-indigo-700 font-bold'
+                                    : 'bg-white border-slate-200 text-slate-600'
+                                }`}
+                              >
+                                <span>{emoji}</span>
+                                <span className="text-[9.5px] font-bold">{userIds.length}</span>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Message Meta / Timestamp & Read Receipt */}
                         <div className="flex items-center gap-1 mt-1 text-[10px] text-slate-400 px-1">
                           <Clock className="w-3 h-3 text-slate-400" />
                           <span>{formatMessageTime(msg.createdAt)}</span>
-                          {isMine && <CheckCheck className="w-3.5 h-3.5 text-indigo-500 ml-1" />}
+                          {isMine && (
+                            <span title={msg.read ? 'Seen' : 'Sent'}>
+                              {msg.read ? (
+                                <CheckCheck className="w-3.5 h-3.5 text-blue-500 ml-1" />
+                              ) : (
+                                <Check className="w-3.5 h-3.5 text-slate-400 ml-1" />
+                              )}
+                            </span>
+                          )}
                         </div>
                       </div>
                     );
                   })
                 )}
+
+                {/* Real-time Typing Indicator Bubble */}
+                {isPeerTyping && (
+                  <div className="flex items-center gap-2 animate-fade-in">
+                    <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xs">
+                      {typingPeerName.charAt(0)}
+                    </div>
+                    <div className="px-4 py-2.5 bg-white border border-slate-200/80 rounded-2xl rounded-tl-none shadow-xs flex items-center gap-2">
+                      <span className="text-xs text-slate-500 font-semibold">{typingPeerName} is typing</span>
+                      <div className="flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce"></span>
+                        <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                        <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Input Area */}
+              {/* Quick Inquiry Suggestions */}
+              <div className="px-4 py-2 bg-slate-50/80 border-t border-slate-100 flex items-center gap-2 overflow-x-auto no-scrollbar">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide flex-shrink-0 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-indigo-500" />
+                  Quick Ask:
+                </span>
+                {QUICK_INQUIRIES.map((q, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleSendMessage(q)}
+                    className="text-xs text-slate-600 hover:text-indigo-600 bg-white hover:bg-indigo-50 px-3 py-1.5 rounded-xl border border-slate-200 hover:border-indigo-200 whitespace-nowrap transition-all shadow-2xs font-medium cursor-pointer"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+
+              {/* Image Preview Box if attached */}
+              {selectedImageFile && (
+                <div className="p-3 bg-indigo-50/60 border-t border-indigo-100 flex items-center gap-3">
+                  <div className="relative">
+                    <img
+                      src={selectedImageFile}
+                      alt="Attachment preview"
+                      className="w-14 h-14 object-cover rounded-xl border-2 border-indigo-300"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setSelectedImageFile(null)}
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs shadow-xs"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={imageCaption}
+                      onChange={(e) => setImageCaption(e.target.value)}
+                      placeholder="Add an optional caption for this photo..."
+                      className="w-full text-xs px-3 py-2 bg-white border border-indigo-200 rounded-xl focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Input Form & Action Bar */}
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
                   handleSendMessage();
                 }}
-                className="p-4 bg-white border-t border-slate-100 flex items-center gap-3"
+                className="p-3.5 bg-white border-t border-slate-100 flex items-center gap-2"
               >
+                {/* Image Upload Button */}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImageUpload}
+                  accept="image/*"
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="p-3 rounded-2xl bg-slate-100 hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 transition-all cursor-pointer"
+                  title="Attach Photo"
+                >
+                  <ImageIcon className="w-4 h-4" />
+                </button>
+
+                {/* Lock Deal Quick Trigger */}
+                <button
+                  type="button"
+                  onClick={() => setIsAgreeDealOpen(true)}
+                  className="p-3 rounded-2xl bg-slate-100 hover:bg-emerald-50 text-slate-500 hover:text-emerald-600 transition-all cursor-pointer"
+                  title="Lock Deal Agreement"
+                >
+                  <Handshake className="w-4 h-4" />
+                </button>
+
+                {/* Location Quick Trigger */}
+                <button
+                  type="button"
+                  onClick={() => setIsShareLocationOpen(true)}
+                  className="p-3 rounded-2xl bg-slate-100 hover:bg-blue-50 text-slate-500 hover:text-blue-600 transition-all cursor-pointer"
+                  title="Share Meetup Location"
+                >
+                  <MapPin className="w-4 h-4" />
+                </button>
+
+                {/* Message Input */}
                 <input
                   type="text"
                   value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
+                  onChange={handleInputChange}
                   placeholder={`Write a message to ${selectedConversation.peerUser.name}...`}
-                  className="flex-1 text-xs px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all text-slate-800"
+                  className="flex-1 text-xs px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all text-slate-800"
                 />
+
+                {/* Send Button */}
                 <button
                   type="submit"
-                  disabled={!inputValue.trim()}
-                  className="px-5 py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:hover:bg-indigo-600 text-white text-xs font-bold rounded-2xl shadow-md transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
+                  disabled={!inputValue.trim() && !selectedImageFile}
+                  className="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:hover:bg-indigo-600 text-white text-xs font-bold rounded-2xl shadow-md transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
                 >
                   <span>Send</span>
                   <Send className="w-4 h-4" />
@@ -841,12 +1269,12 @@ export const Messages: React.FC = () => {
             </>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-              <div className="w-16 h-16 rounded-3xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4 shadow-sm">
+              <div className="w-16 h-16 rounded-3xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4 shadow-xs">
                 <MessageSquare className="w-8 h-8" />
               </div>
               <h2 className="text-base font-bold text-slate-900 mb-1">Your Inbox</h2>
               <p className="text-xs text-slate-500 max-w-sm">
-                Select an active conversation from the left to read messages and reply in real-time.
+                Select an active conversation from the left to read messages and negotiate in real-time.
               </p>
             </div>
           )}
@@ -860,6 +1288,24 @@ export const Messages: React.FC = () => {
           sellerName={selectedConversation.peerUser.name}
           onClose={() => setIsMakeOfferOpen(false)}
           onSubmitOffer={handleSendOffer}
+        />
+      )}
+
+      {/* Lock Deal Agreement Modal */}
+      {isAgreeDealOpen && (
+        <AgreeDealModal
+          product={selectedConversation?.product}
+          peerName={selectedConversation?.peerUser?.name || 'Seller'}
+          onClose={() => setIsAgreeDealOpen(false)}
+          onSubmitDeal={handleSendDealAgreement}
+        />
+      )}
+
+      {/* Share Location Modal */}
+      {isShareLocationOpen && (
+        <ShareLocationModal
+          onClose={() => setIsShareLocationOpen(false)}
+          onShareLocation={handleSendLocation}
         />
       )}
     </div>

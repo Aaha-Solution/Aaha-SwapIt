@@ -9,10 +9,13 @@ export interface Product {
   imageUrl: string;
   location: string;
   city: string;
+  neighborhood?: string;
+  latitude?: number;
+  longitude?: number;
   postedAt: string;
-  condition: 'Brand New' | 'Like New' | 'Good' | 'Fair';
+  condition: 'Brand New' | 'Like New' | 'Good' | 'Fair' | string;
   featured?: boolean;
-  badge?: 'featured' | 'good' | 'likenew' | 'verified' | 'brandnew';
+  badge?: 'featured' | 'good' | 'likenew' | 'verified' | 'brandnew' | string;
   badgeText?: string;
   seller: {
     id: string;
