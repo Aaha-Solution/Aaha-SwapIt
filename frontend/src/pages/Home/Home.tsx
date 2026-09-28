@@ -159,14 +159,14 @@ export const Home: React.FC = () => {
                   style={{
                     width: '100%',
                     height: '36px',
-                    borderRadius: '9999px',
-                    background: '#6d28d9',
+                    borderRadius: '10px',
+                    background: '#2563eb',
                     color: '#ffffff',
                     fontSize: '12px',
                     fontWeight: 700,
                     border: 'none',
                     cursor: 'pointer',
-                    boxShadow: '0 2px 6px rgba(109, 40, 217, 0.25)',
+                    boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)',
                     transition: 'all 0.2s',
                   }}
                 >

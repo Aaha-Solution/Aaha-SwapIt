@@ -84,8 +84,9 @@ export const paymentController = {
         });
       }
 
-      // Verify HMAC signature if signature provided
-      let isValid = true;
+      let isValid = false;
+      const isProduction = process.env.NODE_ENV === 'production';
+
       if (razorpaySignature) {
         const body = `${razorpayOrderId}|${razorpayPaymentId}`;
         const expectedSignature = crypto
@@ -93,7 +94,16 @@ export const paymentController = {
           .update(body.toString())
           .digest('hex');
 
-        isValid = expectedSignature === razorpaySignature;
+        try {
+          const expectedBuffer = Buffer.from(expectedSignature, 'utf8');
+          const receivedBuffer = Buffer.from(razorpaySignature, 'utf8');
+          isValid = expectedBuffer.length === receivedBuffer.length && crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
+        } catch {
+          isValid = false;
+        }
+      } else if (!isProduction && razorpayOrderId.startsWith('order_mock_')) {
+        // Allow mock orders only in local non-production development
+        isValid = true;
       }
 
       if (!isValid) {
@@ -109,7 +119,7 @@ export const paymentController = {
         data: {
           status: 'paid',
           razorpayPaymentId,
-          razorpaySignature: razorpaySignature || 'verified',
+          razorpaySignature: razorpaySignature || 'dev_mock_verified',
         },
       });
 
@@ -135,18 +145,24 @@ export const paymentController = {
       const signature = req.headers['x-razorpay-signature'] as string;
       const secret = ENV.RAZORPAY_KEY_SECRET;
 
-      if (signature) {
-        const shasum = crypto.createHmac('sha256', secret);
-        shasum.update(JSON.stringify(req.body));
-        const digest = shasum.digest('hex');
+      if (!signature) {
+        return res.status(400).json({ status: 'missing signature header' });
+      }
 
-        if (digest !== signature) {
-          return res.status(400).json({ status: 'invalid signature' });
-        }
+      const shasum = crypto.createHmac('sha256', secret);
+      shasum.update(JSON.stringify(req.body));
+      const digest = shasum.digest('hex');
+
+      const expectedBuffer = Buffer.from(digest, 'utf8');
+      const receivedBuffer = Buffer.from(signature, 'utf8');
+      const isValid = expectedBuffer.length === receivedBuffer.length && crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
+
+      if (!isValid) {
+        return res.status(400).json({ status: 'invalid signature' });
       }
 
       const event = req.body.event;
-      logger.info({ event }, 'Razorpay webhook received');
+      logger.info({ event }, 'Razorpay webhook verified and received');
 
       if (event === 'payment.captured') {
         const paymentEntity = req.body.payload.payment.entity;

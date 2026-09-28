@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { notificationController } from './notification.controller.js';
-import { optionalAuth } from '../../middleware/auth.middleware.js';
+import { requireAuth, requireAdmin } from '../../middleware/auth.middleware.js';
 
 const router = Router();
 
@@ -8,19 +8,19 @@ const router = Router();
  * @openapi
  * /notifications/send-email:
  *   post:
- *     summary: Send transactional email via Nodemailer / AWS SES
+ *     summary: Send transactional email via Nodemailer / AWS SES (Admin only)
  *     tags: [Notifications]
  */
-router.post('/send-email', notificationController.sendEmail);
+router.post('/send-email', requireAdmin, notificationController.sendEmail);
 
 /**
  * @openapi
  * /notifications/send-push:
  *   post:
- *     summary: Send push notification via Firebase Cloud Messaging (FCM)
+ *     summary: Send push notification via Firebase Cloud Messaging (Admin only)
  *     tags: [Notifications]
  */
-router.post('/send-push', notificationController.sendPushNotification);
+router.post('/send-push', requireAdmin, notificationController.sendPushNotification);
 
 /**
  * @openapi
@@ -29,7 +29,7 @@ router.post('/send-push', notificationController.sendPushNotification);
  *     summary: Get user in-app notifications
  *     tags: [Notifications]
  */
-router.get('/', optionalAuth, notificationController.getUserNotifications);
+router.get('/', requireAuth, notificationController.getUserNotifications);
 
 /**
  * @openapi
@@ -38,7 +38,7 @@ router.get('/', optionalAuth, notificationController.getUserNotifications);
  *     summary: Mark all notifications as read
  *     tags: [Notifications]
  */
-router.put('/read-all', optionalAuth, notificationController.markAllAsRead);
+router.put('/read-all', requireAuth, notificationController.markAllAsRead);
 
 /**
  * @openapi
@@ -47,7 +47,7 @@ router.put('/read-all', optionalAuth, notificationController.markAllAsRead);
  *     summary: Mark single notification as read
  *     tags: [Notifications]
  */
-router.put('/:id/read', optionalAuth, notificationController.markAsRead);
+router.put('/:id/read', requireAuth, notificationController.markAsRead);
 
 /**
  * @openapi
@@ -56,7 +56,7 @@ router.put('/:id/read', optionalAuth, notificationController.markAsRead);
  *     summary: Delete a notification
  *     tags: [Notifications]
  */
-router.delete('/:id', optionalAuth, notificationController.deleteNotification);
+router.delete('/:id', requireAuth, notificationController.deleteNotification);
 
 /**
  * @openapi
@@ -65,6 +65,7 @@ router.delete('/:id', optionalAuth, notificationController.deleteNotification);
  *     summary: Create a notification and broadcast in real-time
  *     tags: [Notifications]
  */
-router.post('/create', optionalAuth, notificationController.createNotification);
+router.post('/create', requireAuth, notificationController.createNotification);
 
 export const notificationRouter = router;
+

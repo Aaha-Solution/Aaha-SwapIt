@@ -101,9 +101,9 @@ export const useNotifications = () => {
   const triggerTestAlert = async () => {
     try {
       const demoTitles = [
-        { title: '🔥 Deal Alert: Sony PS5', message: 'Seller accepted your ₹38,000 offer! Complete payment now.', type: 'offer', link: '/messages' },
-        { title: '⚡ Fast Swap Proposal', message: 'New swap request received for your DSLR Camera.', type: 'deal', link: '/messages' },
-        { title: '📉 Price Drop on MacBook M2', message: 'Price decreased by 12% in your city.', type: 'price_drop', link: '/products' },
+        { title: 'Deal Alert: Sony PS5', message: 'Seller accepted your ₹38,000 offer! Complete payment now.', type: 'offer', link: '/messages' },
+        { title: 'Swap Proposal', message: 'New swap request received for your DSLR Camera.', type: 'deal', link: '/messages' },
+        { title: 'Price Drop on MacBook M2', message: 'Price decreased by 12% in your city.', type: 'price_drop', link: '/products' },
       ];
       const random = demoTitles[Math.floor(Math.random() * demoTitles.length)];
 

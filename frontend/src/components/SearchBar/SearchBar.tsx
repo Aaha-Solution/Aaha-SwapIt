@@ -230,7 +230,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearchSubmit }) => {
                           alignItems: 'center',
                           gap: '6px',
                           padding: '6px 12px',
-                          borderRadius: '9999px',
+                          borderRadius: '8px',
                           background: '#f1f5f9',
                           border: 'none',
                           fontSize: '12px',
@@ -326,8 +326,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearchSubmit }) => {
                 onClick={() => handleSearchExecute(localQuery)}
                 style={{
                   padding: '6px 16px',
-                  borderRadius: '9999px',
-                  background: '#6366f1',
+                  borderRadius: '8px',
+                  background: '#2563eb',
                   color: '#ffffff',
                   border: 'none',
                   fontSize: '12px',
@@ -366,7 +366,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearchSubmit }) => {
                           alignItems: 'center',
                           gap: '6px',
                           padding: '6px 12px',
-                          borderRadius: '9999px',
+                          borderRadius: '8px',
                           background: '#f8fafc',
                           border: '1px solid #e2e8f0',
                           fontSize: '12px',
@@ -395,11 +395,11 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearchSubmit }) => {
                       onClick={() => handleSearchExecute(popular)}
                       style={{
                         padding: '6px 12px',
-                        borderRadius: '9999px',
-                        background: '#eef2ff',
-                        border: 'none',
+                        borderRadius: '8px',
+                        background: '#eff6ff',
+                        border: '1px solid #dbeafe',
                         fontSize: '12px',
-                        color: '#4f46e5',
+                        color: '#1d4ed8',
                         fontWeight: 600,
                         cursor: 'pointer',
                       }}

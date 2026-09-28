@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { productController } from './product.controller.js';
 import { optionalAuth, requireAuth } from '../../middleware/auth.middleware.js';
+import { productCreateLimiter, uploadLimiter } from '../../middleware/rateLimiter.js';
 
 const router = Router();
 
@@ -10,31 +11,8 @@ const router = Router();
  *   get:
  *     summary: Retrieve products with filtering, search, and pagination
  *     tags: [Products]
- *     parameters:
- *       - in: query
- *         name: search
- *         schema: { type: string }
- *         description: Search keyword across title and description
- *       - in: query
- *         name: category
- *         schema: { type: string }
- *       - in: query
- *         name: city
- *         schema: { type: string }
- *       - in: query
- *         name: minPrice
- *         schema: { type: number }
- *       - in: query
- *         name: maxPrice
- *         schema: { type: number }
- *       - in: query
- *         name: sortBy
- *         schema: { type: string, enum: [newest, price-asc, price-desc, featured] }
- *     responses:
- *       200:
- *         description: List of products
  */
-router.get('/', productController.getProducts);
+router.get('/', optionalAuth, productController.getProducts);
 
 /**
  * @openapi
@@ -52,25 +30,25 @@ router.get('/suggestions', productController.getSuggestions);
  *     summary: Get single product by ID
  *     tags: [Products]
  */
-router.get('/:id', productController.getProductById);
+router.get('/:id', optionalAuth, productController.getProductById);
 
 /**
  * @openapi
  * /products:
  *   post:
- *     summary: Create / Post a new product listing
+ *     summary: Create / Post a new product listing (Authenticated)
  *     tags: [Products]
  */
-router.post('/', optionalAuth, productController.createProduct);
+router.post('/', productCreateLimiter, requireAuth, productController.createProduct);
 
 /**
  * @openapi
  * /products/{id}:
  *   put:
- *     summary: Update product details
+ *     summary: Update product details (Owner / Admin only)
  *     tags: [Products]
  */
-router.put('/:id', optionalAuth, productController.updateProduct);
+router.put('/:id', requireAuth, productController.updateProduct);
 
 /**
  * @openapi
@@ -79,16 +57,16 @@ router.put('/:id', optionalAuth, productController.updateProduct);
  *     summary: Update product status (active / sold)
  *     tags: [Products]
  */
-router.patch('/:id/status', optionalAuth, productController.updateProductStatus);
+router.patch('/:id/status', requireAuth, productController.updateProductStatus);
 
 /**
  * @openapi
  * /products/{id}:
  *   delete:
- *     summary: Delete a product listing
+ *     summary: Delete a product listing (Owner / Admin only)
  *     tags: [Products]
  */
-router.delete('/:id', optionalAuth, productController.deleteProduct);
+router.delete('/:id', requireAuth, productController.deleteProduct);
 
 /**
  * @openapi
@@ -97,7 +75,7 @@ router.delete('/:id', optionalAuth, productController.deleteProduct);
  *     summary: Upload single product media image
  *     tags: [Products]
  */
-router.post('/upload-image', optionalAuth, productController.uploadImage);
+router.post('/upload-image', uploadLimiter, requireAuth, productController.uploadImage);
 
 /**
  * @openapi
@@ -106,6 +84,7 @@ router.post('/upload-image', optionalAuth, productController.uploadImage);
  *     summary: Batch upload multiple product media images
  *     tags: [Products]
  */
-router.post('/upload-images', optionalAuth, productController.uploadImages);
+router.post('/upload-images', uploadLimiter, requireAuth, productController.uploadImages);
 
 export const productRouter = router;
+

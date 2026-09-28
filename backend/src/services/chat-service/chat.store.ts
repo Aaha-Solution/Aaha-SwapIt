@@ -257,7 +257,7 @@ export function getSmartSellerReply(messageText: string, sellerName: string, pro
   const text = messageText.toLowerCase();
 
   if (text.includes('offer') || text.includes('negotiate') || text.includes('lowest')) {
-    return `Feel free to use the "🤝 Make an Offer" button to send your price proposal directly!`;
+    return `Feel free to use the "Make an Offer" button to send your price proposal directly!`;
   }
   if (text.includes('available') || text.includes('still have') || text.includes('available?')) {
     return `Hi! Yes, ${productTitle ? `the ${productTitle}` : 'this item'} is still available and ready for pickup!`;

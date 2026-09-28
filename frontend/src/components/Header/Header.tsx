@@ -49,8 +49,8 @@ export const Header: React.FC = () => {
                   <stop offset="1" stopColor="#3b82f6"/>
                 </linearGradient>
                 <linearGradient id="head-logo-2" x1="13" y1="8" x2="29" y2="24" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#4f46e5"/>
-                  <stop offset="1" stopColor="#7c3aed"/>
+                  <stop stopColor="#0284c7"/>
+                  <stop offset="1" stopColor="#0ea5e9"/>
                 </linearGradient>
               </defs>
             </svg>
@@ -82,7 +82,7 @@ export const Header: React.FC = () => {
                   alignItems: 'center',
                   gap: '8px',
                   padding: '6px 12px',
-                  borderRadius: '9999px',
+                  borderRadius: '10px',
                   background: '#f1f5f9',
                   border: 'none',
                   cursor: 'pointer',

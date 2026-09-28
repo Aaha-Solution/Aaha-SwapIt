@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { wishlistController } from './wishlist.controller.js';
-import { optionalAuth } from '../../middleware/auth.middleware.js';
+import { requireAuth } from '../../middleware/auth.middleware.js';
 
 const router = Router();
 
@@ -11,7 +11,7 @@ const router = Router();
  *     summary: Retrieve user's wishlist products
  *     tags: [Wishlist]
  */
-router.get('/', optionalAuth, wishlistController.getWishlist);
+router.get('/', requireAuth, wishlistController.getWishlist);
 
 /**
  * @openapi
@@ -20,7 +20,7 @@ router.get('/', optionalAuth, wishlistController.getWishlist);
  *     summary: Add product to wishlist
  *     tags: [Wishlist]
  */
-router.post('/', optionalAuth, wishlistController.addToWishlist);
+router.post('/', requireAuth, wishlistController.addToWishlist);
 
 /**
  * @openapi
@@ -29,6 +29,7 @@ router.post('/', optionalAuth, wishlistController.addToWishlist);
  *     summary: Remove product from wishlist
  *     tags: [Wishlist]
  */
-router.delete('/:productId', optionalAuth, wishlistController.removeFromWishlist);
+router.delete('/:productId', requireAuth, wishlistController.removeFromWishlist);
 
 export const wishlistRouter = router;
+

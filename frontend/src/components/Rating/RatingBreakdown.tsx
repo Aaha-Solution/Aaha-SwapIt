@@ -30,7 +30,7 @@ export const RatingBreakdown: React.FC<RatingBreakdownProps> = ({
 
             <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-amber-400 to-amber-500 rounded-full transition-all duration-500"
+                className="h-full bg-amber-400 rounded-full transition-all duration-500"
                 style={{ width: `${pct}%` }}
               />
             </div>

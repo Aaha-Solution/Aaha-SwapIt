@@ -143,7 +143,7 @@ export const NotificationDropdown: React.FC = () => {
               minWidth: '18px',
               height: '18px',
               padding: '0 4px',
-              borderRadius: '9999px',
+              borderRadius: '10px',
               background: '#ef4444',
               color: '#ffffff',
               fontSize: '10.5px',
@@ -201,7 +201,7 @@ export const NotificationDropdown: React.FC = () => {
                     background: '#eff6ff',
                     color: '#2563eb',
                     padding: '2px 8px',
-                    borderRadius: '9999px',
+                    borderRadius: '6px',
                   }}
                 >
                   {unreadCount} new
@@ -283,7 +283,7 @@ export const NotificationDropdown: React.FC = () => {
                   padding: '4px 10px',
                   fontSize: '11.5px',
                   fontWeight: activeTab === tab.key ? 700 : 500,
-                  borderRadius: '9999px',
+                  borderRadius: '8px',
                   border: 'none',
                   background: activeTab === tab.key ? '#ffffff' : 'transparent',
                   color: activeTab === tab.key ? '#0f172a' : '#64748b',

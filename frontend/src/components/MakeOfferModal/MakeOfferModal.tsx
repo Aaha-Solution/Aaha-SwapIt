@@ -248,7 +248,7 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
                     color: '#059669',
                     background: '#ecfdf5',
                     padding: '2px 8px',
-                    borderRadius: '9999px',
+                    borderRadius: '6px',
                   }}
                 >
                   Save {formatINR(savings)} ({discountPercent}%)

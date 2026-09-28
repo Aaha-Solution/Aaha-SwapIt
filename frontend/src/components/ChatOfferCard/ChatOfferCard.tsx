@@ -77,7 +77,7 @@ export const ChatOfferCard: React.FC<ChatOfferCardProps> = ({
             fontSize: '10.5px',
             fontWeight: 700,
             padding: '2px 8px',
-            borderRadius: '9999px',
+            borderRadius: '6px',
             background: isAccepted
               ? '#dcfce7'
               : isDeclined
@@ -164,7 +164,7 @@ export const ChatOfferCard: React.FC<ChatOfferCardProps> = ({
             marginBottom: '10px',
           }}
         >
-          🏷️ {formatINR(savings)} below original listing price
+          Save {formatINR(savings)} below original listing price
         </div>
       )}
 

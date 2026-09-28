@@ -367,11 +367,21 @@ export const productController = {
   async updateProduct(req: Request, res: Response) {
     try {
       const { id } = req.params;
+      const userId = (req as any).user?.id;
+      const userRole = (req as any).user?.role;
       const { title, price, description, category, condition, city, status, imageUrl, images } = req.body;
 
       const existing = await prisma.product.findUnique({ where: { id } });
       if (!existing) {
         return res.status(404).json({ success: false, message: 'Product not found' });
+      }
+
+      // Check ownership: must be seller or admin
+      if (userId && existing.sellerId !== userId && userRole !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: 'You do not have permission to update this product listing',
+        });
       }
 
       const updateData: any = {};
@@ -445,10 +455,24 @@ export const productController = {
   async updateProductStatus(req: Request, res: Response) {
     try {
       const { id } = req.params;
+      const userId = (req as any).user?.id;
+      const userRole = (req as any).user?.role;
       const { status } = req.body;
 
       if (!['active', 'sold', 'inactive'].includes(status)) {
         return res.status(400).json({ success: false, message: 'Invalid status' });
+      }
+
+      const existing = await prisma.product.findUnique({ where: { id } });
+      if (!existing) {
+        return res.status(404).json({ success: false, message: 'Product not found' });
+      }
+
+      if (userId && existing.sellerId !== userId && userRole !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: 'You do not have permission to update this product status',
+        });
       }
 
       const updated = await prisma.product.update({

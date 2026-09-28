@@ -74,7 +74,7 @@ export const setupSocketIO = (httpServer: HttpServer) => {
         const notif: StoredNotification = {
           id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
           userId: data.receiverId,
-          title: `💬 New Message from ${senderUser.name}`,
+          title: `New Message from ${senderUser.name}`,
           message: data.message.length > 60 ? data.message.slice(0, 57) + '...' : data.message,
           type: 'message',
           read: false,

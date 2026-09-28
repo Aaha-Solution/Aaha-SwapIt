@@ -91,11 +91,10 @@ export const ratingController = {
       const updatedSummary = calculateRatingSummary(targetUserId);
 
       // Create notification for the seller/target user
-      const starsDisplay = '★'.repeat(savedReview.rating);
       const notif = addNotificationToStore({
         id: `notif-${randomId}`,
         userId: targetUserId,
-        title: `⭐ New Review Received (${starsDisplay})`,
+        title: `New ${savedReview.rating}/5 Review Received`,
         message: `${reviewerName} gave you a ${savedReview.rating}-star review: "${savedReview.comment.slice(0, 60)}${savedReview.comment.length > 60 ? '...' : ''}"`,
         type: 'deal',
         read: false,

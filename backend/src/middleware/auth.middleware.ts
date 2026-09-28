@@ -42,8 +42,8 @@ passport.use(
   )
 );
 
-// Express middleware for protected routes
-export const requireAuth = (req: Request, res: Response, next: NextFunction) => {
+// Express middleware for strictly protected routes
+export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({
@@ -54,8 +54,8 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction) => 
 
   const token = authHeader.split(' ')[1];
 
-  // Support demo token for testing and demo logins
-  if (token.startsWith('demo-') || token.includes('iyyanar') || token === 'demo-jwt-token') {
+  // In development only, allow the demo user token
+  if (ENV.NODE_ENV === 'development' && token === 'demo-jwt-token') {
     req.user = {
       id: 'usr-demo-iyyanar',
       email: 'iyyanar@example.com',
@@ -67,34 +67,84 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction) => 
 
   try {
     const decoded = jwt.verify(token, ENV.JWT_SECRET) as AuthenticatedUser;
-    req.user = decoded;
-    next();
-  } catch (error) {
-    // If token has payload structure or fallback for demo sessions
-    try {
-      const decodedUnverified = jwt.decode(token) as AuthenticatedUser;
-      if (decodedUnverified?.id) {
-        req.user = decodedUnverified;
-        return next();
-      }
-    } catch {
-      // Ignore
+    if (!decoded || !decoded.id) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid token payload',
+      });
+    }
+
+    req.user = {
+      id: decoded.id,
+      email: decoded.email,
+      name: decoded.name,
+      role: decoded.role || 'user',
+    };
+
+    return next();
+  } catch (error: any) {
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Access token has expired. Please refresh your token.',
+        code: 'TOKEN_EXPIRED',
+      });
     }
 
     return res.status(401).json({
       success: false,
-      message: 'Invalid or expired token',
+      message: 'Invalid or forged authentication token',
     });
   }
 };
 
-// Optional auth middleware (attaches user if token present)
+// Express middleware to protect Admin-only routes
+export const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      message: 'Authentication required before checking administrative privileges',
+    });
+  }
+
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied: Administrative privileges required',
+    });
+  }
+
+  return next();
+};
+
+// Express middleware for role-based access control (RBAC)
+export const requireRole = (allowedRoles: string[]) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required',
+      });
+    }
+
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: `Forbidden: requires one of the following roles: [${allowedRoles.join(', ')}]`,
+      });
+    }
+
+    return next();
+  };
+};
+
+// Optional auth middleware (attaches user if valid token present)
 export const optionalAuth = (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.split(' ')[1];
 
-    if (token.startsWith('demo-') || token.includes('iyyanar') || token === 'demo-jwt-token') {
+    if (ENV.NODE_ENV === 'development' && token === 'demo-jwt-token') {
       req.user = {
         id: 'usr-demo-iyyanar',
         email: 'iyyanar@example.com',
@@ -106,17 +156,17 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction) =>
 
     try {
       const decoded = jwt.verify(token, ENV.JWT_SECRET) as AuthenticatedUser;
-      req.user = decoded;
-    } catch {
-      try {
-        const decodedUnverified = jwt.decode(token) as AuthenticatedUser;
-        if (decodedUnverified?.id) {
-          req.user = decodedUnverified;
-        }
-      } catch {
-        // Ignore error for optional auth
+      if (decoded && decoded.id) {
+        req.user = {
+          id: decoded.id,
+          email: decoded.email,
+          name: decoded.name,
+          role: decoded.role || 'user',
+        };
       }
+    } catch {
+      // For optional auth, continue without req.user if verification fails
     }
   }
-  next();
+  return next();
 };

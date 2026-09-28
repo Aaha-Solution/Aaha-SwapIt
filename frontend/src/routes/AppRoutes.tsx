@@ -9,6 +9,8 @@ import { Profile } from '../pages/Profile/Profile';
 import { Messages } from '../pages/Messages/Messages';
 import { Login } from '../pages/Login/Login';
 import { Signup } from '../pages/Signup/Signup';
+import { PrivacyPolicy } from '../pages/PrivacyPolicy/PrivacyPolicy';
+import { TermsConditions } from '../pages/TermsConditions/TermsConditions';
 import { ProtectedRoute } from './ProtectedRoute';
 
 export const AppRoutes: React.FC = () => {
@@ -59,6 +61,10 @@ export const AppRoutes: React.FC = () => {
       />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+      <Route path="/terms" element={<TermsConditions />} />
+      <Route path="/terms-and-conditions" element={<TermsConditions />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

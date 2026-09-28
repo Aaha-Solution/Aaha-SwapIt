@@ -279,9 +279,9 @@ export const ChatModal: React.FC<ChatModalProps> = ({ product, onClose, onOpenOf
                 alignItems: 'center',
                 gap: '6px',
                 padding: '6px 12px',
-                borderRadius: '9999px',
-                background: '#eef2ff',
-                color: '#4f46e5',
+                borderRadius: '8px',
+                background: '#eff6ff',
+                color: '#2563eb',
                 border: 'none',
                 fontSize: '11.5px',
                 fontWeight: 700,
@@ -460,7 +460,7 @@ export const ChatModal: React.FC<ChatModalProps> = ({ product, onClose, onOpenOf
               onClick={() => handleSendMessage(chip)}
               style={{
                 padding: '4px 10px',
-                borderRadius: '9999px',
+                borderRadius: '8px',
                 background: '#f8fafc',
                 border: '1px solid #e2e8f0',
                 fontSize: '11px',
@@ -490,7 +490,7 @@ export const ChatModal: React.FC<ChatModalProps> = ({ product, onClose, onOpenOf
             style={{
               flex: 1,
               padding: '10px 16px',
-              borderRadius: '9999px',
+              borderRadius: '10px',
               background: '#f8fafc',
               border: '1px solid #e2e8f0',
               fontSize: '13px',

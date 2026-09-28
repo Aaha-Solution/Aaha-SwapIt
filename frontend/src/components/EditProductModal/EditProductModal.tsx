@@ -223,8 +223,8 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                 onChange={(e) => setStatus(e.target.value as 'active' | 'sold')}
                 className="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all text-slate-800 font-bold"
               >
-                <option value="active">🟢 Active (Available for Buyers)</option>
-                <option value="sold">🔴 Sold (Mark as Completed)</option>
+                <option value="active">Active (Available for Buyers)</option>
+                <option value="sold">Sold (Mark as Completed)</option>
               </select>
             </div>
           </div>

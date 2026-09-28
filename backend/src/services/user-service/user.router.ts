@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { userController } from './user.controller.js';
-import { optionalAuth } from '../../middleware/auth.middleware.js';
+import { requireAuth } from '../../middleware/auth.middleware.js';
 
 const router = Router();
 
@@ -11,7 +11,7 @@ const router = Router();
  *     summary: Get user profile
  *     tags: [Users]
  */
-router.get('/profile', optionalAuth, userController.getProfile);
+router.get('/profile', requireAuth, userController.getProfile);
 
 /**
  * @openapi
@@ -20,7 +20,7 @@ router.get('/profile', optionalAuth, userController.getProfile);
  *     summary: Update user profile
  *     tags: [Users]
  */
-router.put('/profile', optionalAuth, userController.updateProfile);
+router.put('/profile', requireAuth, userController.updateProfile);
 
 /**
  * @openapi
@@ -29,6 +29,7 @@ router.put('/profile', optionalAuth, userController.updateProfile);
  *     summary: Get products listed by the authenticated user
  *     tags: [Users]
  */
-router.get('/my-ads', optionalAuth, userController.getMyAds);
+router.get('/my-ads', requireAuth, userController.getMyAds);
 
 export const userRouter = router;
+

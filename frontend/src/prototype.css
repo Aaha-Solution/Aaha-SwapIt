@@ -11,12 +11,12 @@
   --text-muted: #64748b;
   --text-light: #94a3b8;
   
-  --primary-purple: #7c3aed;
-  --primary-indigo: #4f46e5;
-  --sidebar-active-bg: #ede9fe;
-  --sidebar-active-text: #6d28d9;
+  --primary-purple: #2563eb;
+  --primary-indigo: #1d4ed8;
+  --sidebar-active-bg: #eff6ff;
+  --sidebar-active-text: #1d4ed8;
   
-  --dark-pill: #0c1322;
+  --dark-pill: #0f172a;
   --border-subtle: #e2e8f0;
   --border-card: #eef2f6;
 
@@ -119,7 +119,7 @@ html, body {
   height: 42px;
   background-color: #f1f5f9;
   border: 1px solid #e2e8f0;
-  border-radius: 9999px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   padding: 0 4px 0 16px;
@@ -129,7 +129,7 @@ html, body {
 .search-container:focus-within {
   background-color: #ffffff;
   border-color: var(--primary-purple);
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
 .search-input-box {
@@ -289,7 +289,7 @@ html, body {
   background: var(--dark-pill);
   color: #ffffff;
   border: none;
-  border-radius: 9999px;
+  border-radius: 10px;
   padding: 9px 20px;
   font-family: inherit;
   font-size: 13px;
@@ -299,7 +299,7 @@ html, body {
   align-items: center;
   gap: 6px;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 5px rgba(12, 19, 34, 0.15);
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.15);
 }
 
 .btn-post-ad:hover {
@@ -403,13 +403,13 @@ html, body {
   transform: translateX(-50%);
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(6px);
-  border: 1px solid rgba(124, 58, 237, 0.18);
-  border-radius: 9999px;
+  border: 1px solid rgba(37, 99, 235, 0.18);
+  border-radius: 10px;
   padding: 6px 18px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  box-shadow: 0 6px 16px -2px rgba(124, 58, 237, 0.15);
+  box-shadow: 0 6px 16px -2px rgba(37, 99, 235, 0.1);
   z-index: 10;
   pointer-events: none;
 }
@@ -417,7 +417,7 @@ html, body {
 .badge-title {
   font-size: 11.5px;
   font-weight: 700;
-  color: #6d28d9;
+  color: #1d4ed8;
   line-height: 1.2;
 }
 
@@ -444,9 +444,7 @@ html, body {
 }
 
 .hero-heading .gradient-text {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #7c3aed 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #2563eb;
 }
 
 .hero-subtext {
@@ -461,7 +459,7 @@ html, body {
   background: var(--dark-pill);
   color: #ffffff;
   border: none;
-  border-radius: 9999px;
+  border-radius: 10px;
   padding: 11px 26px;
   font-family: inherit;
   font-size: 13.5px;
@@ -471,7 +469,7 @@ html, body {
   align-items: center;
   gap: 8px;
   transition: all 0.2s ease;
-  box-shadow: 0 3px 8px rgba(12, 19, 34, 0.15);
+  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.15);
 }
 
 .hero-cta-btn:hover {
@@ -560,7 +558,7 @@ html, body {
 
 .hero-carousel-dots .dot.active {
   width: 18px;
-  border-radius: 9999px;
+  border-radius: 3px;
   background: #2563eb;
 }
 
@@ -816,7 +814,7 @@ html, body {
   background: #ffffff;
   color: #0f172a;
   border: none;
-  border-radius: 9999px;
+  border-radius: 8px;
   padding: 6px 14px;
   font-family: inherit;
   font-size: 11.5px;
@@ -870,12 +868,12 @@ html, body {
 }
 
 .active-filter-badge {
-  background: #ede9fe;
-  color: #6d28d9;
+  background: #eff6ff;
+  color: #1d4ed8;
   font-size: 11.5px;
   font-weight: 600;
   padding: 3px 9px;
-  border-radius: 9999px;
+  border-radius: 6px;
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -884,7 +882,7 @@ html, body {
 .filter-reset-btn {
   background: transparent;
   border: none;
-  color: #6d28d9;
+  color: #1d4ed8;
   font-size: 14px;
   cursor: pointer;
   font-weight: bold;
@@ -1069,7 +1067,7 @@ html, body {
 .newsletter-form input {
   width: 100%;
   height: 36px;
-  border-radius: 9999px;
+  border-radius: 8px;
   border: 1px solid #e2e8f0;
   background: #ffffff;
   padding: 0 14px;
@@ -1087,9 +1085,9 @@ html, body {
 .btn-subscribe {
   width: 100%;
   height: 36px;
-  border-radius: 9999px;
+  border-radius: 8px;
   border: none;
-  background: #6d28d9;
+  background: #2563eb;
   color: #ffffff;
   font-family: inherit;
   font-size: 12.5px;
@@ -1099,8 +1097,8 @@ html, body {
 }
 
 .btn-subscribe:hover {
-  background: #5b21b6;
-  box-shadow: 0 3px 10px rgba(109, 40, 217, 0.25);
+  background: #1d4ed8;
+  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.25);
 }
 
 /* ==========================================================================
@@ -1209,7 +1207,7 @@ html, body {
   background: #f1f5f9;
   color: var(--text-body);
   border: none;
-  border-radius: 9999px;
+  border-radius: 8px;
   padding: 9px 18px;
   font-family: inherit;
   font-size: 13px;
@@ -1221,7 +1219,7 @@ html, body {
   background: var(--primary-purple);
   color: #ffffff;
   border: none;
-  border-radius: 9999px;
+  border-radius: 8px;
   padding: 9px 22px;
   font-family: inherit;
   font-size: 13px;
@@ -1249,7 +1247,7 @@ html, body {
   padding: 4px 12px 4px 5px;
   background: #f8fafc;
   border: 1px solid var(--border-subtle);
-  border-radius: 9999px;
+  border-radius: 10px;
   cursor: pointer;
   user-select: none;
   transition: all 0.2s ease;
@@ -1264,7 +1262,7 @@ html, body {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: #2563eb;
   color: #ffffff;
   font-size: 12px;
   font-weight: 700;
@@ -1480,7 +1478,7 @@ html, body {
   gap: 10px;
   background: #ffffff;
   border: 1px solid var(--border-subtle);
-  border-radius: 9999px;
+  border-radius: 10px;
   padding: 10px 16px;
   font-family: inherit;
   font-size: 13px;
@@ -1502,10 +1500,10 @@ html, body {
 
 .btn-demo-quick {
   width: 100%;
-  background: #f5f3ff;
-  color: #6d28d9;
-  border: 1px dashed #c4b5fd;
-  border-radius: 9999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px dashed #bfdbfe;
+  border-radius: 10px;
   padding: 8px 16px;
   font-family: inherit;
   font-size: 12px;
@@ -1515,8 +1513,8 @@ html, body {
 }
 
 .btn-demo-quick:hover {
-  background: #ede9fe;
-  border-color: #8b5cf6;
+  background: #dbeafe;
+  border-color: #3b82f6;
 }
 
 .auth-divider {
@@ -1636,23 +1634,23 @@ html, body {
 
 .btn-auth-submit {
   width: 100%;
-  background: var(--primary-purple);
+  background: #2563eb;
   color: #ffffff;
   border: none;
-  border-radius: 9999px;
+  border-radius: 10px;
   padding: 11px 0;
   font-family: inherit;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
   margin-top: 4px;
 }
 
 .btn-auth-submit:hover {
-  background: #6d28d9;
-  box-shadow: 0 6px 16px rgba(124, 58, 237, 0.35);
+  background: #1d4ed8;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
   transform: translateY(-1px);
 }
 

@@ -14,16 +14,16 @@ import { Product } from '../../types/product.types';
 
 const CATEGORY_PILLS = [
   { id: 'all', name: 'All Items' },
-  { id: 'cars', name: '🚗 Cars' },
-  { id: 'bikes', name: '🏍️ Bikes' },
-  { id: 'mobiles', name: '📱 Mobiles' },
-  { id: 'electronics', name: '💻 Electronics' },
-  { id: 'properties', name: '🏠 Properties' },
-  { id: 'furniture', name: '🛋️ Furniture' },
-  { id: 'fashion', name: '👔 Fashion' },
-  { id: 'pets', name: '🐕 Pets' },
-  { id: 'books', name: '📚 Books' },
-  { id: 'services', name: '⚡ Services' },
+  { id: 'cars', name: 'Cars' },
+  { id: 'bikes', name: 'Bikes' },
+  { id: 'mobiles', name: 'Mobiles' },
+  { id: 'electronics', name: 'Electronics' },
+  { id: 'properties', name: 'Properties' },
+  { id: 'furniture', name: 'Furniture' },
+  { id: 'fashion', name: 'Fashion' },
+  { id: 'pets', name: 'Pets' },
+  { id: 'books', name: 'Books & Hobbies' },
+  { id: 'services', name: 'Services' },
 ];
 
 export const Products: React.FC = () => {
@@ -142,14 +142,14 @@ export const Products: React.FC = () => {
             className="btn-primary-action"
             style={{
               padding: '10px 24px',
-              borderRadius: '9999px',
-              background: '#6366f1',
+              borderRadius: '10px',
+              background: '#2563eb',
               color: '#ffffff',
               fontSize: '13px',
               fontWeight: 600,
               border: 'none',
               cursor: 'pointer',
-              boxShadow: '0 4px 14px rgba(99, 102, 241, 0.3)',
+              boxShadow: '0 4px 14px rgba(37, 99, 235, 0.25)',
               transition: 'all 0.2s ease',
             }}
           >

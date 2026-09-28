@@ -24,7 +24,7 @@ export const inMemoryNotifications: StoredNotification[] = [
   {
     id: 'notif-2',
     userId: 'usr-demo-iyyanar',
-    title: '🔥 Price Drop Alert: iPhone 13 Pro',
+    title: 'Price Drop Alert: iPhone 13 Pro',
     message: 'An item in your wishlist dropped price from ₹52,000 to ₹45,999!',
     type: 'price_drop',
     read: false,
@@ -35,7 +35,7 @@ export const inMemoryNotifications: StoredNotification[] = [
   {
     id: 'notif-3',
     userId: 'usr-demo-iyyanar',
-    title: '💬 New Message from Priya Sharma',
+    title: 'New Message from Priya Sharma',
     message: '"Is the Apple MacBook Air M1 still available for exchange?"',
     type: 'message',
     read: false,
@@ -46,7 +46,7 @@ export const inMemoryNotifications: StoredNotification[] = [
   {
     id: 'notif-4',
     userId: 'usr-demo-iyyanar',
-    title: '🤝 Swap Offer Received',
+    title: 'Swap Offer Received',
     message: 'Arun Kumar proposed a swap offer for your "Sony WH-1000XM4 Headphones".',
     type: 'offer',
     read: true,

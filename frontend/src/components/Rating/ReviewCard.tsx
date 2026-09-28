@@ -52,7 +52,7 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
               className="w-10 h-10 rounded-full object-cover ring-2 ring-indigo-50"
             />
           ) : (
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-violet-600 text-white font-bold flex items-center justify-center text-sm shadow-sm">
+            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white font-bold flex items-center justify-center text-sm shadow-sm">
               {review.reviewerName.charAt(0)}
             </div>
           )}

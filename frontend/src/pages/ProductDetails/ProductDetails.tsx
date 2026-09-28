@@ -17,6 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Maximize2,
+  Tag,
 } from 'lucide-react';
 import { Product } from '../../types/product.types';
 import { formatINR } from '../../utils/helpers';
@@ -355,9 +356,10 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
               <button
                 type="button"
                 onClick={handleMakeOffer}
-                className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition-all active:scale-[0.98] cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition-all active:scale-[0.98] cursor-pointer"
               >
-                <span>🤝 Make an Offer</span>
+                <Tag className="w-4 h-4" />
+                <span>Make an Offer</span>
               </button>
 
               <div className="grid grid-cols-2 gap-2">

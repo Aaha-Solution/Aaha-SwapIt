@@ -548,7 +548,7 @@ export const Messages: React.FC = () => {
                           className="w-11 h-11 rounded-2xl object-cover border border-slate-200"
                         />
                       ) : (
-                        <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 text-white font-black text-sm flex items-center justify-center shadow-sm">
+                        <div className="w-11 h-11 rounded-2xl bg-blue-600 text-white font-black text-sm flex items-center justify-center shadow-sm">
                           {conv.peerUser.name?.charAt(0) || 'U'}
                         </div>
                       )}
@@ -633,7 +633,7 @@ export const Messages: React.FC = () => {
                         className="w-11 h-11 rounded-2xl object-cover border border-slate-200"
                       />
                     ) : (
-                      <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 text-white font-black text-sm flex items-center justify-center shadow-md">
+                      <div className="w-11 h-11 rounded-2xl bg-blue-600 text-white font-black text-sm flex items-center justify-center shadow-md">
                         {selectedConversation.peerUser.name?.charAt(0) || 'U'}
                       </div>
                     )}
@@ -665,7 +665,7 @@ export const Messages: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setIsMakeOfferOpen(true)}
-                      className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                      className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
                     >
                       <Tag className="w-3.5 h-3.5" />
                       <span>Make an Offer</span>
@@ -724,7 +724,7 @@ export const Messages: React.FC = () => {
                       onClick={() => setIsMakeOfferOpen(true)}
                       className="text-xs font-bold text-indigo-700 bg-indigo-100 hover:bg-indigo-200 px-3 py-1 rounded-lg transition-colors cursor-pointer"
                     >
-                      🤝 Send Price Offer
+                      Send Price Offer
                     </button>
                     <span className="text-[10px] text-slate-500 font-semibold bg-white px-2.5 py-1 rounded-lg border border-slate-200/60">
                       Product In Discussion

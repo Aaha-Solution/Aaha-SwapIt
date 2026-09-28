@@ -604,7 +604,7 @@ export const Profile: React.FC = () => {
 
           {/* Aggregate Rating & Breakdown Grid */}
           {ratingSummary && (
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-6 p-6 rounded-2xl bg-gradient-to-br from-slate-50 to-indigo-50/30 border border-slate-200/60">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6 p-6 rounded-2xl bg-slate-50 border border-slate-200">
               {/* Left Column: Big Score */}
               <div className="md:col-span-2 flex flex-col items-center justify-center text-center sm:border-r border-slate-200/60 pr-4">
                 <span className="text-5xl font-black text-slate-900 tracking-tight">

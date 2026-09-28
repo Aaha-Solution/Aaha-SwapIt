@@ -160,7 +160,7 @@ export const Navbar: React.FC = () => {
               fontSize: '9.5px',
               fontWeight: 700,
               padding: '2px 7px',
-              borderRadius: '9999px',
+              borderRadius: '6px',
               textTransform: 'uppercase',
               letterSpacing: '0.3px',
             }}
@@ -305,7 +305,7 @@ export const Navbar: React.FC = () => {
                 fontSize: '10px',
                 fontWeight: 700,
                 padding: '1px 6px',
-                borderRadius: '9999px',
+                borderRadius: '6px',
               }}
             >
               {messagesCount}
