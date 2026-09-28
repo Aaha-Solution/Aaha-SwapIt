@@ -33,24 +33,59 @@ export const authSlice = createSlice({
       state.isLoading = false;
       state.error = action.payload;
     },
-    quickDemoLogin: (state) => {
-      const demoUser: User = {
-        id: 'usr-demo-iyyanar',
-        name: 'Iyyanar',
-        email: 'iyyanar@example.com',
-        phone: '+91 98401 98765',
-        location: 'Chennai',
-        memberSince: 'Sep 2024',
-        verified: true,
-        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-      };
+    quickDemoLogin: (state, action: PayloadAction<('admin' | 'seller' | 'customer') | undefined>) => {
+      const targetRole = action.payload || 'admin';
+      let demoUser: User;
+      let demoToken: string;
+
+      if (targetRole === 'seller') {
+        demoUser = {
+          id: 'usr-demo-seller',
+          name: 'Karthik Raja (Seller)',
+          email: 'seller@swapit.com',
+          phone: '+91 98401 23456',
+          location: 'Chennai',
+          memberSince: 'Oct 2024',
+          verified: true,
+          role: 'seller',
+          avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+        };
+        demoToken = 'demo-jwt-token-seller';
+      } else if (targetRole === 'customer') {
+        demoUser = {
+          id: 'usr-demo-customer',
+          name: 'Vignesh (Customer)',
+          email: 'customer@swapit.com',
+          phone: '+91 97910 88231',
+          location: 'Chennai',
+          memberSince: 'Jan 2025',
+          verified: true,
+          role: 'customer',
+          avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+        };
+        demoToken = 'demo-jwt-token-customer';
+      } else {
+        demoUser = {
+          id: 'usr-demo-admin',
+          name: 'Iyyanar (Admin)',
+          email: 'admin@swapit.com',
+          phone: '+91 98401 98765',
+          location: 'Chennai',
+          memberSince: 'Sep 2024',
+          verified: true,
+          role: 'admin',
+          avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+        };
+        demoToken = 'demo-jwt-token-admin';
+      }
+
       state.isLoading = false;
       state.isAuthenticated = true;
       state.user = demoUser;
-      state.token = 'demo-jwt-token-iyyanar';
+      state.token = demoToken;
       state.error = null;
       localStorage.setItem('dealkart_user', JSON.stringify(demoUser));
-      localStorage.setItem('dealkart_token', 'demo-jwt-token-iyyanar');
+      localStorage.setItem('dealkart_token', demoToken);
     },
     logout: (state) => {
       state.user = null;

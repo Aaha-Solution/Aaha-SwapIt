@@ -7,12 +7,30 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting SwapIt database seeding...');
 
-  // 1. Create Demo Admin & Users
+  // 1. Create Demo Admin, Seller, and Customer
   const passwordHash = await bcrypt.hash('Password@123', 10);
 
-  const demoUser = await prisma.user.upsert({
+  // Admin Account
+  const demoAdmin = await prisma.user.upsert({
+    where: { email: 'admin@swapit.com' },
+    update: { role: 'admin' },
+    create: {
+      id: 'usr-demo-admin',
+      email: 'admin@swapit.com',
+      password: passwordHash,
+      name: 'Iyyanar (Admin)',
+      phone: '+91 98401 98765',
+      location: 'Chennai',
+      verified: true,
+      role: 'admin',
+      memberSince: 'Sep 2024',
+    },
+  });
+
+  // Legacy demo user email also mapped to admin
+  await prisma.user.upsert({
     where: { email: 'iyyanar@example.com' },
-    update: {},
+    update: { role: 'admin' },
     create: {
       id: 'usr-demo-iyyanar',
       email: 'iyyanar@example.com',
@@ -26,24 +44,54 @@ async function main() {
     },
   });
 
+  // Demo Customer Account (Buyer)
+  await prisma.user.upsert({
+    where: { email: 'customer@swapit.com' },
+    update: { role: 'customer' },
+    create: {
+      id: 'usr-demo-customer',
+      email: 'customer@swapit.com',
+      password: passwordHash,
+      name: 'Vignesh (Customer)',
+      phone: '+91 97910 88231',
+      location: 'Chennai',
+      verified: true,
+      role: 'customer',
+      memberSince: 'Jan 2025',
+    },
+  });
+
+  // Demo Primary Seller Account (Created by Admin)
+  await prisma.user.upsert({
+    where: { email: 'seller@swapit.com' },
+    update: { role: 'seller' },
+    create: {
+      id: 'usr-demo-seller',
+      email: 'seller@swapit.com',
+      password: passwordHash,
+      name: 'Karthik Raja (Seller)',
+      phone: '+91 98401 23456',
+      location: 'Chennai',
+      verified: true,
+      role: 'seller',
+      memberSince: 'Oct 2024',
+    },
+  });
+
   const sellers = [
-    { id: 'usr-1', name: 'Karthik Raja', email: 'karthik@example.com', phone: '+91 98401 23456', location: 'Chennai' },
-    { id: 'usr-2', name: 'Vignesh M', email: 'vignesh@example.com', phone: '+91 97910 88231', location: 'Chennai' },
-    { id: 'usr-3', name: 'Suresh Kumar', email: 'suresh@example.com', phone: '+91 94441 55210', location: 'Chennai' },
-    { id: 'usr-4', name: 'Ananya Ramesh', email: 'ananya@example.com', phone: '+91 98840 76543', location: 'Chennai' },
-    { id: 'usr-5', name: 'Deepak Nathan', email: 'deepak@example.com', phone: '+91 99620 11984', location: 'Chennai' },
-    { id: 'usr-6', name: 'Apex Realtors', email: 'apex@example.com', phone: '+91 98410 99882', location: 'Chennai' },
-    { id: 'usr-7', name: 'Pravin Studio', email: 'pravin@example.com', phone: '+91 91760 33419', location: 'Chennai' },
-    { id: 'usr-8', name: 'Balaji S', email: 'balaji@example.com', phone: '+91 90030 45612', location: 'Chennai' },
-    { id: 'usr-9', name: 'Ritu Verma', email: 'ritu@example.com', phone: '+91 98200 44556', location: 'Chennai' },
-    { id: 'usr-10', name: 'Dr. Pet Haven', email: 'pethaven@example.com', phone: '+91 98111 22334', location: 'Chennai' },
-    { id: 'usr-11', name: 'QuickFix Pro', email: 'quickfix@example.com', phone: '+91 99400 11223', location: 'Chennai' },
+    { id: 'usr-1', name: 'Karthik Raja', email: 'karthik@example.com', phone: '+91 98401 23456', location: 'Chennai', role: 'seller' },
+    { id: 'usr-2', name: 'Suresh Motors', email: 'suresh@example.com', phone: '+91 94441 55210', location: 'Chennai', role: 'seller' },
+    { id: 'usr-3', name: 'Ananya Ramesh', email: 'ananya@example.com', phone: '+91 98840 76543', location: 'Chennai', role: 'seller' },
+    { id: 'usr-4', name: 'Deepak Nathan', email: 'deepak@example.com', phone: '+91 99620 11984', location: 'Chennai', role: 'seller' },
+    { id: 'usr-5', name: 'Apex Realtors', email: 'apex@example.com', phone: '+91 98410 99882', location: 'Chennai', role: 'seller' },
+    { id: 'usr-6', name: 'Pravin Studio', email: 'pravin@example.com', phone: '+91 91760 33419', location: 'Chennai', role: 'seller' },
+    { id: 'usr-7', name: 'Balaji S', email: 'balaji@example.com', phone: '+91 90030 45612', location: 'Chennai', role: 'seller' },
   ];
 
   for (const s of sellers) {
     await prisma.user.upsert({
       where: { email: s.email },
-      update: { name: s.name, phone: s.phone, location: s.location },
+      update: { name: s.name, phone: s.phone, location: s.location, role: s.role },
       create: {
         id: s.id,
         email: s.email,
@@ -52,13 +100,13 @@ async function main() {
         phone: s.phone,
         location: s.location,
         verified: true,
-        role: 'user',
+        role: s.role,
         memberSince: 'Oct 2024',
       },
     });
   }
 
-  console.log('✅ Demo sellers seeded');
+  console.log('✅ Demo Admin, Sellers, and Customer seeded');
 
   // 2. Categories
   const categoriesData = [
@@ -388,13 +436,13 @@ async function main() {
   await prisma.wishlistItem.upsert({
     where: {
       userId_productId: {
-        userId: demoUser.id,
+        userId: demoAdmin.id,
         productId: 'prod-1',
       },
     },
     update: {},
     create: {
-      userId: demoUser.id,
+      userId: demoAdmin.id,
       productId: 'prod-1',
     },
   });

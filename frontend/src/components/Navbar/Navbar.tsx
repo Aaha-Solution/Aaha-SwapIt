@@ -17,6 +17,7 @@ import {
   Package,
   Heart,
   MessageSquare,
+  Shield,
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
@@ -63,6 +64,7 @@ export const Navbar: React.FC = () => {
   const isMyAdsActive = pathname === '/profile' || pathname === '/my-ads';
   const isFavoritesActive = pathname === '/wishlist';
   const isMessagesActive = pathname === '/messages';
+  const isAdminActive = pathname === '/admin';
 
   // Keep unread messages count synchronized
   React.useEffect(() => {
@@ -223,6 +225,42 @@ export const Navbar: React.FC = () => {
         >
           My Account
         </div>
+
+        {/* Admin Portal Button (visible to Admin) */}
+        {user?.role === 'admin' && (
+          <button
+            type="button"
+            onClick={() => handleProtectedNav('/admin')}
+            className={`nav-item ${isAdminActive ? 'active' : ''}`}
+            style={{
+              width: '100%',
+              justifyContent: 'space-between',
+              border: 'none',
+              background: isAdminActive ? '#f5f3ff' : 'transparent',
+              color: isAdminActive ? '#4338ca' : '#4f46e5',
+              fontWeight: 700,
+              cursor: 'pointer',
+              marginBottom: '4px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <Shield className="nav-icon" style={{ color: '#4f46e5' }} />
+              <span>Admin Portal</span>
+            </div>
+            <span
+              style={{
+                fontSize: '10px',
+                background: '#e0e7ff',
+                color: '#4338ca',
+                fontWeight: 800,
+                padding: '1px 6px',
+                borderRadius: '6px',
+              }}
+            >
+              ADMIN
+            </span>
+          </button>
+        )}
 
         {/* My Ads */}
         <button
