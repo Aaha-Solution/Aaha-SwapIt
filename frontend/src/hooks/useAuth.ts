@@ -21,7 +21,7 @@ export function useAuth() {
       if (res.success && res.data) {
         dispatch(loginSuccess(res.data));
         dispatch(closeAuthModal());
-        return { success: true };
+        return { success: true, user: res.data.user };
       }
       const errMsg = res.message || 'Login failed';
       dispatch(loginFailure(errMsg));

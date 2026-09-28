@@ -111,21 +111,6 @@ export const authController = {
         });
       }
 
-      // Check role constraints if specific login role tab was selected
-      if (role === 'admin' && user.role !== 'admin') {
-        return res.status(403).json({
-          success: false,
-          message: 'Access denied. Administrator privileges required for Admin Login.',
-        });
-      }
-
-      if (role === 'seller' && user.role !== 'seller' && user.role !== 'admin') {
-        return res.status(403).json({
-          success: false,
-          message: 'This account is registered as a Customer. Selling accounts must be created and authorized by Admin.',
-        });
-      }
-
       const tokenPayload = {
         id: user.id,
         email: user.email,

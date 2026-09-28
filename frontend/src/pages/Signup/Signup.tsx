@@ -127,19 +127,11 @@ export const Signup: React.FC<SignupProps> = ({
       </div>
 
       {/* Title */}
-      <div className="mb-4">
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-md text-[10.5px] font-bold mb-2">
-          <span>Customer Account Registration</span>
-        </div>
+      <div className="mb-6">
         <h2 className="text-xl font-extrabold text-slate-900">Join SwapIt today</h2>
         <p className="text-xs text-slate-500 mt-1">
-          Create your verified customer account to browse, chat with sellers, and buy safely.
+          Create your verified account in 30 seconds to buy and sell pre-owned items safely.
         </p>
-
-        {/* Note on Sellers */}
-        <div className="mt-3 p-2.5 bg-amber-50/80 border border-amber-200/80 rounded-xl text-[11px] text-amber-800">
-          <strong>Selling on SwapIt:</strong> In SwapIt, selling accounts are authorized and created directly by the Administrator. If you represent a business or dealer, please contact Admin for a Seller Login.
-        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-3.5">
