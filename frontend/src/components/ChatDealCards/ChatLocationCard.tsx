@@ -26,8 +26,9 @@ export const ChatLocationCard: React.FC<ChatLocationCardProps> = ({ location }) 
         <div className="font-bold text-xs text-slate-900">{location.name}</div>
         <div className="text-[11px] text-slate-600 mt-0.5 leading-snug">{location.address}</div>
         {location.landmark && (
-          <div className="text-[10px] text-indigo-600 font-medium mt-1">
-            📍 Landmark: {location.landmark}
+          <div className="text-[10px] text-indigo-600 font-medium mt-1 flex items-center gap-1">
+            <MapPin className="w-3 h-3 text-indigo-500" />
+            <span>Landmark: {location.landmark}</span>
           </div>
         )}
       </div>

@@ -18,6 +18,13 @@ import {
   ShieldCheck,
   Tag,
   Zap,
+  ChevronDown,
+  Car,
+  Bike,
+  Smartphone,
+  Laptop,
+  Building2,
+  Armchair,
 } from 'lucide-react';
 import { Product } from '../../types/product.types';
 import { formatINR } from '../../utils/helpers';
@@ -218,8 +225,9 @@ export const DealsNearMeMap: React.FC<DealsNearMeMapProps> = ({ products, onSele
       .addTo(map)
       .bindPopup(`
         <div style="font-family: inherit; padding: 4px;">
-          <div style="font-weight: 800; font-size: 12px; color: #1e1b4b; display: flex; align-items: center; gap: 4px;">
-            <span>📍 ${userCoords.name}</span>
+          <div style="font-weight: 800; font-size: 12px; color: #1e1b4b; display: flex; align-items: center; gap: 5px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+            <span>${userCoords.name}</span>
           </div>
           <div style="font-size: 10.5px; color: #64748b; margin-top: 2px;">Your active search center</div>
         </div>
@@ -296,8 +304,9 @@ export const DealsNearMeMap: React.FC<DealsNearMeMapProps> = ({ products, onSele
               <span style="font-size: 15px; font-weight: 900; color: #4f46e5;">${formatINR(p.price)}</span>
               <span style="font-size: 10px; color: #64748b; background: #f1f5f9; padding: 1px 6px; border-radius: 4px;">${p.condition}</span>
             </div>
-            <div style="font-size: 10.5px; color: #64748b; margin-top: 4px; display: flex; align-items: center; gap: 3px;">
-              <span>📍 ${p.neighborhood || p.city}</span>
+            <div style="font-size: 10.5px; color: #64748b; margin-top: 4px; display: flex; align-items: center; gap: 4px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+              <span>${p.neighborhood || p.city}</span>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px;">
               <button id="view-prod-${p.id}" style="
@@ -380,7 +389,8 @@ export const DealsNearMeMap: React.FC<DealsNearMeMapProps> = ({ products, onSele
           </button>
 
           {/* Quick Landmark Presets */}
-          <div className="relative">
+          <div className="relative flex items-center">
+            <MapPin className="w-3.5 h-3.5 text-indigo-600 absolute left-2.5 pointer-events-none z-10" />
             <select
               value={userCoords.name}
               onChange={(e) => {
@@ -389,14 +399,15 @@ export const DealsNearMeMap: React.FC<DealsNearMeMapProps> = ({ products, onSele
                 );
                 if (landmark) handleSelectLandmark(landmark);
               }}
-              className="text-xs font-bold pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 text-slate-800 cursor-pointer shadow-2xs"
+              className="text-xs font-bold pl-7 pr-7 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 text-slate-800 cursor-pointer shadow-2xs appearance-none"
             >
               {KNOWN_CITY_LANDMARKS.map((l) => (
                 <option key={l.id} value={`${l.name}, ${l.city}`}>
-                  📍 {l.name} ({l.city})
+                  {l.name} ({l.city})
                 </option>
               ))}
             </select>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2 pointer-events-none" />
           </div>
 
           {locationStatusMessage && (
@@ -447,26 +458,33 @@ export const DealsNearMeMap: React.FC<DealsNearMeMapProps> = ({ products, onSele
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
           {[
             { id: 'all', name: 'All' },
-            { id: 'cars', name: '🚗 Cars' },
-            { id: 'bikes', name: '🏍️ Bikes' },
-            { id: 'mobiles', name: '📱 Mobiles' },
-            { id: 'electronics', name: '💻 Electronics' },
-            { id: 'properties', name: '🏠 Properties' },
-            { id: 'furniture', name: '🛋️ Furniture' },
-          ].map((cat) => (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => setSelectedCategory(cat.id)}
-              className={`text-xs font-bold px-3 py-1.5 rounded-xl border transition-all whitespace-nowrap cursor-pointer ${
-                selectedCategory === cat.id
-                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
-                  : 'bg-slate-50 text-slate-600 border-slate-200/80 hover:bg-slate-100'
-              }`}
-            >
-              {cat.name}
-            </button>
-          ))}
+            { id: 'cars', name: 'Cars', icon: Car },
+            { id: 'bikes', name: 'Bikes', icon: Bike },
+            { id: 'mobiles', name: 'Mobiles', icon: Smartphone },
+            { id: 'electronics', name: 'Electronics', icon: Laptop },
+            { id: 'properties', name: 'Properties', icon: Building2 },
+            { id: 'furniture', name: 'Furniture', icon: Armchair },
+          ].map((cat) => {
+            const IconComp = cat.icon;
+            const isActive = selectedCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`text-xs font-bold px-3 py-1.5 rounded-xl border transition-all whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5 ${
+                  isActive
+                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                    : 'bg-slate-50 text-slate-600 border-slate-200/80 hover:bg-slate-100 hover:text-slate-900'
+                }`}
+              >
+                {IconComp && (
+                  <IconComp className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-slate-500'}`} />
+                )}
+                <span>{cat.name}</span>
+              </button>
+            );
+          })}
         </div>
 
         <div className="relative w-full sm:w-60">

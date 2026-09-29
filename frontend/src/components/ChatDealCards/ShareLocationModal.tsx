@@ -122,8 +122,9 @@ export const ShareLocationModal: React.FC<ShareLocationModalProps> = ({
                         </div>
                         <div className="text-[11px] text-slate-500 mt-0.5">{place.address}</div>
                         {place.landmark && (
-                          <div className="text-[10px] text-indigo-600 font-semibold mt-1">
-                            📍 {place.landmark}
+                          <div className="text-[10px] text-indigo-600 font-semibold mt-1 flex items-center gap-1">
+                            <MapPin className="w-3 h-3 text-indigo-500" />
+                            <span>{place.landmark}</span>
                           </div>
                         )}
                       </div>

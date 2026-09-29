@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { Mail, CheckCircle2 } from 'lucide-react';
+import { Mail, CheckCircle2, MapPin } from 'lucide-react';
 import { CATEGORIES } from '../../utils/constants';
 import { useProducts } from '../../hooks/useProducts';
 import { CategoryCard } from '../../components/CategoryCard/CategoryCard';
@@ -106,21 +106,23 @@ export const Home: React.FC = () => {
               type="button"
               onClick={() => navigate('/products?view=map')}
               style={{
-                fontSize: '11px',
+                fontSize: '11.5px',
                 fontWeight: 700,
                 color: '#db2777',
                 background: '#fdf2f8',
                 border: '1px solid #fbcfe8',
-                padding: '3px 10px',
+                padding: '4px 10px',
                 borderRadius: '8px',
                 cursor: 'pointer',
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
-                gap: '4px',
-                boxShadow: '0 1px 3px rgba(219, 39, 119, 0.1)',
+                gap: '5px',
+                boxShadow: '0 1px 3px rgba(219, 39, 119, 0.08)',
+                transition: 'all 0.15s ease',
               }}
             >
-              <span>📍 Deals Near Me (Map)</span>
+              <MapPin size={13} style={{ color: '#db2777', strokeWidth: 2.5 }} />
+              <span>Deals Near Me (Map)</span>
             </button>
           </div>
           <button

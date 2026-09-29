@@ -230,7 +230,7 @@ export const Header: React.FC = () => {
             onClick={handlePostAdClick}
             className="btn-post-ad"
           >
-            <span className="plus-sign">+</span>
+            <Plus size={15} strokeWidth={2.5} />
             <span>Post an Ad</span>
           </button>
         </div>
