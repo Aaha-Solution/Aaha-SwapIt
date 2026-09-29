@@ -17,7 +17,7 @@ export const AgreeDealModal: React.FC<AgreeDealModalProps> = ({
   onSubmitDeal,
 }) => {
   const [agreedPrice, setAgreedPrice] = useState<number>(product?.price || 0);
-  const [meetLocation, setMeetLocation] = useState('Phoenix Marketcity Mall (Main Entrance), Chennai');
+  const [meetLocation, setMeetLocation] = useState('Promenade Beach (Gandhi Statue), Puducherry');
   const [meetTime, setMeetTime] = useState('Tomorrow around 5:00 PM');
   const [customTerms, setCustomTerms] = useState('');
 

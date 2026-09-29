@@ -35,7 +35,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
   const [price, setPrice] = useState(product.price.toString());
   const [category, setCategory] = useState(product.category || 'electronics');
   const [condition, setCondition] = useState(product.condition || 'Good');
-  const [city, setCity] = useState(product.city || 'Chennai');
+  const [city, setCity] = useState(product.city || 'Puducherry');
   const [status, setStatus] = useState<'active' | 'sold'>(
     (product.status as 'active' | 'sold') || 'active'
   );
@@ -240,7 +240,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                 type="text"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
-                placeholder="e.g. Chennai, T. Nagar"
+                placeholder="e.g. White Town, Puducherry"
                 className="w-full text-xs pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all text-slate-800"
               />
             </div>

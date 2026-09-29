@@ -12,20 +12,20 @@ export interface CityLandmark {
 }
 
 export const KNOWN_CITY_LANDMARKS: CityLandmark[] = [
-  { id: 'chn-center', name: 'Chennai Central', city: 'Chennai', latitude: 13.0827, longitude: 80.2707 },
-  { id: 'chn-tnagar', name: 'T. Nagar', city: 'Chennai', latitude: 13.0418, longitude: 80.2341 },
-  { id: 'chn-velachery', name: 'Velachery / Phoenix Mall', city: 'Chennai', latitude: 12.9815, longitude: 80.2180 },
-  { id: 'chn-annanagar', name: 'Anna Nagar', city: 'Chennai', latitude: 13.0850, longitude: 80.2101 },
-  { id: 'chn-adyar', name: 'Adyar / Besant Nagar', city: 'Chennai', latitude: 13.0012, longitude: 80.2565 },
-  { id: 'chn-omr', name: 'OMR / Thoraipakkam', city: 'Chennai', latitude: 12.9352, longitude: 80.2289 },
-  { id: 'chn-guindy', name: 'Guindy', city: 'Chennai', latitude: 13.0067, longitude: 80.2025 },
-  { id: 'chn-porur', name: 'Porur', city: 'Chennai', latitude: 13.0382, longitude: 80.1565 },
-  { id: 'chn-tambaram', name: 'Tambaram', city: 'Chennai', latitude: 12.9249, longitude: 80.1000 },
-  { id: 'blr-koramangala', name: 'Koramangala, Bangalore', city: 'Bangalore', latitude: 12.9352, longitude: 77.6245 },
-  { id: 'blr-indiranagar', name: 'Indiranagar, Bangalore', city: 'Bangalore', latitude: 12.9784, longitude: 77.6408 },
-  { id: 'mum-bandra', name: 'Bandra West, Mumbai', city: 'Mumbai', latitude: 19.0596, longitude: 72.8295 },
-  { id: 'del-cp', name: 'Connaught Place, Delhi', city: 'Delhi NCR', latitude: 28.6315, longitude: 77.2167 },
-  { id: 'hyd-hitech', name: 'HITEC City, Hyderabad', city: 'Hyderabad', latitude: 17.4435, longitude: 78.3772 },
+  { id: 'pdy-whitetown', name: 'White Town (French Quarter)', city: 'Puducherry', latitude: 11.9338, longitude: 79.8359 },
+  { id: 'pdy-promenade', name: 'Promenade Beach / Beach Rd', city: 'Puducherry', latitude: 11.9316, longitude: 79.8358 },
+  { id: 'pdy-heritagetown', name: 'Heritage Town / Mission St', city: 'Puducherry', latitude: 11.9372, longitude: 79.8302 },
+  { id: 'pdy-lawspet', name: 'Lawspet', city: 'Puducherry', latitude: 11.9660, longitude: 79.8180 },
+  { id: 'pdy-muthialpet', name: 'Muthialpet', city: 'Puducherry', latitude: 11.9540, longitude: 79.8310 },
+  { id: 'pdy-reddiarpalayam', name: 'Reddiarpalayam', city: 'Puducherry', latitude: 11.9380, longitude: 79.7990 },
+  { id: 'pdy-villianur', name: 'Villianur', city: 'Puducherry', latitude: 11.9167, longitude: 79.7556 },
+  { id: 'pdy-jipmer', name: 'Gorimedu / JIPMER', city: 'Puducherry', latitude: 11.9560, longitude: 79.8020 },
+  { id: 'pdy-busstand', name: 'Indira Gandhi Sq / New Bus Stand', city: 'Puducherry', latitude: 11.9280, longitude: 79.8100 },
+  { id: 'pdy-auroville', name: 'Auroville / Kuilapalayam', city: 'Puducherry', latitude: 12.0070, longitude: 79.8105 },
+  { id: 'pdy-kalapet', name: 'Kalapet / Pondy Univ', city: 'Puducherry', latitude: 12.0150, longitude: 79.8550 },
+  { id: 'pdy-chunnambar', name: 'Nonankuppam / Chunnambar', city: 'Puducherry', latitude: 11.8820, longitude: 79.8050 },
+  { id: 'pdy-mudaliarpet', name: 'Mudaliarpet', city: 'Puducherry', latitude: 11.9180, longitude: 79.8130 },
+  { id: 'pdy-ariankuppam', name: 'Ariankuppam', city: 'Puducherry', latitude: 11.9020, longitude: 79.8090 },
 ];
 
 /**
@@ -63,10 +63,10 @@ export function formatDistance(distanceKm: number): string {
 }
 
 /**
- * Default initial location (Chennai Center)
+ * Default initial location (Puducherry Center / White Town)
  */
 export const DEFAULT_USER_LOCATION: GeoPoint & { name: string } = {
-  latitude: 13.0418,
-  longitude: 80.2341,
-  name: 'T. Nagar, Chennai',
+  latitude: 11.9338,
+  longitude: 79.8359,
+  name: 'White Town, Puducherry',
 };

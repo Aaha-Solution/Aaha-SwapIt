@@ -17,7 +17,7 @@ export const userApi = {
           name: 'Iyyanar',
           email: 'iyyanar@example.com',
           phone: '+91 98401 98765',
-          location: 'Chennai',
+          location: 'Puducherry',
           memberSince: 'Sep 2024',
           verified: true,
         },

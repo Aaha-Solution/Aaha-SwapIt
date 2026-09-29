@@ -162,7 +162,7 @@ export const Messages: React.FC = () => {
                 peerUser: {
                   id: queryUserId,
                   name: catalogProd?.seller?.name || 'Seller',
-                  location: catalogProd?.location || 'Chennai',
+                  location: catalogProd?.location || 'White Town, Puducherry',
                 },
                 lastMessage: 'Start a new conversation',
                 productId: queryProductId || catalogProd?.id,

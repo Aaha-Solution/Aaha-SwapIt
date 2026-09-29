@@ -16,5 +16,59 @@
     "message": "[OFFER:{\"amount\":360000,\"originalPrice\":450000,\"status\":\"pending\",\"productId\":\"prod-1\",\"productTitle\":\"Maruti Swift 2019\",\"note\":\"Ready to pick up today!\"}] Ready to pick up today!",
     "read": false,
     "createdAt": "2026-09-24T12:57:20.073Z"
+  },
+  {
+    "id": "msg-1790685634000-5vq6e5",
+    "senderId": "usr-login-customer",
+    "receiverId": "usr-2",
+    "productId": "prod-2",
+    "message": "[OFFER:{\"amount\":68000,\"originalPrice\":85000,\"status\":\"pending\",\"productId\":\"prod-2\",\"productTitle\":\"Yamaha FZ\",\"note\":\"Ready to pick up today!\"}] Ready to pick up today!",
+    "read": false,
+    "createdAt": "2026-09-29T12:40:34.000Z"
+  },
+  {
+    "id": "msg-1790685635986-ve4yu5",
+    "senderId": "usr-2",
+    "receiverId": "usr-login-customer",
+    "productId": "prod-2",
+    "message": "[OFFER:{\"amount\":68000,\"originalPrice\":85000,\"status\":\"accepted\",\"productId\":\"prod-2\",\"productTitle\":\"Yamaha FZ\",\"note\":\"Ready to pick up today!\"}] That's a fair offer! I accept ₹68,000 for the Yamaha FZ. When would you like to collect it?",
+    "read": false,
+    "createdAt": "2026-09-29T12:40:35.986Z"
+  },
+  {
+    "id": "msg-1790685707829-1e8iot",
+    "senderId": "usr-login-customer",
+    "receiverId": "usr-2",
+    "productId": "prod-2",
+    "message": "Is this still available?",
+    "read": false,
+    "createdAt": "2026-09-29T12:41:47.830Z"
+  },
+  {
+    "id": "msg-1790685709747-9e3wev",
+    "senderId": "usr-2",
+    "receiverId": "usr-login-customer",
+    "productId": "prod-2",
+    "message": "Hi! Yes, the Yamaha FZ is still available and ready for pickup!",
+    "read": false,
+    "createdAt": "2026-09-29T12:41:49.747Z"
+  },
+  {
+    "id": "msg-1790685715414-8lb9vr",
+    "senderId": "usr-login-customer",
+    "receiverId": "usr-2",
+    "productId": "prod-2",
+    "message": "[OFFER:{\"amount\":80750,\"originalPrice\":85000,\"status\":\"pending\",\"productId\":\"prod-2\",\"productTitle\":\"Yamaha FZ\",\"note\":\"Ready to pick up today!\"}] Ready to pick up today!",
+    "read": false,
+    "createdAt": "2026-09-29T12:41:55.414Z"
+  },
+  {
+    "id": "msg-1790685717331-3czunv",
+    "senderId": "usr-2",
+    "receiverId": "usr-login-customer",
+    "productId": "prod-2",
+    "message": "[OFFER:{\"amount\":80750,\"originalPrice\":85000,\"status\":\"accepted\",\"productId\":\"prod-2\",\"productTitle\":\"Yamaha FZ\",\"note\":\"Ready to pick up today!\"}] That's a fair offer! I accept ₹80,750 for the Yamaha FZ. When would you like to collect it?",
+    "read": false,
+    "createdAt": "2026-09-29T12:41:57.331Z"
   }
 ]

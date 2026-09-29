@@ -20,7 +20,7 @@ interface UserState {
 }
 
 const initialState: UserState = {
-  selectedCity: 'Chennai',
+  selectedCity: 'All Puducherry',
   searchQuery: '',
   selectedCategory: 'all',
   priceRange: 'all',

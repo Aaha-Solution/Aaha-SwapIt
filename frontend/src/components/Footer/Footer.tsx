@@ -98,12 +98,12 @@ export const Footer: React.FC = () => {
               Popular Locations
             </h4>
             <ul className="space-y-2 text-xs text-slate-400">
-              <li><Link to="/products" className="hover:text-white transition-colors">Chennai Classifieds</Link></li>
-              <li><Link to="/products" className="hover:text-white transition-colors">Bangalore Classifieds</Link></li>
-              <li><Link to="/products" className="hover:text-white transition-colors">Mumbai Classifieds</Link></li>
-              <li><Link to="/products" className="hover:text-white transition-colors">Delhi NCR Classifieds</Link></li>
-              <li><Link to="/products" className="hover:text-white transition-colors">Hyderabad Classifieds</Link></li>
-              <li><Link to="/products" className="hover:text-white transition-colors">Pune Classifieds</Link></li>
+              <li><Link to="/products" className="hover:text-white transition-colors">White Town / French Quarter</Link></li>
+              <li><Link to="/products" className="hover:text-white transition-colors">Heritage Town & Mission St</Link></li>
+              <li><Link to="/products" className="hover:text-white transition-colors">Lawspet & Muthialpet</Link></li>
+              <li><Link to="/products" className="hover:text-white transition-colors">Reddiarpalayam & Villianur</Link></li>
+              <li><Link to="/products" className="hover:text-white transition-colors">Gorimedu / JIPMER</Link></li>
+              <li><Link to="/products" className="hover:text-white transition-colors">Auroville & Kalapet</Link></li>
             </ul>
           </div>
 

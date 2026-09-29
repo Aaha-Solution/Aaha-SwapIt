@@ -3,17 +3,20 @@ import { Router, Request, Response } from 'express';
 const router = Router();
 
 const CITIES = [
-  'All India',
-  'Chennai',
-  'Bangalore',
-  'Hyderabad',
-  'Mumbai',
-  'Delhi NCR',
-  'Coimbatore',
-  'Madurai',
-  'Kochi',
-  'Pune',
-  'Kolkata',
+  'All Puducherry',
+  'White Town',
+  'Heritage Town',
+  'Lawspet',
+  'Muthialpet',
+  'Reddiarpalayam',
+  'Villianur',
+  'Gorimedu / JIPMER',
+  'Indira Gandhi Sq',
+  'Auroville / Kuilapalayam',
+  'Kalapet',
+  'Mudaliarpet',
+  'Ariankuppam',
+  'Thavalakuppam',
 ];
 
 /**

@@ -157,7 +157,7 @@ export const userController = {
           name: name.trim(),
           email: email.toLowerCase().trim(),
           phone: phone?.trim() || null,
-          location: location?.trim() || 'Chennai',
+          location: location?.trim() || 'Puducherry',
           password: passwordHash,
           role: 'seller',
           verified: true,

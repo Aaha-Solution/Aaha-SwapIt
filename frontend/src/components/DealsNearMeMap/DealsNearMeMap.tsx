@@ -113,16 +113,16 @@ export const DealsNearMeMap: React.FC<DealsNearMeMapProps> = ({ products, onSele
       let lng = p.longitude;
 
       if (!lat || !lng) {
-        // Fallback offset around Chennai Central
+        // Fallback offset around Puducherry
         const offsets = [
-          { lat: 13.0418, lng: 80.2341, name: 'T. Nagar' },
-          { lat: 12.9815, lng: 80.2180, name: 'Velachery' },
-          { lat: 13.0850, lng: 80.2101, name: 'Anna Nagar' },
-          { lat: 13.0012, lng: 80.2565, name: 'Adyar' },
-          { lat: 12.9352, lng: 80.2289, name: 'OMR' },
-          { lat: 13.0382, lng: 80.1565, name: 'Porur' },
-          { lat: 13.0569, lng: 80.2425, name: 'Nungambakkam' },
-          { lat: 13.0067, lng: 80.2025, name: 'Guindy' },
+          { lat: 11.9338, lng: 79.8359, name: 'White Town' },
+          { lat: 11.9660, lng: 79.8180, name: 'Lawspet' },
+          { lat: 11.9372, lng: 79.8302, name: 'Heritage Town' },
+          { lat: 11.9540, lng: 79.8310, name: 'Muthialpet' },
+          { lat: 11.9380, lng: 79.7990, name: 'Reddiarpalayam' },
+          { lat: 11.9167, lng: 79.7556, name: 'Villianur' },
+          { lat: 11.9560, lng: 79.8020, name: 'Gorimedu' },
+          { lat: 11.9280, lng: 79.8100, name: 'Indira Gandhi Sq' },
         ];
         const chosen = offsets[idx % offsets.length];
         lat = chosen.lat;

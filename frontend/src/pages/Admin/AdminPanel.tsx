@@ -44,7 +44,7 @@ export const AdminPanel: React.FC = () => {
     name: '',
     email: '',
     phone: '',
-    location: 'Chennai',
+    location: 'Puducherry',
     password: 'Password@123',
   });
 
@@ -76,7 +76,7 @@ export const AdminPanel: React.FC = () => {
           name: 'Karthik Raja (Seller)',
           email: 'seller@swapit.com',
           phone: '+91 98401 23456',
-          location: 'Chennai',
+          location: 'Puducherry',
           verified: true,
           role: 'seller',
           memberSince: 'Oct 2024',
@@ -87,7 +87,7 @@ export const AdminPanel: React.FC = () => {
           name: 'Suresh Motors',
           email: 'suresh@example.com',
           phone: '+91 94441 55210',
-          location: 'Chennai',
+          location: 'Puducherry',
           verified: true,
           role: 'seller',
           memberSince: 'Nov 2024',
@@ -128,7 +128,7 @@ export const AdminPanel: React.FC = () => {
           name: '',
           email: '',
           phone: '',
-          location: 'Chennai',
+          location: 'Puducherry',
           password: 'Password@123',
         });
         fetchData();

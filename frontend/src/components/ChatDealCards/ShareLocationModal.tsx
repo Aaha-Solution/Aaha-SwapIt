@@ -9,34 +9,40 @@ interface ShareLocationModalProps {
 
 const PRESET_PLACES: LocationShare[] = [
   {
-    name: 'Phoenix Marketcity (Main Gate)',
-    address: '142, Velachery Main Rd, Indira Gandhi Nagar, Velachery',
-    landmark: 'Near Main Entrance Starbucks',
-    city: 'Chennai',
+    name: 'Promenade Beach (Gandhi Statue)',
+    address: 'Goubert Ave, White Town',
+    landmark: 'Near Mahatma Gandhi Statue / Le Cafe',
+    city: 'Puducherry',
   },
   {
-    name: 'Express Avenue Mall',
-    address: 'Club House Rd, Express Estate, Royapettah',
-    landmark: 'Central Atrium Floor 1',
-    city: 'Chennai',
+    name: 'Providence Mall',
+    address: 'Cuddalore Main Rd, Orleanpet',
+    landmark: 'Main Entrance Lobby / Ground Floor',
+    city: 'Puducherry',
   },
   {
-    name: 'Anna Nagar Tower Metro Station',
-    address: '2nd Avenue, Block Y, Anna Nagar',
-    landmark: 'Gate 2 Ticket Counter',
-    city: 'Chennai',
+    name: 'Indira Gandhi Square / New Bus Stand',
+    address: 'Maraimalai Adigal Salai, Orleanpet',
+    landmark: 'Bus Stand Main Inquiry Counter',
+    city: 'Puducherry',
   },
   {
-    name: 'Forum Vijaya Mall',
-    address: '183, Great Southern Trunk Rd, Arcot Rd, Vadapalani',
-    landmark: 'Near Food Court Level 3',
-    city: 'Chennai',
+    name: 'Pondicherry Railway Station',
+    address: 'South Boulevard, Colas Nagar',
+    landmark: 'Platform 1 Main Entrance',
+    city: 'Puducherry',
   },
   {
-    name: 'T. Nagar Panagal Park',
-    address: 'Prakasam Rd, Parthasarathi Puram, T. Nagar',
-    landmark: 'Opposite GRT Jewellers',
-    city: 'Chennai',
+    name: 'JIPMER Hospital Main Gate',
+    address: 'Dhanvantari Nagar, Gorimedu',
+    landmark: 'Main Gate Security Post',
+    city: 'Puducherry',
+  },
+  {
+    name: 'Baker Street / White Town Cafe',
+    address: '123, Bussy St, Heritage Town',
+    landmark: 'Near French Institute',
+    city: 'Puducherry',
   },
 ];
 
@@ -62,7 +68,7 @@ export const ShareLocationModal: React.FC<ShareLocationModalProps> = ({
       name: customName.trim(),
       address: customAddress.trim(),
       landmark: customLandmark.trim() || undefined,
-      city: 'Chennai',
+      city: 'Puducherry',
     });
     onClose();
   };
