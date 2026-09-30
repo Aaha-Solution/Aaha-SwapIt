@@ -1,4 +1,4 @@
-import Redis from 'ioredis';
+import { Redis } from 'ioredis';
 import { ENV } from '../config/env.config.js';
 import { logger } from './logger.js';
 
@@ -8,6 +8,11 @@ class CacheService {
   private isRedisAvailable = false;
 
   constructor() {
+    if (process.env.NODE_ENV === 'test') {
+      this.isRedisAvailable = false;
+      return;
+    }
+
     try {
       this.redis = new Redis({
         host: ENV.REDIS_HOST,

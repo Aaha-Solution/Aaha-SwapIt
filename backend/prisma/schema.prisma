@@ -26,6 +26,10 @@ model User {
   wishlist         WishlistItem[]
   sentMessages     ChatMessage[]  @relation("SentMessages")
   receivedMessages ChatMessage[]  @relation("ReceivedMessages")
+  reviewsReceived  Review[]       @relation("ReceivedReviews")
+  reviewsGiven     Review[]       @relation("GivenReviews")
+  buyerOffers      Offer[]        @relation("BuyerOffers")
+  sellerOffers     Offer[]        @relation("SellerOffers")
   orders           Order[]
   notifications    Notification[]
 
@@ -81,6 +85,9 @@ model Product {
 
   wishlistedBy WishlistItem[]
   orders       Order[]
+  reviews      Review[]
+  offers       Offer[]
+  chatMessages ChatMessage[]
 
   @@index([title])
   @@index([city])
@@ -122,15 +129,67 @@ model Order {
 model ChatMessage {
   id         String   @id @default(uuid())
   senderId   String
-  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
   receiverId String
-  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
   productId  String?
+  product    Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
   message    String   @db.Text
+  type       String   @default("text")
+  metadata   Json?
   read       Boolean  @default(false)
   createdAt  DateTime @default(now())
 
+  @@index([senderId, receiverId])
+  @@index([receiverId])
   @@map("chat_messages")
+}
+
+model Review {
+  id             String   @id @default(uuid())
+  targetUserId   String
+  targetUser     User     @relation("ReceivedReviews", fields: [targetUserId], references: [id], onDelete: Cascade)
+  reviewerId     String
+  reviewer       User     @relation("GivenReviews", fields: [reviewerId], references: [id], onDelete: Cascade)
+  productId      String?
+  product        Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  rating         Int      @default(5)
+  comment        String   @db.Text
+  tags           Json?
+  helpfulCount   Int      @default(0)
+  helpfulUserIds Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([targetUserId])
+  @@index([reviewerId])
+  @@map("reviews")
+}
+
+model Offer {
+  id             String   @id @default(uuid())
+  buyerId        String
+  buyer          User     @relation("BuyerOffers", fields: [buyerId], references: [id], onDelete: Cascade)
+  sellerId       String
+  seller         User     @relation("SellerOffers", fields: [sellerId], references: [id], onDelete: Cascade)
+  productId      String
+  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  offerAmount    Float
+  originalPrice  Float
+  status         String   @default("pending")
+  counterAmount  Float?
+  exchangeItem   String?
+  pickupLocation String?
+  pickupTime     String?
+  notes          String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([productId])
+  @@index([status])
+  @@map("offers")
 }
 
 model Notification {

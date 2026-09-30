@@ -1,11 +1,14 @@
 import rateLimit from 'express-rate-limit';
 
+const isTest = process.env.NODE_ENV === 'test';
+
 // Standard API Rate Limiter: 500 requests per 15 minutes per IP
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 500,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => isTest,
   message: {
     success: false,
     message: 'Too many requests from this IP, please try again after 15 minutes',
@@ -18,6 +21,7 @@ export const authLimiter = rateLimit({
   max: 30,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => isTest,
   message: {
     success: false,
     message: 'Too many authentication attempts from this IP, please try again after 15 minutes',
@@ -30,6 +34,7 @@ export const uploadLimiter = rateLimit({
   max: 30,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => isTest,
   message: {
     success: false,
     message: 'Upload rate limit reached. Please wait before uploading more files.',
@@ -42,6 +47,7 @@ export const productCreateLimiter = rateLimit({
   max: 30,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => isTest,
   message: {
     success: false,
     message: 'Listing creation rate limit reached. Please wait a few minutes.',
@@ -54,8 +60,10 @@ export const chatRateLimiter = rateLimit({
   max: 120,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => isTest,
   message: {
     success: false,
     message: 'Message rate limit exceeded. Please slow down.',
   },
 });
+
