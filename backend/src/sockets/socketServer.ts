@@ -1,10 +1,20 @@
 import { Server as HttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
+import jwt from 'jsonwebtoken';
 import { ENV } from '../config/env.config.js';
 import { logger } from '../shared/logger.js';
 import { prisma } from '../shared/prisma.js';
-import { inMemoryMessages, saveMessageToStore, updateMessageInStore, MOCK_USERS, MOCK_PRODUCTS, StoredMessage } from '../services/chat-service/chat.store.js';
+import {
+  saveMessageToStore,
+  updateMessageInStore,
+  MOCK_USERS,
+  MOCK_PRODUCTS,
+  StoredMessage,
+} from '../services/chat-service/chat.store.js';
 import { addNotificationToStore, StoredNotification } from '../services/notification-service/notification.store.js';
+
+// Online user registry: userId -> Set of socketIds
+const onlineUsers = new Map<string, Set<string>>();
 
 export const setupSocketIO = (httpServer: HttpServer) => {
   const io = new Server(httpServer, {
@@ -13,25 +23,85 @@ export const setupSocketIO = (httpServer: HttpServer) => {
       methods: ['GET', 'POST'],
       credentials: true,
     },
+    pingTimeout: 20000,
+    pingInterval: 25000,
+    connectTimeout: 45000,
+    transports: ['websocket', 'polling'],
+  });
+
+  // 1. Socket Authentication Middleware
+  io.use((socket: Socket, next) => {
+    try {
+      const authHeader = socket.handshake.headers.authorization;
+      const authToken = socket.handshake.auth?.token || (authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null);
+
+      if (authToken) {
+        try {
+          const decoded = jwt.verify(authToken, ENV.JWT_SECRET) as { id: string; email: string; name?: string; role?: string };
+          socket.data.user = decoded;
+          socket.data.userId = decoded.id;
+        } catch {
+          // Token invalid or expired, continue as guest
+          socket.data.user = null;
+        }
+      }
+      return next();
+    } catch {
+      return next();
+    }
   });
 
   io.on('connection', (socket: Socket) => {
-    logger.info({ socketId: socket.id }, 'Socket.IO client connected');
+    const authenticatedUserId = socket.data.userId;
+    logger.info({ socketId: socket.id, userId: authenticatedUserId || 'guest' }, 'Socket.IO client connected');
 
-    // Join user room for targeted notifications & direct messaging
+    // If socket authenticated via JWT, auto-join user room & track online status
+    if (authenticatedUserId) {
+      socket.join(`user:${authenticatedUserId}`);
+      if (!onlineUsers.has(authenticatedUserId)) {
+        onlineUsers.set(authenticatedUserId, new Set());
+      }
+      onlineUsers.get(authenticatedUserId)!.add(socket.id);
+
+      // Broadcast online status to peers
+      io.emit('user:presence_changed', { userId: authenticatedUserId, status: 'online' });
+    }
+
+    // Explicit room join for user notifications & direct messaging
     socket.on('join_user_room', (userId: string) => {
+      if (!userId) return;
       socket.join(`user:${userId}`);
+      socket.data.userId = userId;
+
+      if (!onlineUsers.has(userId)) {
+        onlineUsers.set(userId, new Set());
+      }
+      onlineUsers.get(userId)!.add(socket.id);
+      io.emit('user:presence_changed', { userId, status: 'online' });
+
       logger.info({ socketId: socket.id, userId }, 'User joined private room');
+    });
+
+    // Check online status of user
+    socket.on('check_user_online', (userId: string, callback?: (isOnline: boolean) => void) => {
+      const isOnline = onlineUsers.has(userId) && (onlineUsers.get(userId)?.size || 0) > 0;
+      if (typeof callback === 'function') {
+        callback(isOnline);
+      } else {
+        socket.emit('user_online_response', { userId, isOnline });
+      }
     });
 
     // Join product chat room
     socket.on('join_product_room', (productId: string) => {
+      if (!productId) return;
       socket.join(`product:${productId}`);
       logger.info({ socketId: socket.id, productId }, 'Client joined product room');
     });
 
     // Typing indicators
     socket.on('typing_start', (data: { senderId: string; receiverId: string; senderName?: string }) => {
+      if (!data?.receiverId) return;
       io.to(`user:${data.receiverId}`).emit('user_typing_start', {
         userId: data.senderId,
         userName: data.senderName || 'User',
@@ -39,6 +109,7 @@ export const setupSocketIO = (httpServer: HttpServer) => {
     });
 
     socket.on('typing_stop', (data: { senderId: string; receiverId: string }) => {
+      if (!data?.receiverId) return;
       io.to(`user:${data.receiverId}`).emit('user_typing_stop', {
         userId: data.senderId,
       });
@@ -47,6 +118,8 @@ export const setupSocketIO = (httpServer: HttpServer) => {
     // Mark messages as read receipt
     socket.on('mark_messages_read', async (data: { readerId: string; senderId: string }) => {
       try {
+        if (!data?.readerId || !data?.senderId) return;
+
         updateMessageInStore(
           (m) => m.senderId === data.senderId && m.receiverId === data.readerId && !m.read,
           (m) => {
@@ -80,6 +153,8 @@ export const setupSocketIO = (httpServer: HttpServer) => {
       userId: string;
       receiverId: string;
     }) => {
+      if (!data?.messageId || !data?.emoji) return;
+
       io.to(`user:${data.receiverId}`).emit('message_reaction_update', {
         messageId: data.messageId,
         emoji: data.emoji,
@@ -100,8 +175,10 @@ export const setupSocketIO = (httpServer: HttpServer) => {
       message: string;
     }) => {
       try {
+        if (!data?.senderId || !data?.receiverId || !data?.message) return;
+
         const messagePayload: StoredMessage = {
-          id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+          id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
           senderId: data.senderId,
           receiverId: data.receiverId,
           productId: data.productId || null,
@@ -130,11 +207,11 @@ export const setupSocketIO = (httpServer: HttpServer) => {
 
         // 3. Emit to recipient's private room
         io.to(`user:${data.receiverId}`).emit('receive_chat_message', messagePayload);
-        
-        // Also push a live notification to receiver's notification feed
-        const senderUser = MOCK_USERS[data.senderId] || { name: 'User' };
+
+        // Live notification to receiver
+        const senderUser = MOCK_USERS[data.senderId] || { name: socket.data.user?.name || 'SwapIt User', avatarUrl: undefined };
         const notif: StoredNotification = {
-          id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+          id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
           userId: data.receiverId,
           title: `New Message from ${senderUser.name}`,
           message: data.message.length > 60 ? data.message.slice(0, 57) + '...' : data.message,
@@ -155,7 +232,7 @@ export const setupSocketIO = (httpServer: HttpServer) => {
           const peerSeller = MOCK_USERS[data.receiverId];
           const prodTitle = data.productId ? MOCK_PRODUCTS[data.productId]?.title : undefined;
 
-          // 1. Send typing indicator after 600ms
+          // Send typing indicator after 600ms
           setTimeout(() => {
             io.to(`user:${data.senderId}`).emit('user_typing_start', {
               userId: data.receiverId,
@@ -163,7 +240,7 @@ export const setupSocketIO = (httpServer: HttpServer) => {
             });
           }, 600);
 
-          // 2. Stop typing and send smart reply after 1800ms
+          // Stop typing and send smart reply after 1800ms
           setTimeout(async () => {
             io.to(`user:${data.senderId}`).emit('user_typing_stop', {
               userId: data.receiverId,
@@ -173,7 +250,7 @@ export const setupSocketIO = (httpServer: HttpServer) => {
             const replyText = getSmartSellerReply(data.message, peerSeller.name, prodTitle);
 
             const replyMsg: StoredMessage = {
-              id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+              id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
               senderId: data.receiverId,
               receiverId: data.senderId,
               productId: data.productId || null,
@@ -199,6 +276,8 @@ export const setupSocketIO = (httpServer: HttpServer) => {
       receiverId: string;
     }) => {
       try {
+        if (!data?.messageId || !data?.newStatus) return;
+
         let updatedMessageText = '';
         updateMessageInStore(
           (m) => m.id === data.messageId,
@@ -237,12 +316,33 @@ export const setupSocketIO = (httpServer: HttpServer) => {
       }
     });
 
+    // Real-time deal agreements & location share broadcasts
+    socket.on('deal:broadcast_agreement', (data: { receiverId: string; deal: any }) => {
+      if (!data?.receiverId || !data?.deal) return;
+      io.to(`user:${data.receiverId}`).emit('deal:agreement_received', data.deal);
+    });
+
+    socket.on('deal:share_location', (data: { receiverId: string; location: any }) => {
+      if (!data?.receiverId || !data?.location) return;
+      io.to(`user:${data.receiverId}`).emit('deal:location_received', data.location);
+    });
+
     // Real-time live price alert or product update
     socket.on('subscribe_price_alert', (productId: string) => {
+      if (!productId) return;
       socket.join(`price_alert:${productId}`);
     });
 
     socket.on('disconnect', () => {
+      const userId = socket.data.userId;
+      if (userId && onlineUsers.has(userId)) {
+        const userSockets = onlineUsers.get(userId)!;
+        userSockets.delete(socket.id);
+        if (userSockets.size === 0) {
+          onlineUsers.delete(userId);
+          io.emit('user:presence_changed', { userId, status: 'offline' });
+        }
+      }
       logger.info({ socketId: socket.id }, 'Socket.IO client disconnected');
     });
   });

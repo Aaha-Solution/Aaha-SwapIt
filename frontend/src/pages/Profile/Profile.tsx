@@ -22,6 +22,7 @@ import {
   ShieldCheck,
   Star,
   Award,
+  Handshake,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { userApi } from '../../api/user.api';
@@ -35,13 +36,14 @@ import { EditProductModal } from '../../components/EditProductModal/EditProductM
 import { StarRating } from '../../components/Rating/StarRating';
 import { RatingBreakdown } from '../../components/Rating/RatingBreakdown';
 import { ReviewCard } from '../../components/Rating/ReviewCard';
+import { ProfileDeals } from '../../components/ProfileDeals/ProfileDeals';
 
 export const Profile: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useAuth();
 
-  const [mainView, setMainView] = useState<'listings' | 'reviews'>('listings');
+  const [mainView, setMainView] = useState<'listings' | 'deals' | 'reviews'>('listings');
   const [myAds, setMyAds] = useState<Product[]>([]);
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'sold'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -305,7 +307,7 @@ export const Profile: React.FC = () => {
       </div>
 
       {/* Main Section Navigation Switcher */}
-      <div className="flex items-center gap-2 border-b border-slate-200/80 pb-1">
+      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200/80 pb-1">
         <button
           type="button"
           onClick={() => setMainView('listings')}
@@ -317,6 +319,19 @@ export const Profile: React.FC = () => {
         >
           <Package className="w-4 h-4" />
           <span>My Listings ({myAds.length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setMainView('deals')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
+            mainView === 'deals'
+              ? 'bg-indigo-600 text-white shadow-sm'
+              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <Handshake className="w-4 h-4" />
+          <span>Deals & Swap Offers</span>
         </button>
 
         <button
@@ -582,7 +597,10 @@ export const Profile: React.FC = () => {
         </div>
       )}
 
-      {/* VIEW 2: REVIEWS & REPUTATION */}
+      {/* VIEW 2: ACTIVE DEALS & OFFERS */}
+      {mainView === 'deals' && <ProfileDeals />}
+
+      {/* VIEW 3: REVIEWS & REPUTATION */}
       {mainView === 'reviews' && (
         <div className="bg-white rounded-3xl border border-slate-100 p-6 sm:p-8 shadow-sm space-y-8">
           {/* Section Title */}
