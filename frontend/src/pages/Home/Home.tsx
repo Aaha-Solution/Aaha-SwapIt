@@ -52,46 +52,15 @@ export const Home: React.FC = () => {
           </button>
         </div>
 
-        <div className="categories-wrapper">
-          {/* 12 Category Grid (6 cols x 2 rows) */}
-          <div className="categories-grid">
-            {CATEGORIES.map((category) => (
-              <CategoryCard
-                key={category.id}
-                category={category}
-                onClick={handleCategorySelect}
-              />
-            ))}
-          </div>
-
-          {/* Spanning Eco Promo Banner Card (Right 220px) */}
-          <div className="eco-promo-card">
-            <div>
-              <h3 className="eco-title">
-                Small<br />Choices<br />Big Impact
-              </h3>
-              <p className="eco-subtitle">
-                Buy Pre-owned<br />Save the Planet
-              </p>
-              <button
-                type="button"
-                onClick={() => navigate('/products')}
-                className="eco-btn"
-              >
-                <span>Learn More</span>
-                <span>&rarr;</span>
-              </button>
-            </div>
-
-            <div className="eco-img-wrap" style={{ borderRadius: '12px', overflow: 'hidden', height: '102px', marginTop: '10px' }}>
-              <img
-                src="/images/eco_plant.jpg"
-                alt="Buy Pre-owned Save Planet"
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                loading="lazy"
-              />
-            </div>
-          </div>
+        {/* Clean 12 Category Grid (Full-Width Responsive 6 cols) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          {CATEGORIES.map((category) => (
+            <CategoryCard
+              key={category.id}
+              category={category}
+              onClick={handleCategorySelect}
+            />
+          ))}
         </div>
       </section>
 
@@ -104,7 +73,7 @@ export const Home: React.FC = () => {
             </h2>
             <button
               type="button"
-              onClick={() => navigate('/products?view=map')}
+              onClick={() => navigate('/deals-near-me')}
               style={{
                 fontSize: '11.5px',
                 fontWeight: 700,
@@ -136,69 +105,19 @@ export const Home: React.FC = () => {
           </button>
         </div>
 
-        <div className="listings-wrapper">
-          {/* 12 Listing Cards (6 cols x 2 rows) */}
-          <div className="listings-grid">
-            {isLoading
-              ? Array.from({ length: 12 }).map((_, i) => (
-                  <div key={i} style={{ height: '190px', background: '#f1f5f9', borderRadius: '14px' }}></div>
-                ))
-              : products.slice(0, 12).map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    onClick={(p) => setSelectedProduct(p)}
-                  />
-                ))}
-          </div>
-
-          {/* Newsletter Subscribe Card (Right 220px) */}
-          <div className="newsletter-card">
-            <div className="newsletter-icon-wrap">
-              <Mail style={{ width: '20px', height: '20px' }} />
-            </div>
-            <h3 className="newsletter-title">
-              Get the best deals in your city
-            </h3>
-            <p className="newsletter-sub">
-              Subscribe for updates
-            </p>
-
-            {newsletterSubscribed ? (
-              <div style={{ padding: '8px', background: '#dcfce7', color: '#15803d', borderRadius: '10px', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <CheckCircle2 style={{ width: '14px', height: '14px' }} />
-                <span>Subscribed!</span>
-              </div>
-            ) : (
-              <form onSubmit={handleNewsletterSubmit} className="newsletter-form">
-                <input
-                  type="email"
-                  required
-                  value={newsletterEmail}
-                  onChange={(e) => setNewsletterEmail(e.target.value)}
-                  placeholder="Enter your email"
+        {/* Full-width Responsive 6-col Listings Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3.5">
+          {isLoading
+            ? Array.from({ length: 12 }).map((_, i) => (
+                <div key={i} className="h-48 bg-slate-100 rounded-2xl animate-pulse" />
+              ))
+            : products.slice(0, 12).map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onClick={(p) => setSelectedProduct(p)}
                 />
-                <button
-                  type="submit"
-                  style={{
-                    width: '100%',
-                    height: '36px',
-                    borderRadius: '10px',
-                    background: '#2563eb',
-                    color: '#ffffff',
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    border: 'none',
-                    cursor: 'pointer',
-                    boxShadow: '0 2px 6px rgba(37, 99, 235, 0.25)',
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  Subscribe
-                </button>
-              </form>
-            )}
-          </div>
+              ))}
         </div>
       </section>
 

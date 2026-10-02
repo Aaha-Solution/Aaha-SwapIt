@@ -177,14 +177,14 @@ export const Navbar: React.FC = () => {
           type="button"
           onClick={() => {
             dispatch(setSelectedCategory('all'));
-            navigate('/products?view=map');
+            navigate('/deals-near-me');
           }}
-          className={`nav-item ${pathname === '/products' && location.search.includes('view=map') ? 'active' : ''}`}
+          className={`nav-item ${pathname === '/deals-near-me' || (pathname === '/products' && location.search.includes('view=map')) ? 'active' : ''}`}
           style={{
             width: '100%',
             justifyContent: 'space-between',
             border: 'none',
-            background: pathname === '/products' && location.search.includes('view=map') ? 'var(--sidebar-active-bg)' : 'transparent',
+            background: pathname === '/deals-near-me' || (pathname === '/products' && location.search.includes('view=map')) ? 'var(--sidebar-active-bg)' : 'transparent',
             cursor: 'pointer',
           }}
         >

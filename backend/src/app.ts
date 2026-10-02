@@ -32,6 +32,7 @@ import { notificationRouter } from './services/notification-service/notification
 import { chatRouter } from './services/chat-service/chat.router.js';
 import { ratingRouter } from './services/rating-service/rating.router.js';
 import { offerRouter } from './services/product-service/offer.router.js';
+import { reportRouter } from './services/report-service/report.router.js';
 
 // 1. Initialize Sentry error monitoring
 initSentry();
@@ -176,6 +177,7 @@ app.use('/api/notifications', notificationRouter);
 app.use('/api/chat', chatRouter);
 app.use('/api/ratings', ratingRouter);
 app.use('/api/offers', offerRouter);
+app.use('/api/reports', reportRouter);
 
 // 11. Centralized Error Handling
 app.use(errorHandler);

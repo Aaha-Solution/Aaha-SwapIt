@@ -12,6 +12,7 @@ import { Signup } from '../pages/Signup/Signup';
 import { PrivacyPolicy } from '../pages/PrivacyPolicy/PrivacyPolicy';
 import { TermsConditions } from '../pages/TermsConditions/TermsConditions';
 import { AdminPanel } from '../pages/Admin/AdminPanel';
+import { DealsMap } from '../pages/DealsMap/DealsMap';
 import { ProtectedRoute } from './ProtectedRoute';
 
 export const AppRoutes: React.FC = () => {
@@ -20,6 +21,8 @@ export const AppRoutes: React.FC = () => {
       <Route path="/" element={<Home />} />
       <Route path="/products" element={<Products />} />
       <Route path="/products/:id" element={<ProductDetails />} />
+      <Route path="/deals-near-me" element={<DealsMap />} />
+      <Route path="/map" element={<Navigate to="/deals-near-me" replace />} />
       <Route
         path="/admin"
         element={

@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { LayoutGrid, MapPin, Compass, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { Sparkles, ShoppingBag } from 'lucide-react';
 import { RootState } from '../../store/store';
 import { useProducts } from '../../hooks/useProducts';
 import { ProductCard } from '../../components/ProductCard/ProductCard';
 import { ProductDetails } from '../ProductDetails/ProductDetails';
 import { Filter } from '../../components/Filter/Filter';
-import { DealsNearMeMap } from '../../components/DealsNearMeMap/DealsNearMeMap';
 import {
   setSelectedCategory,
   resetFilters,
@@ -30,36 +29,10 @@ const CATEGORY_PILLS = [
 
 export const Products: React.FC = () => {
   const dispatch = useDispatch();
-  const [searchParams, setSearchParams] = useSearchParams();
   const { products, isLoading } = useProducts();
   const { selectedCategory } = useSelector((state: RootState) => state.user);
 
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  
-  // View mode: 'grid' | 'map'
-  const viewParam = searchParams.get('view');
-  const [viewMode, setViewMode] = useState<'grid' | 'map'>(
-    viewParam === 'map' ? 'map' : 'grid'
-  );
-
-  useEffect(() => {
-    if (viewParam === 'map') {
-      setViewMode('map');
-    }
-  }, [viewParam]);
-
-  const handleToggleViewMode = (mode: 'grid' | 'map') => {
-    setViewMode(mode);
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      if (mode === 'map') {
-        next.set('view', 'map');
-      } else {
-        next.delete('view');
-      }
-      return next;
-    });
-  };
 
   const handleCategorySelect = (catId: string) => {
     dispatch(setSelectedCategory(catId));
@@ -71,198 +44,121 @@ export const Products: React.FC = () => {
       <nav className="view-breadcrumbs">
         <Link to="/" className="breadcrumb-link">Home</Link>
         <span className="breadcrumb-separator">/</span>
-        <span className="breadcrumb-current">
-          {viewMode === 'map' ? 'Deals Near Me (Live Map)' : 'All Products'}
-        </span>
+        <span className="breadcrumb-current">All Products</span>
       </nav>
 
-      {/* 2. View Header Bar with View Toggle (Grid vs Map) */}
+      {/* 2. View Header Bar */}
       <div className="view-header-bar products-header-bar flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="view-title flex items-center gap-2.5">
-            {viewMode === 'map' ? (
-              <>
-                <MapPin className="w-6 h-6 text-pink-600" />
-                <span>Deals Near Me (Radius Map)</span>
-              </>
-            ) : (
-              <>
-                <span>Marketplace Products</span>
-                <span className="header-count-badge" id="productsTotalCount">
-                  {products.length} {products.length === 1 ? 'item' : 'items'}
-                </span>
-              </>
-            )}
+            <span>Marketplace Products</span>
+            <span className="header-count-badge" id="productsTotalCount">
+              {products.length} {products.length === 1 ? 'item' : 'items'}
+            </span>
           </h1>
           <p className="view-subtitle">
-            {viewMode === 'map'
-              ? 'Locate verified second-hand items around your current location or selected landmark'
-              : 'Explore verified second-hand items with smart filters, price ranges, and instant seller chat'}
+            Explore verified second-hand items with smart filters, price ranges, and instant seller chat
           </p>
-        </div>
-
-        {/* View Toggle Button Pill */}
-        <div className="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200 self-start md:self-auto shadow-2xs">
-          <button
-            type="button"
-            onClick={() => handleToggleViewMode('grid')}
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              viewMode === 'grid'
-                ? 'bg-white text-indigo-600 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <LayoutGrid className="w-4 h-4" />
-            <span>Grid View</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleToggleViewMode('map')}
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              viewMode === 'map'
-                ? 'bg-pink-600 text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Compass className="w-4 h-4" />
-            <span>Map & Radius</span>
-            <span className="text-[9px] bg-pink-100 text-pink-700 px-1.5 py-0.5 rounded-full font-black uppercase">
-              Live
-            </span>
-          </button>
         </div>
       </div>
 
-      {/* Conditionally Render Map View OR Grid View */}
-      {viewMode === 'map' ? (
-        <div className="mt-2 mb-8">
-          <DealsNearMeMap
-            products={products}
-            onSelectProduct={(p) => setSelectedProduct(p)}
-          />
+      {/* 3. Category Quick-Pills Scroll Bar */}
+      <div style={{ marginBottom: '16px', overflowX: 'auto', paddingBottom: '4px' }}>
+        <div className="category-pills-bar" id="productsCategoryPills">
+          {CATEGORY_PILLS.map((pill) => (
+            <button
+              key={pill.id}
+              type="button"
+              onClick={() => handleCategorySelect(pill.id)}
+              className={`cat-pill ${selectedCategory === pill.id ? 'active' : ''}`}
+            >
+              {pill.name}
+            </button>
+          ))}
         </div>
-      ) : (
-        <>
-          {/* 3. Category Quick-Pills Scroll Bar */}
-          <div style={{ marginBottom: '16px', overflowX: 'auto', paddingBottom: '4px' }}>
-            <div className="category-pills-bar" id="productsCategoryPills">
-              {CATEGORY_PILLS.map((pill) => (
-                <button
-                  key={pill.id}
-                  type="button"
-                  onClick={() => handleCategorySelect(pill.id)}
-                  className={`cat-pill ${selectedCategory === pill.id ? 'active' : ''}`}
-                >
-                  {pill.name}
-                </button>
-              ))}
-            </div>
-          </div>
+      </div>
 
-          {/* 4. Advanced Filter Toolbar Card */}
-          <Filter />
+      {/* 4. Filter Bar */}
+      <Filter />
 
-          {/* 5. All Products Grid: 5 columns matching prototype */}
-          {isLoading ? (
-            <div className="all-products-grid">
-              {Array.from({ length: 10 }).map((_, i) => (
-                <div key={i} style={{ height: '220px', background: '#f1f5f9', borderRadius: '14px' }}></div>
-              ))}
-            </div>
-          ) : products.length === 0 ? (
+      {/* 5. Products Grid Layout (6 cols x 2 rows standard) */}
+      <div className="products-view-grid" id="productsGridContainer">
+        {isLoading ? (
+          Array.from({ length: 12 }).map((_, i) => (
             <div
-              className="empty-state-box"
+              key={i}
+              className="product-card skeleton-card"
+              style={{ height: '260px', background: '#f8fafc', borderRadius: '14px', border: '1px solid #f1f5f9' }}
+            >
+              <div style={{ height: '140px', background: '#e2e8f0', borderRadius: '12px 12px 0 0' }}></div>
+              <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ height: '14px', background: '#cbd5e1', borderRadius: '4px', width: '70%' }}></div>
+                <div style={{ height: '18px', background: '#94a3b8', borderRadius: '4px', width: '40%' }}></div>
+                <div style={{ height: '10px', background: '#e2e8f0', borderRadius: '4px', width: '90%' }}></div>
+              </div>
+            </div>
+          ))
+        ) : products.length > 0 ? (
+          products.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              onClick={(p) => setSelectedProduct(p)}
+            />
+          ))
+        ) : (
+          <div
+            className="empty-state-card"
+            style={{
+              gridColumn: '1 / -1',
+              padding: '60px 20px',
+              textAlign: 'center',
+              background: '#ffffff',
+              borderRadius: '20px',
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            <div
               style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: '16px',
+                background: '#eef2ff',
+                color: '#4f46e5',
                 display: 'flex',
-                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: '48px 24px',
-                background: '#ffffff',
-                borderRadius: '18px',
-                border: '1px solid #f1f5f9',
-                boxShadow: '0 4px 12px -2px rgba(15, 23, 42, 0.05)',
-                textAlign: 'center',
-                margin: '20px 0',
+                margin: '0 auto 16px',
               }}
             >
-              <div
-                className="empty-icon-wrap"
-                style={{
-                  width: '64px',
-                  height: '64px',
-                  borderRadius: '50%',
-                  background: '#f1f5f9',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#94a3b8',
-                  marginBottom: '16px',
-                }}
-              >
-                <svg
-                  style={{ width: '32px', height: '32px' }}
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                >
-                  <circle cx="11" cy="11" r="8"></circle>
-                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                  <line x1="8" y1="11" x2="14" y2="11"></line>
-                </svg>
-              </div>
-              <h3 style={{ margin: '0 0 8px', fontSize: '17px', fontWeight: 700, color: '#0f172a' }}>
-                No products found
-              </h3>
-              <p style={{ margin: '0 0 20px', fontSize: '13.5px', color: '#64748b', maxWidth: '440px', lineHeight: 1.5 }}>
-                We couldn't find any listings matching your current category or filters. Try adjusting your filters or search terms.
-              </p>
-              <button
-                type="button"
-                onClick={() => dispatch(resetFilters())}
-                className="btn-primary-action"
-                style={{
-                  padding: '10px 24px',
-                  borderRadius: '10px',
-                  background: '#2563eb',
-                  color: '#ffffff',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  border: 'none',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 14px rgba(37, 99, 235, 0.25)',
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                Clear All Filters
-              </button>
+              <ShoppingBag size={28} />
             </div>
-          ) : (
-            <div className="all-products-grid">
-              {products.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onClick={(p) => setSelectedProduct(p)}
-                />
-              ))}
-            </div>
-          )}
-        </>
-      )}
-
-      {/* Quick Details Modal */}
-      {selectedProduct && (
-        <div className="modal-backdrop show active" onClick={() => setSelectedProduct(null)}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <ProductDetails
-              productId={selectedProduct.id}
-              isModal={true}
-              onClose={() => setSelectedProduct(null)}
-            />
+            <h3 style={{ fontSize: '17px', fontWeight: 800, color: '#0f172a', marginBottom: '6px' }}>
+              No listings match your criteria
+            </h3>
+            <p style={{ fontSize: '13px', color: '#64748b', maxWidth: '380px', margin: '0 auto 20px' }}>
+              Try adjusting your category filters, clearing price constraints, or searching with broader keywords.
+            </p>
+            <button
+              type="button"
+              onClick={() => dispatch(resetFilters())}
+              className="btn btn-primary"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+            >
+              <Sparkles size={16} />
+              <span>Reset All Filters</span>
+            </button>
           </div>
-        </div>
+        )}
+      </div>
+
+      {/* 6. Product Details Modal */}
+      {selectedProduct && (
+        <ProductDetails
+          productId={selectedProduct.id}
+          isModal={true}
+          onClose={() => setSelectedProduct(null)}
+        />
       )}
     </div>
   );

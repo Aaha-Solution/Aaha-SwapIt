@@ -18,6 +18,8 @@ import {
   ChevronRight,
   Maximize2,
   Tag,
+  Flag,
+  ShieldAlert,
 } from 'lucide-react';
 import { Product } from '../../types/product.types';
 import { formatINR } from '../../utils/helpers';
@@ -31,6 +33,7 @@ import { SellerReviewsModal } from '../../components/Rating/SellerReviewsModal';
 import { WriteReviewModal } from '../../components/Rating/WriteReviewModal';
 import { StarRating } from '../../components/Rating/StarRating';
 import { ReviewCard } from '../../components/Rating/ReviewCard';
+import { ReportModal } from '../../components/ReportModal/ReportModal';
 
 interface ProductDetailsProps {
   productId?: string;
@@ -62,6 +65,9 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
   const [isWriteReviewModalOpen, setIsWriteReviewModalOpen] = useState(false);
   const [sellerReviews, setSellerReviews] = useState<Review[]>([]);
   const [sellerRatingSummary, setSellerRatingSummary] = useState<RatingSummary | null>(null);
+
+  // Trust & Safety Report state
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   const { isWishlisted, toggle } = useWishlist();
   const { isAuthenticated, openLoginModal } = useAuth();
@@ -384,12 +390,23 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
             </div>
           </div>
 
-          {/* Safety Notice */}
-          <div className="flex items-start gap-2.5 text-[11px] text-slate-400 bg-slate-50 p-3 rounded-xl border border-slate-100">
-            <ShieldCheck className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />
-            <span>
-              Always meet in a public location and verify the item thoroughly before making payment.
-            </span>
+          {/* Safety Notice & Trust Actions */}
+          <div className="flex items-center justify-between gap-3 text-[11px] bg-slate-50 p-3 rounded-xl border border-slate-100">
+            <div className="flex items-start gap-2 text-slate-500 min-w-0">
+              <ShieldCheck className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />
+              <span className="leading-tight">
+                Always meet in public & inspect items before payment.
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsReportModalOpen(true)}
+              className="flex items-center gap-1 text-[11px] font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2.5 py-1.5 rounded-lg border border-rose-100 transition-all shrink-0 cursor-pointer"
+              title="Report suspicious or fake listing"
+            >
+              <Flag className="w-3.5 h-3.5 text-rose-500" />
+              <span>Report Ad</span>
+            </button>
           </div>
         </div>
       </div>
@@ -516,6 +533,17 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
           onSuccess={handleReviewSuccess}
         />
       )}
+      {/* Trust & Safety Report Modal */}
+      {isReportModalOpen && (
+        <ReportModal
+          product={product}
+          sellerId={product.seller.id}
+          sellerName={product.seller.name}
+          isOpen={isReportModalOpen}
+          onClose={() => setIsReportModalOpen(false)}
+        />
+      )}
+
       {/* Fullscreen High-Resolution Lightbox Modal */}
       {isLightboxOpen && (
         <div

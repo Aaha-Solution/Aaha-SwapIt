@@ -49,7 +49,7 @@ export function useProducts() {
         sortBy,
       });
 
-      if (response.success) {
+      if (response.success && response.data) {
         setProducts(response.data);
       }
     } catch {

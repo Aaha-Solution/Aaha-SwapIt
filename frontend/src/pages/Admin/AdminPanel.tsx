@@ -16,15 +16,24 @@ import {
   Check,
   AlertCircle,
   RefreshCw,
+  ShieldAlert,
+  AlertTriangle,
+  Ban,
+  PackageX,
+  FileCheck,
+  Eye,
+  MessageSquareWarning,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { authApi } from '../../api/auth.api';
+import { reportApi } from '../../api/report.api';
 import { User, SellerAccountInput } from '../../types/user.types';
+import { Report, SafetyStats, ReportStatus, ModerationAction } from '../../types/report.types';
 import { CITIES } from '../../utils/constants';
 
 export const AdminPanel: React.FC = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'create' | 'list'>('create');
+  const [activeTab, setActiveTab] = useState<'create' | 'list' | 'safety'>('create');
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalSellers: 0,
@@ -32,6 +41,11 @@ export const AdminPanel: React.FC = () => {
     totalProducts: 0,
   });
   const [sellers, setSellers] = useState<Array<User & { _count?: { products: number } }>>([]);
+  const [reports, setReports] = useState<Report[]>([]);
+  const [safetyStats, setSafetyStats] = useState<SafetyStats | null>(null);
+  const [reportFilter, setReportFilter] = useState<string>('all');
+  const [safetyActionId, setSafetyActionId] = useState<string | null>(null);
+
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -51,9 +65,10 @@ export const AdminPanel: React.FC = () => {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [statsRes, sellersRes] = await Promise.all([
+      const [statsRes, sellersRes, reportsRes] = await Promise.all([
         authApi.getAdminStats(),
         authApi.getSellers(),
+        reportApi.getAdminReports(),
       ]);
 
       if (statsRes.success && statsRes.data) {
@@ -61,6 +76,10 @@ export const AdminPanel: React.FC = () => {
       }
       if (sellersRes.success && sellersRes.data) {
         setSellers(sellersRes.data);
+      }
+      if (reportsRes.success && reportsRes.data) {
+        setReports(reportsRes.data.reports);
+        setSafetyStats(reportsRes.data.stats);
       }
     } catch {
       // Fallback demo data if offline
@@ -94,8 +113,52 @@ export const AdminPanel: React.FC = () => {
           _count: { products: 2 },
         },
       ]);
+      setSafetyStats({
+        totalReports: 2,
+        pendingReports: 1,
+        investigatingReports: 1,
+        resolvedReports: 0,
+        dismissedReports: 0,
+        takedownsCount: 0,
+        trustSafetyScore: 98,
+      });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleUpdateReport = async (
+    reportId: string,
+    status: ReportStatus,
+    actionTaken: ModerationAction,
+    notes?: string
+  ) => {
+    setSafetyActionId(reportId);
+    const res = await reportApi.updateReport(reportId, {
+      status,
+      actionTaken,
+      adminNotes: notes || `Moderated by admin on ${new Date().toLocaleDateString()}`,
+    });
+    setSafetyActionId(null);
+
+    if (res.success && res.data) {
+      setReports((prev) =>
+        prev.map((r) => (r.id === reportId ? (res.data as Report) : r))
+      );
+      setFeedback({
+        type: 'success',
+        message: `Report ${reportId} updated to "${status}" with action "${actionTaken}".`,
+      });
+      // Refresh safety stats
+      const statsRes = await reportApi.getSafetyStats();
+      if (statsRes.success && statsRes.data) {
+        setSafetyStats(statsRes.data);
+      }
+    } else {
+      setFeedback({
+        type: 'error',
+        message: res.error || 'Failed to update report',
+      });
     }
   };
 
@@ -305,10 +368,10 @@ export const AdminPanel: React.FC = () => {
       )}
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 mb-6">
+      <div className="flex items-center gap-2 border-b border-slate-200 mb-6 overflow-x-auto">
         <button
           onClick={() => setActiveTab('create')}
-          className={`flex items-center gap-2 px-5 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-5 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
             activeTab === 'create'
               ? 'border-indigo-600 text-indigo-600'
               : 'border-transparent text-slate-500 hover:text-slate-900'
@@ -319,7 +382,7 @@ export const AdminPanel: React.FC = () => {
         </button>
         <button
           onClick={() => setActiveTab('list')}
-          className={`flex items-center gap-2 px-5 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+          className={`flex items-center gap-2 px-5 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
             activeTab === 'list'
               ? 'border-indigo-600 text-indigo-600'
               : 'border-transparent text-slate-500 hover:text-slate-900'
@@ -327,6 +390,24 @@ export const AdminPanel: React.FC = () => {
         >
           <Store className="w-4 h-4" />
           <span>Manage Sellers Directory ({sellers.length})</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('safety')}
+          className={`flex items-center gap-2 px-5 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+            activeTab === 'safety'
+              ? 'border-rose-600 text-rose-600'
+              : 'border-transparent text-slate-500 hover:text-slate-900'
+          }`}
+        >
+          <ShieldAlert className="w-4 h-4 text-rose-500" />
+          <span className="flex items-center gap-1.5">
+            <span>Trust & Safety Moderation</span>
+            {reports.filter((r) => r.status === 'pending').length > 0 && (
+              <span className="bg-rose-500 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full">
+                {reports.filter((r) => r.status === 'pending').length}
+              </span>
+            )}
+          </span>
         </button>
       </div>
 
@@ -532,6 +613,277 @@ export const AdminPanel: React.FC = () => {
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Tab 3: Trust & Safety Fraud Moderation Center */}
+      {activeTab === 'safety' && (
+        <div className="space-y-6">
+          {/* Safety Summary Banner & Metrics */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-white p-4 rounded-2xl border border-rose-100 shadow-sm">
+              <div className="flex items-center justify-between text-rose-500 mb-1">
+                <span className="text-[11px] font-bold uppercase tracking-wider">Pending Action</span>
+                <ShieldAlert className="w-4 h-4 text-rose-600" />
+              </div>
+              <p className="text-2xl font-black text-rose-950">
+                {safetyStats?.pendingReports ?? reports.filter((r) => r.status === 'pending').length}
+              </p>
+              <span className="text-[11px] text-rose-600 font-medium mt-0.5 block">Requires review</span>
+            </div>
+
+            <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+              <div className="flex items-center justify-between text-slate-500 mb-1">
+                <span className="text-[11px] font-bold uppercase tracking-wider">Investigating</span>
+                <AlertTriangle className="w-4 h-4 text-amber-500" />
+              </div>
+              <p className="text-2xl font-black text-slate-900">
+                {safetyStats?.investigatingReports ?? reports.filter((r) => r.status === 'investigating').length}
+              </p>
+              <span className="text-[11px] text-slate-400 mt-0.5 block">Under scrutiny</span>
+            </div>
+
+            <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+              <div className="flex items-center justify-between text-slate-500 mb-1">
+                <span className="text-[11px] font-bold uppercase tracking-wider">Takedowns</span>
+                <Ban className="w-4 h-4 text-red-600" />
+              </div>
+              <p className="text-2xl font-black text-slate-900">
+                {safetyStats?.takedownsCount ?? reports.filter((r) => r.actionTaken === 'listing_removed').length}
+              </p>
+              <span className="text-[11px] text-slate-400 mt-0.5 block">Listings removed</span>
+            </div>
+
+            <div className="bg-white p-4 rounded-2xl border border-emerald-100 shadow-sm bg-gradient-to-br from-white to-emerald-50/40">
+              <div className="flex items-center justify-between text-emerald-600 mb-1">
+                <span className="text-[11px] font-bold uppercase tracking-wider">Platform Trust Score</span>
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              </div>
+              <p className="text-2xl font-black text-emerald-950">
+                {safetyStats?.trustSafetyScore ?? 98}%
+              </p>
+              <span className="text-[11px] text-emerald-700 font-medium mt-0.5 block">Community health</span>
+            </div>
+          </div>
+
+          {/* Moderation Queue Container */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-md space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+              <div>
+                <h2 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+                  <ShieldAlert className="w-5 h-5 text-rose-600" />
+                  <span>Flagged Ads & Fraud Reports</span>
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Review reported listings, counterfeit flags, or scam attempts submitted by users.
+                </p>
+              </div>
+
+              {/* Status Filter Tabs */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+                {(['all', 'pending', 'investigating', 'resolved', 'dismissed'] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => setReportFilter(tab)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-all cursor-pointer ${
+                      reportFilter === tab
+                        ? 'bg-slate-900 text-white shadow-sm'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Reports List */}
+            {(() => {
+              const filteredReports = reports.filter((r) =>
+                reportFilter === 'all' ? true : r.status === reportFilter
+              );
+
+              if (filteredReports.length === 0) {
+                return (
+                  <div className="py-12 text-center text-slate-400 space-y-2">
+                    <CheckCircle2 className="w-10 h-10 mx-auto text-emerald-500 opacity-80" />
+                    <p className="text-sm font-bold text-slate-700">No reports found for this filter</p>
+                    <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                      All clean! There are no flagged listings or user safety complaints matching this status.
+                    </p>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="space-y-4">
+                  {filteredReports.map((report) => {
+                    const isActing = safetyActionId === report.id;
+
+                    const reasonBadges: Record<string, { label: string; color: string }> = {
+                      fraud_scam: { label: 'Scam / Fraud Attempt', color: 'bg-rose-100 text-rose-800 border-rose-200' },
+                      counterfeit: { label: 'Counterfeit / Replica', color: 'bg-amber-100 text-amber-800 border-amber-200' },
+                      prohibited_item: { label: 'Prohibited Item', color: 'bg-red-100 text-red-800 border-red-200' },
+                      inaccurate_description: { label: 'Misleading Info', color: 'bg-orange-100 text-orange-800 border-orange-200' },
+                      harassment: { label: 'Abusive / Harassment', color: 'bg-purple-100 text-purple-800 border-purple-200' },
+                      suspicious_seller: { label: 'Suspicious Profile', color: 'bg-blue-100 text-blue-800 border-blue-200' },
+                      other: { label: 'Other Concern', color: 'bg-slate-100 text-slate-800 border-slate-200' },
+                    };
+
+                    const statusBadges: Record<string, { label: string; color: string }> = {
+                      pending: { label: 'Pending Review', color: 'bg-rose-50 text-rose-700 border-rose-200 font-extrabold' },
+                      investigating: { label: 'Investigating', color: 'bg-amber-50 text-amber-700 border-amber-200' },
+                      resolved: { label: 'Resolved', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+                      dismissed: { label: 'Dismissed', color: 'bg-slate-100 text-slate-600 border-slate-200' },
+                    };
+
+                    const badge = reasonBadges[report.reason] || { label: report.reason, color: 'bg-slate-100 text-slate-800' };
+                    const statusBadge = statusBadges[report.status] || { label: report.status, color: 'bg-slate-100 text-slate-800' };
+
+                    return (
+                      <div
+                        key={report.id}
+                        className="p-5 rounded-2xl border border-slate-200 bg-slate-50/40 hover:bg-white hover:border-indigo-200 transition-all space-y-3"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${badge.color}`}>
+                              {badge.label}
+                            </span>
+                            <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${statusBadge.color}`}>
+                              {statusBadge.label}
+                            </span>
+                            {report.actionTaken && report.actionTaken !== 'none' && (
+                              <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                Action: {report.actionTaken.replace('_', ' ')}
+                              </span>
+                            )}
+                          </div>
+
+                          <span className="text-[11px] text-slate-400">
+                            Reported {new Date(report.createdAt).toLocaleString()}
+                          </span>
+                        </div>
+
+                        {/* Reported Item / Seller Details */}
+                        <div className="p-3.5 rounded-xl bg-white border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-slate-900">
+                                {report.productTitle || 'Reported Listing'}
+                              </span>
+                              {report.productPrice && (
+                                <span className="text-xs font-extrabold text-indigo-600">
+                                  ₹{report.productPrice.toLocaleString()}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-slate-500 mt-0.5">
+                              Seller: <strong>{report.sellerName || 'Unknown'}</strong> {report.sellerId && `(${report.sellerId})`}
+                            </p>
+                          </div>
+
+                          <div className="text-[11px] text-slate-500">
+                            <span>Reporter: <strong>{report.reporterName}</strong> ({report.reporterEmail || 'Anonymous'})</span>
+                          </div>
+                        </div>
+
+                        {/* Description */}
+                        <div className="text-xs text-slate-700 bg-white/80 p-3 rounded-xl border border-slate-100 leading-relaxed">
+                          <strong className="text-slate-900 font-semibold block mb-0.5">Report Description:</strong>
+                          {report.description}
+                        </div>
+
+                        {/* Admin Notes if present */}
+                        {report.adminNotes && (
+                          <div className="text-[11px] text-indigo-900 bg-indigo-50/60 p-2.5 rounded-xl border border-indigo-100">
+                            <strong>Admin Note:</strong> {report.adminNotes}
+                          </div>
+                        )}
+
+                        {/* Moderation Actions Bar */}
+                        <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                          {report.status !== 'resolved' && (
+                            <>
+                              <button
+                                type="button"
+                                disabled={isActing}
+                                onClick={() =>
+                                  handleUpdateReport(
+                                    report.id,
+                                    'resolved',
+                                    'listing_removed',
+                                    'Listing removed due to community safety violation'
+                                  )
+                                }
+                                className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                              >
+                                <Ban className="w-3.5 h-3.5" />
+                                <span>Take Down Ad</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                disabled={isActing}
+                                onClick={() =>
+                                  handleUpdateReport(
+                                    report.id,
+                                    'investigating',
+                                    'warning_sent',
+                                    'Warning notification dispatched to seller'
+                                  )
+                                }
+                                className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                              >
+                                <AlertTriangle className="w-3.5 h-3.5" />
+                                <span>Warn Seller</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                disabled={isActing}
+                                onClick={() =>
+                                  handleUpdateReport(
+                                    report.id,
+                                    'resolved',
+                                    'none',
+                                    'Resolved after inspection'
+                                  )
+                                }
+                                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>Mark Resolved</span>
+                              </button>
+                            </>
+                          )}
+
+                          {report.status !== 'dismissed' && (
+                            <button
+                              type="button"
+                              disabled={isActing}
+                              onClick={() =>
+                                handleUpdateReport(
+                                  report.id,
+                                  'dismissed',
+                                  'none',
+                                  'Report reviewed and dismissed as false alarm'
+                                )
+                              }
+                              className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl transition-all cursor-pointer disabled:opacity-50"
+                            >
+                              <span>Dismiss</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </div>
         </div>
       )}
     </div>
