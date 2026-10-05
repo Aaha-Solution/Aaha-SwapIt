@@ -125,7 +125,11 @@ export const Home: React.FC = () => {
       <div className="home-explore-more-bar">
         <div className="explore-info">
           <h4>Looking for more variety & great deals?</h4>
-          <p>Explore all 12+ verified pre-owned items across categories with instant filters</p>
+          <p>
+            {products.length > 0
+              ? `Explore all ${products.length} verified pre-owned items across categories with instant filters`
+              : 'Explore verified pre-owned items across categories with instant filters'}
+          </p>
         </div>
 
         <button
@@ -134,7 +138,11 @@ export const Home: React.FC = () => {
           className="btn-explore-products"
           style={{ border: 'none', cursor: 'pointer' }}
         >
-          <span>Explore All Products (12+)</span>
+          <span>
+            {products.length > 0
+              ? `Explore All Products (${products.length})`
+              : 'Explore All Products'}
+          </span>
           <span>&rarr;</span>
         </button>
       </div>
