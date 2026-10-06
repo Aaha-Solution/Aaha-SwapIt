@@ -7,6 +7,8 @@ import { productApi } from '../../api/product.api';
 import { closePostAdModal } from '../../store/slices/userSlice';
 import { ImageUploader } from '../../components/ImageUploader/ImageUploader';
 
+import { useToast } from '../../hooks/useToast';
+
 interface SellProps {
   isModal?: boolean;
   onClose?: () => void;
@@ -16,6 +18,7 @@ interface SellProps {
 export const Sell: React.FC<SellProps> = ({ isModal = false, onClose, onSuccess }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const toast = useToast();
 
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('mobiles');
@@ -33,19 +36,23 @@ export const Sell: React.FC<SellProps> = ({ isModal = false, onClose, onSuccess 
     e.preventDefault();
     if (!title.trim() || title.length < 4) {
       setError('Please enter a descriptive ad title (at least 4 characters)');
+      toast.warning('Please enter a descriptive ad title (at least 4 characters)');
       return;
     }
     const numPrice = parseFloat(price);
     if (isNaN(numPrice) || numPrice <= 0) {
       setError('Please enter a valid price in INR');
+      toast.warning('Please enter a valid price in INR');
       return;
     }
     if (!description.trim()) {
       setError('Please provide a brief description');
+      toast.warning('Please provide a brief description');
       return;
     }
     if (images.length === 0) {
       setError('Please upload or select at least one photo for your listing');
+      toast.warning('Please upload or select at least one photo');
       return;
     }
 
@@ -73,6 +80,15 @@ export const Sell: React.FC<SellProps> = ({ isModal = false, onClose, onSuccess 
       });
 
       setIsSuccess(true);
+      toast.success(`"${title}" is now active and discoverable!`, {
+        title: 'Listing Published Live 🎉',
+        duration: 5000,
+        action: {
+          label: 'View Marketplace',
+          url: '/products',
+        },
+      });
+
       setTimeout(() => {
         if (onSuccess) onSuccess();
         if (onClose) onClose();
@@ -81,6 +97,7 @@ export const Sell: React.FC<SellProps> = ({ isModal = false, onClose, onSuccess 
       }, 1200);
     } catch {
       setError('Failed to post ad. Please try again.');
+      toast.error('Failed to publish listing. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

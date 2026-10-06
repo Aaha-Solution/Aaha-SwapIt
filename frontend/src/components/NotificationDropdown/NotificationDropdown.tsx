@@ -236,7 +236,7 @@ export const NotificationDropdown: React.FC = () => {
 
               <button
                 type="button"
-                onClick={triggerTestAlert}
+                onClick={() => triggerTestAlert()}
                 style={{
                   display: 'flex',
                   alignItems: 'center',

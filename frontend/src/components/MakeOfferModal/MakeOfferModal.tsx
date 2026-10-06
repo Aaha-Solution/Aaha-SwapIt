@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Tag, Sparkles, Check, ArrowRight } from 'lucide-react';
 import { formatINR } from '../../utils/helpers';
+import { useToast } from '../../hooks/useToast';
 
 interface MakeOfferModalProps {
   product: {
@@ -21,6 +22,7 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
   onClose,
   onSubmitOffer,
 }) => {
+  const toast = useToast();
   const [offerAmount, setOfferAmount] = useState<number>(() => Math.round(product.price * 0.9));
   const [customInput, setCustomInput] = useState<string>(() => String(Math.round(product.price * 0.9)));
   const [note, setNote] = useState<string>('Ready to pick up today!');
@@ -47,6 +49,13 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
     e.preventDefault();
     if (offerAmount > 0 && offerAmount <= product.price * 1.5) {
       onSubmitOffer(offerAmount, note.trim() || undefined);
+      toast.success(`Offer of ₹${offerAmount.toLocaleString()} submitted to ${sellerName}!`, {
+        title: 'Offer Sent 🤝',
+        action: {
+          label: 'View Messages',
+          url: '/messages',
+        },
+      });
       onClose();
     }
   };

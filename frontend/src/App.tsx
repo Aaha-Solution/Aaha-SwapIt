@@ -6,6 +6,7 @@ import { Header } from './components/Header/Header';
 import { Navbar } from './components/Navbar/Navbar';
 import { Footer } from './components/Footer/Footer';
 import { MobileBottomNav } from './components/MobileBottomNav/MobileBottomNav';
+import { ToastContainer } from './components/Toast/ToastContainer';
 import { AppRoutes } from './routes/AppRoutes';
 import { closeAuthModal, closePostAdModal } from './store/slices/userSlice';
 
@@ -28,6 +29,9 @@ export const AppContent: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc] text-slate-800">
+      {/* Global Interactive Toast Notification Host */}
+      <ToastContainer />
+
       {/* Top Sticky Header */}
       <Header />
 

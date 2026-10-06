@@ -1,10 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useDispatch } from 'react-redux';
 import { notificationApi } from '../api/notification.api';
-import { NotificationItem } from '../types/notification.types';
+import { NotificationItem, NotificationType } from '../types/notification.types';
 import { getSocket, joinUserRoom } from '../api/socket';
 import { useAuth } from './useAuth';
+import { addToast, ToastType } from '../store/slices/toastSlice';
 
 export const useNotifications = () => {
+  const dispatch = useDispatch();
   const { user, isAuthenticated } = useAuth();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState<number>(0);
@@ -48,10 +51,28 @@ export const useNotifications = () => {
       setUnreadCount((prev) => prev + 1);
       setActiveToast(notif);
 
-      // Auto-hide toast after 5.5s
+      // Map notification types to toast types
+      let toastType: ToastType = 'info';
+      if (notif.type === 'offer' || notif.type === 'deal') {
+        toastType = 'success';
+      } else if (notif.type === 'price_drop') {
+        toastType = 'warning';
+      }
+
+      dispatch(
+        addToast({
+          type: toastType,
+          title: notif.title || 'New Notification',
+          message: notif.message,
+          duration: 5000,
+          action: notif.link ? { label: 'View Deal', url: notif.link } : undefined,
+        })
+      );
+
+      // Auto-hide local toast
       const timer = setTimeout(() => {
         setActiveToast((current) => (current?.id === notif.id ? null : current));
-      }, 5500);
+      }, 5000);
 
       return () => clearTimeout(timer);
     };
@@ -61,7 +82,7 @@ export const useNotifications = () => {
     return () => {
       socket.off('receive_notification', handleNewNotification);
     };
-  }, [isAuthenticated, user?.id]);
+  }, [isAuthenticated, user?.id, dispatch]);
 
   const markAsRead = async (id: string) => {
     try {
@@ -98,28 +119,57 @@ export const useNotifications = () => {
     }
   };
 
-  const triggerTestAlert = async () => {
-    try {
-      const demoTitles = [
-        { title: 'Deal Alert: Sony PS5', message: 'Seller accepted your ₹38,000 offer! Complete payment now.', type: 'offer', link: '/messages' },
-        { title: 'Swap Proposal', message: 'New swap request received for your DSLR Camera.', type: 'deal', link: '/messages' },
-        { title: 'Price Drop on MacBook M2', message: 'Price decreased by 12% in your city.', type: 'price_drop', link: '/products' },
-      ];
-      const random = demoTitles[Math.floor(Math.random() * demoTitles.length)];
-
-      await notificationApi.triggerTestNotification({
-        title: random.title,
-        message: random.message,
-        type: random.type,
-        link: random.link,
-      });
-    } catch (err) {
-      console.error('Failed to trigger test notification', err);
-    }
-  };
-
   const dismissToast = () => {
     setActiveToast(null);
+  };
+
+  const triggerTestAlert = async (type: NotificationType = 'offer') => {
+    const mockTitles: Record<NotificationType, string> = {
+      offer: 'New Offer Received! 🎉',
+      message: 'New Message from Buyer 💬',
+      price_drop: 'Price Drop Alert 📉',
+      deal: 'Deal Confirmed 🤝',
+      favorite: 'Item Added to Wishlist ⭐',
+      system: 'SwapIt Safety Tip 🛡️',
+    };
+
+    const mockMessages: Record<NotificationType, string> = {
+      offer: 'Karthik Raja offered ₹24,000 for your iPhone 13.',
+      message: 'Is the Royal Enfield still available for test drive?',
+      price_drop: 'MacBook Air M2 price dropped to ₹68,000 in your area.',
+      deal: 'Your deal for Leather Biker Jacket was accepted!',
+      favorite: '3 people saved your Yamaha FZ listing this week.',
+      system: 'Always meet in public locations when exchanging goods.',
+    };
+
+    const mockItem: NotificationItem = {
+      id: 'test-' + Date.now(),
+      userId: user?.id || 'usr-current',
+      title: mockTitles[type] || 'New Notification',
+      message: mockMessages[type] || 'You have a new update on SwapIt.',
+      type,
+      read: false,
+      link: type === 'message' ? '/messages' : '/products',
+      createdAt: 'Just now',
+    };
+
+    setNotifications((prev) => [mockItem, ...prev]);
+    setUnreadCount((prev) => prev + 1);
+    setActiveToast(mockItem);
+
+    let toastType: ToastType = 'info';
+    if (type === 'offer' || type === 'deal') toastType = 'success';
+    else if (type === 'price_drop') toastType = 'warning';
+
+    dispatch(
+      addToast({
+        type: toastType,
+        title: mockItem.title,
+        message: mockItem.message,
+        duration: 5000,
+        action: mockItem.link ? { label: 'Open', url: mockItem.link } : undefined,
+      })
+    );
   };
 
   return {
@@ -127,11 +177,11 @@ export const useNotifications = () => {
     unreadCount,
     isLoading,
     activeToast,
+    fetchNotifications,
     markAsRead,
     markAllAsRead,
     deleteNotification,
-    triggerTestAlert,
     dismissToast,
-    refreshNotifications: fetchNotifications,
+    triggerTestAlert,
   };
 };
