@@ -1,5 +1,34 @@
 [
   {
+    "id": "rep-1791267510709-3sae3",
+    "reporterId": "usr-anonymous-guest",
+    "reporterName": "Community Member",
+    "productId": "prod-mod-test",
+    "productTitle": "Prohibited Drone without license",
+    "reason": "prohibited_item",
+    "description": "Selling restricted wireless communication hardware.",
+    "status": "resolved",
+    "actionTaken": "listing_removed",
+    "createdAt": "2026-10-06T06:18:30.709Z",
+    "updatedAt": "2026-10-06T06:18:30.719Z",
+    "adminNotes": "Confirmed violation. Listing was taken down."
+  },
+  {
+    "id": "rep-1791267510647-4oi4g",
+    "reporterId": "usr-buyer-test",
+    "reporterName": "Community Member",
+    "reporterEmail": "buyer@example.com",
+    "productId": "prod-test-flag",
+    "productTitle": "Suspicious Luxury Watch",
+    "productPrice": 1200,
+    "reason": "counterfeit",
+    "description": "Seller claims original Swiss timepiece but serial number format is invalid.",
+    "status": "pending",
+    "actionTaken": "none",
+    "createdAt": "2026-10-06T06:18:30.647Z",
+    "updatedAt": "2026-10-06T06:18:30.647Z"
+  },
+  {
     "id": "rep-1791193335465-g6vd2",
     "reporterId": "usr-anonymous-guest",
     "reporterName": "Community Member",

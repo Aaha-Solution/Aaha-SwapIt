@@ -1,15 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from './store/store';
 import { Header } from './components/Header/Header';
 import { Navbar } from './components/Navbar/Navbar';
 import { Footer } from './components/Footer/Footer';
+import { MobileBottomNav } from './components/MobileBottomNav/MobileBottomNav';
 import { AppRoutes } from './routes/AppRoutes';
-import { Login } from './pages/Login/Login';
-import { Signup } from './pages/Signup/Signup';
-import { Sell } from './pages/Sell/Sell';
 import { closeAuthModal, closePostAdModal } from './store/slices/userSlice';
+
+// Lazy load modal overlay components so they don't block the initial main bundle
+const Login = lazy(() => import('./pages/Login/Login').then((m) => ({ default: m.Login })));
+const Signup = lazy(() => import('./pages/Signup/Signup').then((m) => ({ default: m.Signup })));
+const Sell = lazy(() => import('./pages/Sell/Sell').then((m) => ({ default: m.Sell })));
 
 export const AppContent: React.FC = () => {
   const dispatch = useDispatch();
@@ -42,6 +45,9 @@ export const AppContent: React.FC = () => {
       {/* Footer */}
       <Footer />
 
+      {/* Modern Floating Mobile Bottom Navigation */}
+      <MobileBottomNav />
+
       {/* Global Auth Modal */}
       {isAuthModalOpen && (
         <div
@@ -49,19 +55,21 @@ export const AppContent: React.FC = () => {
           onClick={() => dispatch(closeAuthModal())}
         >
           <div onClick={(e) => e.stopPropagation()}>
-            {modalTab === 'login' ? (
-              <Login
-                isModal={true}
-                onClose={() => dispatch(closeAuthModal())}
-                onSwitchToSignup={() => setModalTab('signup')}
-              />
-            ) : (
-              <Signup
-                isModal={true}
-                onClose={() => dispatch(closeAuthModal())}
-                onSwitchToLogin={() => setModalTab('login')}
-              />
-            )}
+            <Suspense fallback={null}>
+              {modalTab === 'login' ? (
+                <Login
+                  isModal={true}
+                  onClose={() => dispatch(closeAuthModal())}
+                  onSwitchToSignup={() => setModalTab('signup')}
+                />
+              ) : (
+                <Signup
+                  isModal={true}
+                  onClose={() => dispatch(closeAuthModal())}
+                  onSwitchToLogin={() => setModalTab('login')}
+                />
+              )}
+            </Suspense>
           </div>
         </div>
       )}
@@ -73,10 +81,12 @@ export const AppContent: React.FC = () => {
           onClick={() => dispatch(closePostAdModal())}
         >
           <div onClick={(e) => e.stopPropagation()}>
-            <Sell
-              isModal={true}
-              onClose={() => dispatch(closePostAdModal())}
-            />
+            <Suspense fallback={null}>
+              <Sell
+                isModal={true}
+                onClose={() => dispatch(closePostAdModal())}
+              />
+            </Suspense>
           </div>
         </div>
       )}
