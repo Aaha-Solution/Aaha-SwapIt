@@ -3,21 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {
-  MapPin,
   Navigation,
-  Sliders,
-  Sparkles,
-  ShoppingBag,
-  ExternalLink,
-  MessageSquare,
   Search,
   CheckCircle2,
-  Maximize2,
   Compass,
-  ArrowRight,
-  ShieldCheck,
-  Tag,
   Zap,
+  Layers,
+  MessageSquare,
 } from 'lucide-react';
 import { Product } from '../../types/product.types';
 import { formatINR } from '../../utils/helpers';
@@ -26,6 +18,9 @@ import {
   formatDistance,
   KNOWN_CITY_LANDMARKS,
   DEFAULT_USER_LOCATION,
+  PUDUCHERRY_BOUNDS,
+  isWithinPuducherry,
+  resolvePuducherryCoordinates,
   CityLandmark,
 } from '../../utils/geo';
 
@@ -34,22 +29,59 @@ interface DealsNearMeMapProps {
   onSelectProduct?: (product: Product) => void;
 }
 
+const CATEGORIES = [
+  { id: 'all', name: 'All' },
+  { id: 'cars', name: '🚗 Cars' },
+  { id: 'bikes', name: '🏍️ Bikes' },
+  { id: 'mobiles', name: '📱 Mobiles' },
+  { id: 'electronics', name: '💻 Electronics' },
+  { id: 'properties', name: '🏠 Properties' },
+  { id: 'furniture', name: '🛋️ Furniture' },
+  { id: 'fashion', name: '👕 Fashion' },
+];
+
+const MAP_LAYERS = {
+  google: {
+    name: 'Google Map',
+    url: 'https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+    maxZoom: 20,
+    attribution: '&copy; Google Maps',
+  },
+  hybrid: {
+    name: 'Satellite',
+    url: 'https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+    maxZoom: 20,
+    attribution: '&copy; Google Maps Satellite',
+  },
+  osm: {
+    name: 'OpenStreetMap',
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    subdomains: ['a', 'b', 'c'],
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors',
+  },
+};
+
 export const DealsNearMeMap: React.FC<DealsNearMeMapProps> = ({ products, onSelectProduct }) => {
   const navigate = useNavigate();
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
+  const tileLayerRef = useRef<L.TileLayer | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
   const radiusCircleRef = useRef<L.Circle | null>(null);
   const userMarkerRef = useRef<L.Marker | null>(null);
 
-  // Geo & Filter States
+  // Geo & Filter States (Restricted strictly to Puducherry & Surroundings)
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number; name: string }>({
     lat: DEFAULT_USER_LOCATION.latitude,
     lng: DEFAULT_USER_LOCATION.longitude,
     name: DEFAULT_USER_LOCATION.name,
   });
-  const [radiusKm, setRadiusKm] = useState<number>(10);
+  const [radiusKm, setRadiusKm] = useState<number>(15);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [mapStyle, setMapStyle] = useState<'google' | 'hybrid' | 'osm'>('google');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isLocating, setIsLocating] = useState<boolean>(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -68,20 +100,39 @@ export const DealsNearMeMap: React.FC<DealsNearMeMapProps> = ({ products, onSele
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
-        setUserCoords({
-          lat: latitude,
-          lng: longitude,
-          name: 'My Current GPS Location',
-        });
-        setIsLocating(false);
-        setLocationStatusMessage('Location detected successfully!');
-        if (mapInstanceRef.current) {
-          mapInstanceRef.current.flyTo([latitude, longitude], 13, { duration: 1.2 });
+        if (isWithinPuducherry(latitude, longitude)) {
+          setUserCoords({
+            lat: latitude,
+            lng: longitude,
+            name: 'Your Location (Puducherry)',
+          });
+          setLocationStatusMessage('Located in Puducherry');
+          if (mapInstanceRef.current) {
+            mapInstanceRef.current.flyTo([latitude, longitude], 14, { duration: 1.2 });
+          }
+        } else {
+          // If GPS coordinates are outside Pondicherry, alert and center on Pondicherry
+          setUserCoords({
+            lat: DEFAULT_USER_LOCATION.latitude,
+            lng: DEFAULT_USER_LOCATION.longitude,
+            name: DEFAULT_USER_LOCATION.name,
+          });
+          setLocationStatusMessage('GPS outside Puducherry. Map locked to Puducherry.');
+          if (mapInstanceRef.current) {
+            mapInstanceRef.current.flyTo(
+              [DEFAULT_USER_LOCATION.latitude, DEFAULT_USER_LOCATION.longitude],
+              13,
+              { duration: 1.2 }
+            );
+          }
         }
+        setIsLocating(false);
+        setTimeout(() => setLocationStatusMessage(''), 4000);
       },
       (err) => {
         setIsLocating(false);
         setLocationStatusMessage('Unable to retrieve position. Using default city location.');
+        setTimeout(() => setLocationStatusMessage(''), 3000);
         console.warn('Geolocation error:', err.message);
       },
       { timeout: 8000, enableHighAccuracy: true }
@@ -95,38 +146,24 @@ export const DealsNearMeMap: React.FC<DealsNearMeMapProps> = ({ products, onSele
       name: `${landmark.name}, ${landmark.city}`,
     });
     if (mapInstanceRef.current) {
-      mapInstanceRef.current.flyTo([landmark.latitude, landmark.longitude], 13, { duration: 1.2 });
+      mapInstanceRef.current.flyTo([landmark.latitude, landmark.longitude], 14, { duration: 1.2 });
     }
   };
 
-  // Assign fallback coordinates if a product is missing explicit coordinates
+  // Assign exact place-accurate coordinates strictly within Puducherry & surroundings
   const productsWithCoords = useMemo(() => {
     return products.map((p, idx) => {
-      let lat = p.latitude;
-      let lng = p.longitude;
-
-      if (!lat || !lng) {
-        // Fallback offset around Chennai Central
-        const offsets = [
-          { lat: 13.0418, lng: 80.2341, name: 'T. Nagar' },
-          { lat: 12.9815, lng: 80.2180, name: 'Velachery' },
-          { lat: 13.0850, lng: 80.2101, name: 'Anna Nagar' },
-          { lat: 13.0012, lng: 80.2565, name: 'Adyar' },
-          { lat: 12.9352, lng: 80.2289, name: 'OMR' },
-          { lat: 13.0382, lng: 80.1565, name: 'Porur' },
-          { lat: 13.0569, lng: 80.2425, name: 'Nungambakkam' },
-          { lat: 13.0067, lng: 80.2025, name: 'Guindy' },
-        ];
-        const chosen = offsets[idx % offsets.length];
-        lat = chosen.lat;
-        lng = chosen.lng;
-      }
+      const resolved = resolvePuducherryCoordinates(p, idx);
+      const lat = resolved.latitude;
+      const lng = resolved.longitude;
+      const areaName = resolved.areaName;
 
       const dist = calculateDistance(userCoords.lat, userCoords.lng, lat, lng);
       return {
         ...p,
         latitude: lat,
         longitude: lng,
+        areaName,
         distanceKm: dist,
       };
     });
@@ -137,19 +174,24 @@ export const DealsNearMeMap: React.FC<DealsNearMeMapProps> = ({ products, onSele
     return productsWithCoords
       .filter((p) => {
         const matchesRadius = p.distanceKm <= radiusKm;
-        const matchesCat = selectedCategory === 'all' || p.category === selectedCategory || p.categoryId === selectedCategory;
+        const matchesCat =
+          selectedCategory === 'all' ||
+          p.category === selectedCategory ||
+          p.categoryId === selectedCategory;
         const matchesSearch =
           !searchQuery.trim() ||
           p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
           p.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.city.toLowerCase().includes(searchQuery.toLowerCase());
+          p.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (p as any).areaName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.neighborhood?.toLowerCase().includes(searchQuery.toLowerCase());
 
         return matchesRadius && matchesCat && matchesSearch;
       })
       .sort((a, b) => a.distanceKm - b.distanceKm);
   }, [productsWithCoords, radiusKm, selectedCategory, searchQuery]);
 
-  // Format short price (e.g. ₹4.5L, ₹85K)
+  // Format short price (e.g. ₹4.5L, ₹85k)
   const formatShortPrice = (val: number) => {
     if (val >= 100000) return `₹${(val / 100000).toFixed(val % 100000 === 0 ? 0 : 1)}L`;
     if (val >= 1000) return `₹${Math.round(val / 1000)}k`;
@@ -161,22 +203,39 @@ export const DealsNearMeMap: React.FC<DealsNearMeMapProps> = ({ products, onSele
     if (!mapContainerRef.current) return;
 
     if (!mapInstanceRef.current) {
+      const southWest = L.latLng(PUDUCHERRY_BOUNDS.southWest[0], PUDUCHERRY_BOUNDS.southWest[1]);
+      const northEast = L.latLng(PUDUCHERRY_BOUNDS.northEast[0], PUDUCHERRY_BOUNDS.northEast[1]);
+      const puducherryBounds = L.latLngBounds(southWest, northEast);
+
       const map = L.map(mapContainerRef.current, {
         center: [userCoords.lat, userCoords.lng],
-        zoom: 12,
+        zoom: 13,
+        minZoom: 11, // Prevent zooming out beyond Puducherry & surroundings
+        maxZoom: 19,
+        maxBounds: puducherryBounds, // Prevent panning outside Puducherry & surroundings
+        maxBoundsViscosity: 1.0, // Stiff boundary bounce to lock inside Puducherry
         zoomControl: false,
       });
 
       L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-      // OpenStreetMap Tiles with crisp styling
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors',
-        maxZoom: 19,
+      // Map Tile Layer
+      const cfg = MAP_LAYERS[mapStyle];
+      tileLayerRef.current = L.tileLayer(cfg.url, {
+        subdomains: cfg.subdomains,
+        maxZoom: cfg.maxZoom,
+        attribution: cfg.attribution,
       }).addTo(map);
 
       markersLayerRef.current = L.layerGroup().addTo(map);
       mapInstanceRef.current = map;
+
+      // Invalidate size to ensure all tiles render correctly
+      setTimeout(() => {
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.invalidateSize();
+        }
+      }, 200);
     }
 
     return () => {
@@ -186,6 +245,23 @@ export const DealsNearMeMap: React.FC<DealsNearMeMapProps> = ({ products, onSele
       }
     };
   }, []);
+
+  // Update Tile Layer when user toggles mapStyle
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+    const map = mapInstanceRef.current;
+
+    if (tileLayerRef.current) {
+      map.removeLayer(tileLayerRef.current);
+    }
+
+    const cfg = MAP_LAYERS[mapStyle];
+    tileLayerRef.current = L.tileLayer(cfg.url, {
+      subdomains: cfg.subdomains,
+      maxZoom: cfg.maxZoom,
+      attribution: cfg.attribution,
+    }).addTo(map);
+  }, [mapStyle]);
 
   // Update User Marker and Radius Circle
   useEffect(() => {
@@ -206,24 +282,23 @@ export const DealsNearMeMap: React.FC<DealsNearMeMapProps> = ({ products, onSele
       className: 'custom-user-pin',
       html: `
         <div style="position: relative; display: flex; align-items: center; justify-content: center;">
-          <div style="position: absolute; width: 36px; height: 36px; background: rgba(79, 70, 229, 0.25); border-radius: 50%; animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
-          <div style="width: 20px; height: 20px; background: #4f46e5; border: 3px solid #ffffff; border-radius: 50%; box-shadow: 0 4px 12px rgba(79,70,229,0.5);"></div>
+          <div style="position: absolute; width: 34px; height: 34px; background: rgba(79, 70, 229, 0.25); border-radius: 50%; animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+          <div style="width: 16px; height: 16px; background: #4f46e5; border: 2.5px solid #ffffff; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>
         </div>
       `,
-      iconSize: [36, 36],
-      iconAnchor: [18, 18],
+      iconSize: [34, 34],
+      iconAnchor: [17, 17],
+      popupAnchor: [0, -17],
     });
 
     userMarkerRef.current = L.marker([userCoords.lat, userCoords.lng], { icon: userIcon })
       .addTo(map)
-      .bindPopup(`
-        <div style="font-family: inherit; padding: 4px;">
-          <div style="font-weight: 800; font-size: 12px; color: #1e1b4b; display: flex; align-items: center; gap: 4px;">
-            <span>📍 ${userCoords.name}</span>
-          </div>
-          <div style="font-size: 10.5px; color: #64748b; margin-top: 2px;">Your active search center</div>
-        </div>
-      `);
+      .bindPopup(
+        `<div style="font-family: inherit; padding: 4px; text-align: center;">
+          <p style="font-size: 11px; font-weight: 700; color: #4f46e5; margin: 0;">📍 Reference Center</p>
+          <p style="font-size: 12px; font-weight: 700; color: #0f172a; margin: 2px 0 0;">${userCoords.name}</p>
+        </div>`
+      );
 
     // Add search radius boundary circle
     radiusCircleRef.current = L.circle([userCoords.lat, userCoords.lng], {
@@ -246,6 +321,7 @@ export const DealsNearMeMap: React.FC<DealsNearMeMapProps> = ({ products, onSele
     nearbyProducts.forEach((p) => {
       const isSelected = selectedProduct?.id === p.id;
       const shortPrice = formatShortPrice(p.price);
+      const areaLabel = (p as any).areaName || p.neighborhood || p.city || 'Puducherry';
 
       const markerHtml = `
         <div class="product-map-pill" style="
@@ -261,9 +337,9 @@ export const DealsNearMeMap: React.FC<DealsNearMeMapProps> = ({ products, onSele
           align-items: center;
           gap: 4px;
           cursor: pointer;
-          transition: all 0.2s ease;
           white-space: nowrap;
           transform: ${isSelected ? 'scale(1.15)' : 'scale(1)'};
+          transition: all 0.2s ease;
         ">
           <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: ${p.featured ? '#10b981' : '#6366f1'};"></span>
           <span>${shortPrice}</span>
@@ -297,7 +373,7 @@ export const DealsNearMeMap: React.FC<DealsNearMeMapProps> = ({ products, onSele
               <span style="font-size: 10px; color: #64748b; background: #f1f5f9; padding: 1px 6px; border-radius: 4px;">${p.condition}</span>
             </div>
             <div style="font-size: 10.5px; color: #64748b; margin-top: 4px; display: flex; align-items: center; gap: 3px;">
-              <span>📍 ${p.neighborhood || p.city}</span>
+              <span>📍 ${areaLabel}</span>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px;">
               <button id="view-prod-${p.id}" style="
@@ -333,6 +409,9 @@ export const DealsNearMeMap: React.FC<DealsNearMeMapProps> = ({ products, onSele
 
       marker.on('click', () => {
         setSelectedProduct(p);
+        if (onSelectProduct) {
+          onSelectProduct(p);
+        }
       });
 
       marker.on('popupopen', () => {
@@ -353,15 +432,7 @@ export const DealsNearMeMap: React.FC<DealsNearMeMapProps> = ({ products, onSele
 
       markersLayer.addLayer(marker);
     });
-  }, [nearbyProducts, selectedProduct, navigate]);
-
-  // Click handler for sidebar product card to focus on map
-  const handleFocusProductOnMap = (p: Product & { distanceKm: number }) => {
-    setSelectedProduct(p);
-    if (mapInstanceRef.current && p.latitude && p.longitude) {
-      mapInstanceRef.current.flyTo([p.latitude, p.longitude], 14, { duration: 0.8 });
-    }
-  };
+  }, [nearbyProducts, selectedProduct, navigate, onSelectProduct]);
 
   return (
     <div className="w-full bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col">
@@ -407,37 +478,51 @@ export const DealsNearMeMap: React.FC<DealsNearMeMapProps> = ({ products, onSele
           )}
         </div>
 
-        {/* Right: Radius Slider Control */}
-        <div className="flex items-center gap-3 bg-white px-4 py-1.5 rounded-2xl border border-slate-200 shadow-2xs">
-          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
-            <Compass className="w-4 h-4 text-indigo-600" />
-            <span>Radius:</span>
-            <span className="text-indigo-600 font-black">{radiusKm} km</span>
+        {/* Right: Map Style Selector & Distance Radius */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Map Layer Switcher */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
+              <Layers className="w-3.5 h-3.5 text-slate-400" />
+              Style:
+            </span>
+            <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/80">
+              {(['google', 'hybrid', 'osm'] as const).map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setMapStyle(key)}
+                  className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                    mapStyle === key
+                      ? 'bg-white text-indigo-600 shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  {MAP_LAYERS[key].name}
+                </button>
+              ))}
+            </div>
           </div>
-          <input
-            type="range"
-            min={2}
-            max={50}
-            step={1}
-            value={radiusKm}
-            onChange={(e) => setRadiusKm(Number(e.target.value))}
-            className="w-28 sm:w-36 accent-indigo-600 cursor-pointer"
-          />
-          <div className="flex gap-1">
-            {[5, 10, 25].map((km) => (
-              <button
-                key={km}
-                type="button"
-                onClick={() => setRadiusKm(km)}
-                className={`text-[10px] font-bold px-2 py-0.5 rounded-md border transition-colors ${
-                  radiusKm === km
-                    ? 'bg-indigo-600 text-white border-indigo-600'
-                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                }`}
-              >
-                {km}k
-              </button>
-            ))}
+
+          {/* Clean Segmented Distance Radius */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-medium text-slate-500">Radius:</span>
+            <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200/80">
+              {[3, 5, 10, 15, 25].map((km) => (
+                <button
+                  key={km}
+                  type="button"
+                  onClick={() => setRadiusKm(km)}
+                  className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                    radiusKm === km
+                      ? 'bg-white text-indigo-600 shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  {km} km
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -445,15 +530,7 @@ export const DealsNearMeMap: React.FC<DealsNearMeMapProps> = ({ products, onSele
       {/* Category Pills & Search Filter */}
       <div className="px-4 py-2.5 bg-white border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
-          {[
-            { id: 'all', name: 'All' },
-            { id: 'cars', name: '🚗 Cars' },
-            { id: 'bikes', name: '🏍️ Bikes' },
-            { id: 'mobiles', name: '📱 Mobiles' },
-            { id: 'electronics', name: '💻 Electronics' },
-            { id: 'properties', name: '🏠 Properties' },
-            { id: 'furniture', name: '🛋️ Furniture' },
-          ].map((cat) => (
+          {CATEGORIES.map((cat) => (
             <button
               key={cat.id}
               type="button"
@@ -475,8 +552,8 @@ export const DealsNearMeMap: React.FC<DealsNearMeMapProps> = ({ products, onSele
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search nearby items..."
-            className="w-full text-xs pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 text-slate-800"
+            placeholder="Search in Puducherry..."
+            className="w-full text-xs pl-8 pr-3 py-1.5 bg-slate-50 hover:bg-slate-100/70 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 text-slate-800 transition-colors"
           />
         </div>
       </div>
@@ -487,11 +564,13 @@ export const DealsNearMeMap: React.FC<DealsNearMeMapProps> = ({ products, onSele
         <div className="lg:col-span-8 relative h-[340px] lg:h-full border-b lg:border-b-0 lg:border-r border-slate-100 bg-slate-100">
           <div ref={mapContainerRef} className="w-full h-full z-10" />
 
-          {/* Map Overlay Badge */}
-          <div className="absolute top-3 left-3 z-20 bg-white/95 backdrop-blur-xs px-3 py-1.5 rounded-xl shadow-md border border-slate-200/80 flex items-center gap-2">
+          {/* Simple Clean Floating Badge */}
+          <div className="absolute top-3 left-3 z-20 bg-white/95 backdrop-blur-xs px-3 py-1.5 rounded-full shadow-xs border border-slate-200 text-xs font-semibold text-slate-700 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span className="text-xs font-bold text-slate-800">
-              {nearbyProducts.length} {nearbyProducts.length === 1 ? 'deal' : 'deals'} found within {radiusKm} km
+            <span className="font-bold text-indigo-900">Puducherry & Surroundings</span>
+            <span className="text-slate-300">•</span>
+            <span className="text-slate-600">
+              {nearbyProducts.length} {nearbyProducts.length === 1 ? 'item' : 'items'} ({radiusKm} km radius)
             </span>
           </div>
         </div>
@@ -514,7 +593,7 @@ export const DealsNearMeMap: React.FC<DealsNearMeMapProps> = ({ products, onSele
                 </div>
                 <h4 className="text-xs font-bold text-slate-800 mb-1">No deals within {radiusKm} km</h4>
                 <p className="text-[11px] text-slate-500 max-w-xs mb-3">
-                  Try expanding the distance radius slider or switching to another landmark.
+                  Try expanding the distance radius or switching to another landmark.
                 </p>
                 <button
                   type="button"
@@ -527,11 +606,20 @@ export const DealsNearMeMap: React.FC<DealsNearMeMapProps> = ({ products, onSele
             ) : (
               nearbyProducts.map((p) => {
                 const isSelected = selectedProduct?.id === p.id;
+                const areaLabel = (p as any).areaName || p.neighborhood || p.city || 'Puducherry';
                 return (
                   <div
                     key={p.id}
-                    onClick={() => handleFocusProductOnMap(p)}
-                    className={`p-2.5 rounded-2xl border transition-all cursor-pointer flex items-center gap-3 ${
+                    onClick={() => {
+                      setSelectedProduct(p);
+                      if (mapInstanceRef.current && p.latitude && p.longitude) {
+                        mapInstanceRef.current.flyTo([p.latitude, p.longitude], 15, { duration: 1 });
+                      }
+                      if (onSelectProduct) {
+                        onSelectProduct(p);
+                      }
+                    }}
+                    className={`p-2.5 rounded-xl border transition-all cursor-pointer flex gap-3 ${
                       isSelected
                         ? 'bg-indigo-50/80 border-indigo-300 shadow-xs'
                         : 'bg-white border-transparent hover:border-slate-200 hover:bg-slate-50'
@@ -547,8 +635,8 @@ export const DealsNearMeMap: React.FC<DealsNearMeMapProps> = ({ products, onSele
                         <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100">
                           {formatDistance(p.distanceKm)}
                         </span>
-                        <span className="text-[10px] text-slate-400 font-medium">
-                          {p.neighborhood || p.city}
+                        <span className="text-[10px] text-slate-400 font-medium truncate max-w-[100px]">
+                          {areaLabel}
                         </span>
                       </div>
                       <h4 className="text-xs font-bold text-slate-900 truncate">{p.title}</h4>
