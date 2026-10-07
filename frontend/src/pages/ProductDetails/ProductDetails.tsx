@@ -119,9 +119,70 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
     setSellerRatingSummary(data.summary);
   };
 
+  const handleClose = () => {
+    if (onClose) {
+      onClose();
+      return;
+    }
+    const hasHistory =
+      typeof window !== 'undefined' &&
+      window.history.state &&
+      typeof window.history.state.idx === 'number'
+        ? window.history.state.idx > 0
+        : typeof window !== 'undefined' && window.history.length > 1;
+
+    if (hasHistory) {
+      navigate(-1);
+    } else {
+      navigate('/products');
+    }
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (isLightboxOpen) {
+          setIsLightboxOpen(false);
+          return;
+        }
+        if (isChatOpen) {
+          setIsChatOpen(false);
+          return;
+        }
+        if (isReviewsModalOpen) {
+          setIsReviewsModalOpen(false);
+          return;
+        }
+        if (isWriteReviewModalOpen) {
+          setIsWriteReviewModalOpen(false);
+          return;
+        }
+        handleClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [
+    isLightboxOpen,
+    isChatOpen,
+    isReviewsModalOpen,
+    isWriteReviewModalOpen,
+    onClose,
+    navigate,
+  ]);
+
   if (isLoading) {
     return (
-      <div className="p-8 text-center bg-white rounded-3xl border border-slate-100 animate-pulse">
+      <div className="p-8 text-center bg-white rounded-3xl border border-slate-100 animate-pulse relative max-w-4xl mx-auto">
+        <button
+          type="button"
+          onClick={handleClose}
+          className="absolute top-4 right-4 sm:top-5 sm:right-5 z-20 w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-all cursor-pointer"
+          aria-label="Close"
+          title="Close (Esc)"
+        >
+          <X className="w-5 h-5" />
+        </button>
         <div className="w-full h-64 bg-slate-100 rounded-2xl mb-4"></div>
         <div className="h-6 bg-slate-200 rounded w-1/3 mb-2"></div>
         <div className="h-4 bg-slate-100 rounded w-1/4"></div>
@@ -131,12 +192,21 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
 
   if (!product) {
     return (
-      <div className="p-8 text-center bg-white rounded-3xl border border-slate-100">
+      <div className="p-8 text-center bg-white rounded-3xl border border-slate-100 relative max-w-lg mx-auto">
+        <button
+          type="button"
+          onClick={handleClose}
+          className="absolute top-4 right-4 sm:top-5 sm:right-5 z-20 w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-all cursor-pointer"
+          aria-label="Close"
+          title="Close (Esc)"
+        >
+          <X className="w-5 h-5" />
+        </button>
         <h3 className="text-base font-bold text-slate-800">Product not found</h3>
         <button
           type="button"
-          onClick={onClose || (() => navigate('/products'))}
-          className="mt-4 px-4 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-xl cursor-pointer"
+          onClick={handleClose}
+          className="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl cursor-pointer transition-colors"
         >
           Back to Listings
         </button>
@@ -163,16 +233,16 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
 
   const content = (
     <div className="w-full max-w-4xl bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100 relative max-h-[90vh] overflow-y-auto space-y-8">
-      {/* Close button if modal */}
-      {isModal && onClose && (
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute top-5 right-5 z-10 text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-colors"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      )}
+      {/* Close button with action */}
+      <button
+        type="button"
+        onClick={handleClose}
+        className="absolute top-4 right-4 sm:top-5 sm:right-5 z-20 w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-all cursor-pointer shadow-sm hover:shadow active:scale-95 group"
+        aria-label="Close listing"
+        title="Close listing (Esc)"
+      >
+        <X className="w-5 h-5 transition-transform group-hover:scale-110" />
+      </button>
 
       {/* Main Product Two-Column Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -267,7 +337,7 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
         <div className="flex flex-col justify-between space-y-6">
           <div>
             {/* Category & Views */}
-            <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
+            <div className="flex items-center justify-between text-xs text-slate-400 mb-2 pr-10">
               <span className="uppercase font-bold tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full">
                 {product.category}
               </span>
@@ -612,7 +682,15 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto px-4 py-6 space-y-3">
+      <button
+        type="button"
+        onClick={handleClose}
+        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer group"
+      >
+        <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
+        <span>Back to listings</span>
+      </button>
       {content}
     </div>
   );
