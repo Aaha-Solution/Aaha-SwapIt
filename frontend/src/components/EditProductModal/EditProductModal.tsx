@@ -3,6 +3,7 @@ import { X, Save, AlertCircle, Sparkles, MapPin } from 'lucide-react';
 import { Product } from '../../types/product.types';
 import { productApi } from '../../api/product.api';
 import { ImageUploader } from '../ImageUploader/ImageUploader';
+import { CITIES } from '../../utils/constants';
 
 interface EditProductModalProps {
   product: Product;
@@ -238,11 +239,17 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
               <MapPin className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
+                list="edit-cities-list"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
-                placeholder="e.g. Chennai, T. Nagar"
+                placeholder="e.g. Puducherry, Chennai, T. Nagar"
                 className="w-full text-xs pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all text-slate-800"
               />
+              <datalist id="edit-cities-list">
+                {CITIES.map((c) => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
             </div>
           </div>
 
@@ -251,7 +258,8 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
             <ImageUploader
               images={images}
               onChange={setImages}
-              maxImages={6}
+              minImages={1}
+              maxImages={10}
               maxSizeMB={5}
             />
           </div>

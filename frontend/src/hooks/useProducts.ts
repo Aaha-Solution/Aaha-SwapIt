@@ -18,6 +18,7 @@ export function useProducts() {
     customMinPrice,
     customMaxPrice,
     selectedCondition,
+    refreshKey,
   } = useSelector((state: RootState) => state.user);
 
   const fetchProducts = useCallback(async () => {
@@ -66,6 +67,7 @@ export function useProducts() {
     customMinPrice,
     customMaxPrice,
     selectedCondition,
+    refreshKey,
   ]);
 
   useEffect(() => {

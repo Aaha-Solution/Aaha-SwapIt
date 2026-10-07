@@ -46,6 +46,16 @@ passport.use(
 export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // In development mode, permit default demo user if no token provided
+    if (ENV.NODE_ENV === 'development') {
+      req.user = {
+        id: 'usr-demo-iyyanar',
+        email: 'iyyanar@example.com',
+        name: 'Iyyanar',
+        role: 'user',
+      };
+      return next();
+    }
     return res.status(401).json({
       success: false,
       message: 'Authentication required. No token provided.',
@@ -54,14 +64,37 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
 
   const token = authHeader.split(' ')[1];
 
-  // In development only, allow the demo user token
-  if (ENV.NODE_ENV === 'development' && token === 'demo-jwt-token') {
-    req.user = {
-      id: 'usr-demo-iyyanar',
-      email: 'iyyanar@example.com',
-      name: 'Iyyanar',
-      role: 'user',
-    };
+  // In development, handle all demo tokens
+  if (ENV.NODE_ENV === 'development' && (token === 'demo-jwt-token' || token.startsWith('demo-jwt-token'))) {
+    if (token === 'demo-jwt-token-admin') {
+      req.user = {
+        id: 'usr-demo-admin',
+        email: 'admin@swapit.com',
+        name: 'Iyyanar (Admin)',
+        role: 'admin',
+      };
+    } else if (token === 'demo-jwt-token-seller') {
+      req.user = {
+        id: 'usr-demo-seller',
+        email: 'seller@swapit.com',
+        name: 'Karthik Raja (Seller)',
+        role: 'seller',
+      };
+    } else if (token === 'demo-jwt-token-customer') {
+      req.user = {
+        id: 'usr-demo-customer',
+        email: 'customer@swapit.com',
+        name: 'Vignesh (Customer)',
+        role: 'customer',
+      };
+    } else {
+      req.user = {
+        id: 'usr-demo-iyyanar',
+        email: 'iyyanar@example.com',
+        name: 'Iyyanar',
+        role: 'user',
+      };
+    }
     return next();
   }
 
@@ -89,6 +122,17 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
         message: 'Access token has expired. Please refresh your token.',
         code: 'TOKEN_EXPIRED',
       });
+    }
+
+    // In dev mode, if token verification fails, allow fallback demo user
+    if (ENV.NODE_ENV === 'development') {
+      req.user = {
+        id: 'usr-demo-iyyanar',
+        email: 'iyyanar@example.com',
+        name: 'Iyyanar',
+        role: 'user',
+      };
+      return next();
     }
 
     return res.status(401).json({
@@ -144,12 +188,34 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction) =>
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.split(' ')[1];
 
-    if (ENV.NODE_ENV === 'development' && token === 'demo-jwt-token') {
+    if (ENV.NODE_ENV === 'development' && (token === 'demo-jwt-token' || token.startsWith('demo-jwt-token'))) {
+      let demoId = 'usr-demo-iyyanar';
+      let demoEmail = 'iyyanar@example.com';
+      let demoName = 'Iyyanar';
+      let demoRole = 'user';
+
+      if (token === 'demo-jwt-token-admin') {
+        demoId = 'usr-demo-admin';
+        demoEmail = 'admin@swapit.com';
+        demoName = 'Iyyanar (Admin)';
+        demoRole = 'admin';
+      } else if (token === 'demo-jwt-token-seller') {
+        demoId = 'usr-demo-seller';
+        demoEmail = 'seller@swapit.com';
+        demoName = 'Karthik Raja (Seller)';
+        demoRole = 'seller';
+      } else if (token === 'demo-jwt-token-customer') {
+        demoId = 'usr-demo-customer';
+        demoEmail = 'customer@swapit.com';
+        demoName = 'Vignesh (Customer)';
+        demoRole = 'customer';
+      }
+
       req.user = {
-        id: 'usr-demo-iyyanar',
-        email: 'iyyanar@example.com',
-        name: 'Iyyanar',
-        role: 'user',
+        id: demoId,
+        email: demoEmail,
+        name: demoName,
+        role: demoRole,
       };
       return next();
     }

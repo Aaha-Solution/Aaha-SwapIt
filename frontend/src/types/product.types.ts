@@ -17,6 +17,7 @@ export interface Product {
   featured?: boolean;
   badge?: 'featured' | 'good' | 'likenew' | 'verified' | 'brandnew' | string;
   badgeText?: string;
+  phone?: string;
   seller: {
     id: string;
     name: string;

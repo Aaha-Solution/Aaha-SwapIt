@@ -1,11 +1,25 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { User, AuthState } from '../../types/user.types';
 
-const storedUser = localStorage.getItem('dealkart_user');
+const getStoredUser = (): User | null => {
+  const stored = localStorage.getItem('dealkart_user');
+  if (!stored) return null;
+  try {
+    const user = JSON.parse(stored);
+    if (user && user.name) {
+      user.name = user.name.replace(/\s*\((Customer|Admin|Seller)\)/gi, '').trim();
+    }
+    return user;
+  } catch {
+    return null;
+  }
+};
+
+const storedUser = getStoredUser();
 const storedToken = localStorage.getItem('dealkart_token');
 
 const initialState: AuthState = {
-  user: storedUser ? JSON.parse(storedUser) : null,
+  user: storedUser,
   token: storedToken || null,
   isAuthenticated: !!storedToken,
   isLoading: false,
@@ -23,10 +37,14 @@ export const authSlice = createSlice({
     loginSuccess: (state, action: PayloadAction<{ user: User; token: string }>) => {
       state.isLoading = false;
       state.isAuthenticated = true;
-      state.user = action.payload.user;
+      const cleanUser = {
+        ...action.payload.user,
+        name: action.payload.user.name?.replace(/\s*\((Customer|Admin|Seller)\)/gi, '').trim() || action.payload.user.name,
+      };
+      state.user = cleanUser;
       state.token = action.payload.token;
       state.error = null;
-      localStorage.setItem('dealkart_user', JSON.stringify(action.payload.user));
+      localStorage.setItem('dealkart_user', JSON.stringify(cleanUser));
       localStorage.setItem('dealkart_token', action.payload.token);
     },
     loginFailure: (state, action: PayloadAction<string>) => {
@@ -41,7 +59,7 @@ export const authSlice = createSlice({
       if (targetRole === 'seller') {
         demoUser = {
           id: 'usr-demo-seller',
-          name: 'Karthik Raja (Seller)',
+          name: 'Karthik Raja',
           email: 'seller@swapit.com',
           phone: '+91 98401 23456',
           location: 'Chennai',
@@ -54,7 +72,7 @@ export const authSlice = createSlice({
       } else if (targetRole === 'customer') {
         demoUser = {
           id: 'usr-demo-customer',
-          name: 'Vignesh (Customer)',
+          name: 'Vignesh',
           email: 'customer@swapit.com',
           phone: '+91 97910 88231',
           location: 'Chennai',
@@ -67,7 +85,7 @@ export const authSlice = createSlice({
       } else {
         demoUser = {
           id: 'usr-demo-admin',
-          name: 'Iyyanar (Admin)',
+          name: 'Iyyanar',
           email: 'admin@swapit.com',
           phone: '+91 98401 98765',
           location: 'Chennai',

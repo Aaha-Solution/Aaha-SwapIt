@@ -17,6 +17,7 @@ interface UserState {
   authModalTab: 'login' | 'signup';
   isPostAdModalOpen: boolean;
   activeDetailsProductId: string | null;
+  refreshKey: number;
 }
 
 const initialState: UserState = {
@@ -27,13 +28,14 @@ const initialState: UserState = {
   customMinPrice: null,
   customMaxPrice: null,
   selectedCondition: 'all',
-  sortBy: 'featured',
+  sortBy: 'newest',
   myAdsCount: 0,
   messagesCount: 0,
   isAuthModalOpen: false,
   authModalTab: 'login',
   isPostAdModalOpen: false,
   activeDetailsProductId: null,
+  refreshKey: 0,
 };
 
 export const userSlice = createSlice({
@@ -124,7 +126,10 @@ export const userSlice = createSlice({
       state.customMinPrice = null;
       state.customMaxPrice = null;
       state.selectedCondition = 'all';
-      state.sortBy = 'featured';
+      state.sortBy = 'newest';
+    },
+    triggerProductsRefresh: (state) => {
+      state.refreshKey += 1;
     },
   },
 });
@@ -147,6 +152,7 @@ export const {
   closeProductDetails,
   clearFilter,
   resetFilters,
+  triggerProductsRefresh,
 } = userSlice.actions;
 
 export default userSlice.reducer;

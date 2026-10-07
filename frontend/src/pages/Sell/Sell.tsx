@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { Tag, MapPin, CheckCircle, X } from 'lucide-react';
+import { Tag, MapPin, CheckCircle, X, AlertCircle } from 'lucide-react';
 import { CATEGORIES, CITIES } from '../../utils/constants';
 import { productApi } from '../../api/product.api';
-import { closePostAdModal } from '../../store/slices/userSlice';
+import { closePostAdModal, triggerProductsRefresh } from '../../store/slices/userSlice';
 import { ImageUploader } from '../../components/ImageUploader/ImageUploader';
+import { useAuth } from '../../hooks/useAuth';
 
 interface SellProps {
   isModal?: boolean;
@@ -16,18 +17,31 @@ interface SellProps {
 export const Sell: React.FC<SellProps> = ({ isModal = false, onClose, onSuccess }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { user } = useAuth();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('mobiles');
   const [price, setPrice] = useState('');
-  const [city, setCity] = useState('Chennai');
+  const [city, setCity] = useState(user?.location || 'Chennai');
   const [condition, setCondition] = useState<'Brand New' | 'Like New' | 'Good' | 'Fair'>('Like New');
-  const [phone, setPhone] = useState('+91 98401 23456');
+  const [phone, setPhone] = useState(user?.phone || '+91 98401 23456');
   const [description, setDescription] = useState('');
-  const [images, setImages] = useState<string[]>(['/images/phone_purple.png']);
+  const [images, setImages] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState('');
+
+  // Automatically scroll up to show the error message when an error occurs
+  useEffect(() => {
+    if (error) {
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+  }, [error]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,8 +58,8 @@ export const Sell: React.FC<SellProps> = ({ isModal = false, onClose, onSuccess 
       setError('Please provide a brief description');
       return;
     }
-    if (images.length === 0) {
-      setError('Please upload or select at least one photo for your listing');
+    if (images.length < 5) {
+      setError(`Please upload at least 5 photos for your listing (currently ${images.length} of 5 uploaded)`);
       return;
     }
 
@@ -54,24 +68,26 @@ export const Sell: React.FC<SellProps> = ({ isModal = false, onClose, onSuccess 
 
     try {
       await productApi.createProduct({
-        title,
+        title: title.trim(),
         category,
         price: numPrice,
         city,
         condition,
-        description,
+        description: description.trim(),
         imageUrl: images[0],
         images,
+        phone,
         seller: {
-          id: 'usr-current',
-          name: 'Iyyanar',
-          phone,
-          memberSince: 'Sep 2026',
+          id: user?.id || 'usr-demo-iyyanar',
+          name: user?.name || 'Iyyanar',
+          phone: phone || user?.phone || '+91 98401 23456',
+          memberSince: user?.memberSince || 'Sep 2026',
           rating: 5.0,
-          verified: true,
+          verified: user?.verified ?? true,
         },
       });
 
+      dispatch(triggerProductsRefresh());
       setIsSuccess(true);
       setTimeout(() => {
         if (onSuccess) onSuccess();
@@ -79,20 +95,25 @@ export const Sell: React.FC<SellProps> = ({ isModal = false, onClose, onSuccess 
         dispatch(closePostAdModal());
         navigate('/products');
       }, 1200);
-    } catch {
-      setError('Failed to post ad. Please try again.');
+    } catch (err: any) {
+      setError(err?.message || 'Failed to post ad. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const content = (
-    <div className="w-full max-w-2xl bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100 relative max-h-[90vh] overflow-y-auto">
+    <div
+      ref={scrollContainerRef}
+      className="w-full max-w-2xl bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100 relative max-h-[90vh] overflow-y-auto scroll-smooth"
+    >
       {isModal && onClose && (
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-colors"
+          className="absolute top-5 right-5 text-slate-400 hover:text-slate-700 p-2 rounded-full hover:bg-slate-100 transition-colors z-20 cursor-pointer"
+          title="Close"
+          aria-label="Close"
         >
           <X className="w-5 h-5" />
         </button>
@@ -121,8 +142,9 @@ export const Sell: React.FC<SellProps> = ({ isModal = false, onClose, onSuccess 
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600">
-              {error}
+            <div className="mb-4 p-3.5 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600 flex items-center gap-2.5 shadow-sm">
+              <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+              <span className="font-semibold">{error}</span>
             </div>
           )}
 
@@ -135,9 +157,16 @@ export const Sell: React.FC<SellProps> = ({ isModal = false, onClose, onSuccess 
               <input
                 type="text"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  if (error) setError('');
+                }}
                 placeholder="e.g. iPhone 13 128GB Midnight Purple"
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-indigo-500 outline-none"
+                className={`w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl text-xs text-slate-800 placeholder:text-slate-400 focus:bg-white outline-none transition-colors ${
+                  error && (!title.trim() || title.length < 4)
+                    ? 'border-red-400 bg-red-50/40 focus:border-red-500'
+                    : 'border-slate-200 focus:border-indigo-500'
+                }`}
               />
             </div>
 
@@ -169,9 +198,16 @@ export const Sell: React.FC<SellProps> = ({ isModal = false, onClose, onSuccess 
                   <input
                     type="number"
                     value={price}
-                    onChange={(e) => setPrice(e.target.value)}
+                    onChange={(e) => {
+                      setPrice(e.target.value);
+                      if (error) setError('');
+                    }}
                     placeholder="25000"
-                    className="w-full pl-7 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:border-indigo-500 outline-none"
+                    className={`w-full pl-7 pr-3 py-2.5 bg-slate-50 border rounded-xl text-xs text-slate-800 focus:bg-white outline-none transition-colors ${
+                      error && (isNaN(parseFloat(price)) || parseFloat(price) <= 0)
+                        ? 'border-red-400 bg-red-50/40 focus:border-red-500'
+                        : 'border-slate-200 focus:border-indigo-500'
+                    }`}
                   />
                 </div>
               </div>
@@ -222,8 +258,14 @@ export const Sell: React.FC<SellProps> = ({ isModal = false, onClose, onSuccess 
             <div className="pt-1">
               <ImageUploader
                 images={images}
-                onChange={setImages}
-                maxImages={6}
+                onChange={(newImages) => {
+                  setImages(newImages);
+                  if (error && newImages.length >= 5) {
+                    setError('');
+                  }
+                }}
+                minImages={5}
+                maxImages={10}
                 maxSizeMB={5}
               />
             </div>
@@ -236,9 +278,16 @@ export const Sell: React.FC<SellProps> = ({ isModal = false, onClose, onSuccess 
               <textarea
                 rows={3}
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(e) => {
+                  setDescription(e.target.value);
+                  if (error) setError('');
+                }}
                 placeholder="Include details about brand, model, purchase date, warranty, accessories included, reason for selling..."
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-indigo-500 outline-none resize-none"
+                className={`w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs text-slate-800 placeholder:text-slate-400 focus:bg-white outline-none resize-none transition-colors ${
+                  error && !description.trim()
+                    ? 'border-red-400 bg-red-50/40 focus:border-red-500'
+                    : 'border-slate-200 focus:border-indigo-500'
+                }`}
               />
             </div>
 
@@ -255,13 +304,21 @@ export const Sell: React.FC<SellProps> = ({ isModal = false, onClose, onSuccess 
               />
             </div>
 
+            {/* Bottom inline error banner */}
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600 flex items-center gap-2 shadow-sm">
+                <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+                <span className="font-semibold">{error}</span>
+              </div>
+            )}
+
             {/* Actions */}
             <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
               {isModal && onClose && (
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>

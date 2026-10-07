@@ -105,7 +105,7 @@ export const productController = {
           }),
           prisma.product.count({ where }),
         ]),
-        400
+        5000
       );
 
       // Format response according to frontend DealKart types
@@ -237,7 +237,7 @@ export const productController = {
             },
           },
         }),
-        400
+        5000
       );
 
       if (!product) {
@@ -306,7 +306,7 @@ export const productController = {
 
   async createProduct(req: Request, res: Response) {
     try {
-      const userId = (req as any).user?.id;
+      const authUser = (req as any).user;
       const {
         title,
         price,
@@ -318,6 +318,8 @@ export const productController = {
         images,
         badge,
         badgeText,
+        phone,
+        seller,
       } = req.body;
 
       if (!title || price === undefined || !description) {
@@ -327,31 +329,111 @@ export const productController = {
         });
       }
 
-      const authUser = (req as any).user;
-      const sellerId = authUser?.id || userId || 'usr-demo-iyyanar';
+      // 1. Resolve sellerId from authenticated user or request body or fallback
+      let sellerId = authUser?.id || seller?.id || (req as any).userId;
+      let dbUser: any = null;
 
-      // Find or link category
-      const matchedCat = await prisma.category.findFirst({
-        where: {
-          OR: [{ slug: (category || '').toLowerCase() }, { name: category }],
-        },
-      });
+      if (sellerId) {
+        dbUser = await prisma.user.findUnique({ where: { id: sellerId } });
+      }
 
+      if (!dbUser && authUser?.email) {
+        dbUser = await prisma.user.findUnique({ where: { email: authUser.email } });
+      }
+
+      if (!dbUser) {
+        // Fall back to known demo users or any seller/admin
+        dbUser = await prisma.user.findFirst({
+          where: {
+            OR: [
+              { id: 'usr-demo-iyyanar' },
+              { id: 'usr-demo-seller' },
+              { id: 'usr-demo-admin' },
+              { role: 'seller' },
+              { role: 'admin' },
+            ],
+          },
+        });
+      }
+
+      if (!dbUser) {
+        dbUser = await prisma.user.findFirst();
+      }
+
+      if (!dbUser) {
+        // Create demo user if none exists in DB
+        dbUser = await prisma.user.create({
+          data: {
+            id: 'usr-demo-iyyanar',
+            name: seller?.name || authUser?.name || 'Iyyanar',
+            email: authUser?.email || 'iyyanar@example.com',
+            password: 'demo_password_hash',
+            phone: phone || seller?.phone || '+91 98401 23456',
+            location: city || 'Chennai',
+            role: 'seller',
+            verified: true,
+            memberSince: 'Sep 2026',
+          },
+        });
+      }
+
+      sellerId = dbUser.id;
+
+      // Update seller's phone if provided
+      const sellerPhone = phone || seller?.phone;
+      if (sellerPhone && (!dbUser.phone || dbUser.phone !== sellerPhone)) {
+        await prisma.user.update({
+          where: { id: sellerId },
+          data: { phone: sellerPhone },
+        }).catch(() => {});
+      }
+
+      // 2. Find or link category
+      let matchedCat: any = null;
+      if (category) {
+        const catSlug = String(category).toLowerCase().trim();
+        matchedCat = await prisma.category.findFirst({
+          where: {
+            OR: [
+              { slug: catSlug },
+              { name: { contains: catSlug } },
+              { id: `cat-${catSlug}` },
+              { id: catSlug },
+            ],
+          },
+        });
+      }
+
+      // 3. Process and persist images (convert base64 or upload data to real local media files)
+      if (!Array.isArray(images) || images.length < 5) {
+        return res.status(400).json({
+          success: false,
+          message: 'At least 5 photos are mandatory for creating a listing',
+        });
+      }
+
+      const rawImages: string[] = images;
+      const processedImages = await Promise.all(
+        rawImages.map((img: string) => s3Service.saveBase64Image(img))
+      );
+      const primaryImageUrl = processedImages[0];
+
+      // 4. Create Product in MySQL Database via Prisma
       const newProduct = await prisma.product.create({
         data: {
           title: title.trim(),
           price: parseFloat(price),
           description: description.trim(),
-          categoryName: category || 'electronics',
+          categoryName: matchedCat?.slug || category || 'mobiles',
           categoryId: matchedCat?.id || null,
-          condition: condition || 'Good',
+          condition: condition || 'Like New',
           city: city || 'Chennai',
           location: `${city || 'Chennai'} • Just now`,
           postedAt: 'Just now',
-          imageUrl: imageUrl || '/images/laptop_macbook.png',
-          images: images || [imageUrl || '/images/laptop_macbook.png'],
-          badge: badge || null,
-          badgeText: badgeText || null,
+          imageUrl: primaryImageUrl,
+          images: processedImages,
+          badge: badge || 'NEW',
+          badgeText: badgeText || 'Just Listed',
           sellerId,
         },
         include: {
@@ -368,36 +450,60 @@ export const productController = {
         },
       });
 
+      // Update category listing count asynchronously
+      if (matchedCat?.id) {
+        prisma.category
+          .update({
+            where: { id: matchedCat.id },
+            data: { count: { increment: 1 } },
+          })
+          .catch(() => {});
+      }
+
       // Invalidate products cache
-      await cache.delPattern('products:list:*');
+      await cache.delPattern('products:*');
+
+      const formattedProduct = {
+        id: newProduct.id,
+        title: newProduct.title,
+        price: newProduct.price,
+        description: newProduct.description,
+        category: newProduct.categoryName,
+        categoryId: newProduct.categoryId || undefined,
+        images: Array.isArray(newProduct.images) ? newProduct.images : [newProduct.imageUrl],
+        imageUrl: newProduct.imageUrl,
+        location: newProduct.location,
+        city: newProduct.city,
+        postedAt: newProduct.postedAt,
+        condition: newProduct.condition,
+        featured: newProduct.featured,
+        badge: newProduct.badge || undefined,
+        badgeText: newProduct.badgeText || undefined,
+        views: 0,
+        status: newProduct.status,
+        seller: {
+          id: newProduct.seller.id,
+          name: newProduct.seller.name,
+          phone: sellerPhone || newProduct.seller.phone || undefined,
+          avatarUrl: newProduct.seller.avatarUrl || undefined,
+          memberSince: newProduct.seller.memberSince || 'Just now',
+          rating: 5.0,
+          verified: newProduct.seller.verified,
+        },
+      };
+
+      // Also prepend to local fallback store
+      localProductStore.unshift(formattedProduct as any);
+
+      logger.info({ productId: newProduct.id, title: newProduct.title }, 'Successfully posted ad and saved in database');
 
       return res.status(201).json({
         success: true,
         message: 'Product listed successfully',
-        data: {
-          id: newProduct.id,
-          title: newProduct.title,
-          price: newProduct.price,
-          description: newProduct.description,
-          category: newProduct.categoryName,
-          images: Array.isArray(newProduct.images) ? newProduct.images : [newProduct.imageUrl],
-          imageUrl: newProduct.imageUrl,
-          location: newProduct.location,
-          city: newProduct.city,
-          postedAt: newProduct.postedAt,
-          condition: newProduct.condition,
-          seller: {
-            id: newProduct.seller.id,
-            name: newProduct.seller.name,
-            phone: newProduct.seller.phone || undefined,
-            memberSince: newProduct.seller.memberSince || 'Just now',
-            rating: 5.0,
-            verified: newProduct.seller.verified,
-          },
-        },
+        data: formattedProduct,
       });
     } catch (error: any) {
-      logger.error({ error }, 'Error creating product');
+      logger.error({ error }, 'Error creating product in database');
       return res.status(500).json({
         success: false,
         message: error.message || 'Error creating product',

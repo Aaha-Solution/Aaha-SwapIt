@@ -95,23 +95,8 @@ export const Header: React.FC = () => {
                 />
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>
-                    {user.name}
+                    {user.name?.replace(/\s*\((Customer|Admin|Seller)\)/gi, '').trim()}
                   </span>
-                  {user.role === 'admin' && (
-                    <span style={{ fontSize: '10px', fontWeight: 700, padding: '1px 6px', background: '#e0e7ff', color: '#4338ca', borderRadius: '6px' }}>
-                      Admin
-                    </span>
-                  )}
-                  {user.role === 'seller' && (
-                    <span style={{ fontSize: '10px', fontWeight: 700, padding: '1px 6px', background: '#dcfce7', color: '#15803d', borderRadius: '6px' }}>
-                      Seller
-                    </span>
-                  )}
-                  {(!user.role || user.role === 'customer' || user.role === 'user') && (
-                    <span style={{ fontSize: '10px', fontWeight: 700, padding: '1px 6px', background: '#dbeafe', color: '#1d4ed8', borderRadius: '6px' }}>
-                      Customer
-                    </span>
-                  )}
                 </div>
               </button>
 
@@ -129,11 +114,10 @@ export const Header: React.FC = () => {
                   zIndex: 1000,
                 }}>
                   <div style={{ padding: '8px 16px', borderBottom: '1px solid #f1f5f9' }}>
-                    <p style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>{user.name}</p>
+                    <p style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
+                      {user.name?.replace(/\s*\((Customer|Admin|Seller)\)/gi, '').trim()}
+                    </p>
                     <p style={{ fontSize: '11px', color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</p>
-                    <span style={{ display: 'inline-block', marginTop: '4px', fontSize: '10px', fontWeight: 600, color: '#64748b' }}>
-                      Role: {user.role === 'admin' ? 'Administrator' : user.role === 'seller' ? 'Authorized Seller' : 'Customer'}
-                    </span>
                   </div>
 
                   {/* Admin Direct Access */}

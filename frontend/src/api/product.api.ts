@@ -138,8 +138,14 @@ export const productApi = {
   createProduct: async (productData: Partial<Product>): Promise<ApiResponse<Product>> => {
     try {
       const response = await api.post('/products', productData);
+      if (response.data && response.data.data) {
+        localProducts = [response.data.data, ...localProducts.filter((p) => p.id !== response.data.data.id)];
+      }
       return response.data;
-    } catch {
+    } catch (err: any) {
+      if (err.response?.data?.message) {
+        throw new Error(err.response.data.message);
+      }
       const newProduct: Product = {
         id: `prod-${Date.now()}`,
         title: productData.title || 'Untitled Product',
@@ -151,7 +157,7 @@ export const productApi = {
         postedAt: 'Just now',
         condition: productData.condition || 'Good',
         imageUrl: productData.imageUrl || '/images/laptop_macbook.png',
-        images: [productData.imageUrl || '/images/laptop_macbook.png'],
+        images: productData.images || [productData.imageUrl || '/images/laptop_macbook.png'],
         featured: false,
         status: 'active',
         seller: {

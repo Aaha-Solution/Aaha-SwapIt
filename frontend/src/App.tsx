@@ -68,11 +68,8 @@ export const AppContent: React.FC = () => {
 
       {/* Global Post Ad Modal */}
       {isPostAdModalOpen && (
-        <div
-          className="modal-backdrop show active"
-          onClick={() => dispatch(closePostAdModal())}
-        >
-          <div onClick={(e) => e.stopPropagation()}>
+        <div className="modal-backdrop show active">
+          <div>
             <Sell
               isModal={true}
               onClose={() => dispatch(closePostAdModal())}

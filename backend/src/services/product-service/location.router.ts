@@ -5,6 +5,7 @@ const router = Router();
 const CITIES = [
   'All India',
   'Chennai',
+  'Puducherry',
   'Bangalore',
   'Hyderabad',
   'Mumbai',

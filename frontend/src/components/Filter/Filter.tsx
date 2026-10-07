@@ -39,7 +39,7 @@ export const Filter: React.FC = () => {
     priceRange !== 'all' ||
     selectedCondition !== 'all' ||
     (selectedCity !== 'all' && selectedCity !== 'Chennai') ||
-    sortBy !== 'featured';
+    sortBy !== 'newest';
 
   const handleApplyCustomPrice = (e: React.FormEvent) => {
     e.preventDefault();

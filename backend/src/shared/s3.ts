@@ -63,11 +63,21 @@ export const s3Service = {
     const key = `products/${uniqueName}`;
 
     // If AWS credentials are valid production credentials, attempt S3 upload
-    if (
-      ENV.AWS_ACCESS_KEY_ID &&
-      ENV.AWS_ACCESS_KEY_ID !== 'mock_access_key' &&
-      ENV.AWS_SECRET_ACCESS_KEY !== 'mock_secret_key'
-    ) {
+    const isPlaceholderKey =
+      !ENV.AWS_ACCESS_KEY_ID ||
+      ENV.AWS_ACCESS_KEY_ID === 'mock_access_key' ||
+      ENV.AWS_ACCESS_KEY_ID === 'your_aws_key' ||
+      ENV.AWS_ACCESS_KEY_ID.includes('xxxx') ||
+      ENV.AWS_ACCESS_KEY_ID.includes('your_');
+
+    const isPlaceholderSecret =
+      !ENV.AWS_SECRET_ACCESS_KEY ||
+      ENV.AWS_SECRET_ACCESS_KEY === 'mock_secret_key' ||
+      ENV.AWS_SECRET_ACCESS_KEY === 'your_aws_secret' ||
+      ENV.AWS_SECRET_ACCESS_KEY.includes('xxxx') ||
+      ENV.AWS_SECRET_ACCESS_KEY.includes('your_');
+
+    if (!isPlaceholderKey && !isPlaceholderSecret) {
       try {
         const command = new PutObjectCommand({
           Bucket: ENV.AWS_S3_BUCKET_NAME,
@@ -106,8 +116,48 @@ export const s3Service = {
     }
   },
 
+  async saveBase64Image(dataUriOrBase64: string, fileName = 'image.jpg'): Promise<string> {
+    if (!dataUriOrBase64 || typeof dataUriOrBase64 !== 'string') {
+      return dataUriOrBase64 || '/images/phone_purple.png';
+    }
+    // If it's already an http(s) URL or static asset path like /images/..., return directly
+    if (dataUriOrBase64.startsWith('http://') || dataUriOrBase64.startsWith('https://') || dataUriOrBase64.startsWith('/images/')) {
+      return dataUriOrBase64;
+    }
+
+    // Check if it's a data URI
+    const dataUriMatch = dataUriOrBase64.match(/^data:image\/([a-zA-Z0-9+.-]+);base64,(.+)$/);
+    if (dataUriMatch) {
+      const mimeType = `image/${dataUriMatch[1]}`;
+      const rawBase64 = dataUriMatch[2];
+      try {
+        const buffer = Buffer.from(rawBase64, 'base64');
+        const res = await this.uploadFile(buffer, fileName, mimeType);
+        return res.url;
+      } catch (err) {
+        logger.warn({ err }, 'Failed saving base64 dataUri');
+        return dataUriOrBase64;
+      }
+    }
+
+    // If pure base64
+    if (dataUriOrBase64.length > 200 && !dataUriOrBase64.startsWith('/')) {
+      try {
+        const buffer = Buffer.from(dataUriOrBase64, 'base64');
+        const res = await this.uploadFile(buffer, fileName, 'image/jpeg');
+        return res.url;
+      } catch (err) {
+        logger.warn({ err }, 'Failed saving raw base64 string');
+        return dataUriOrBase64;
+      }
+    }
+
+    return dataUriOrBase64;
+  },
+
   getPublicUrl(key: string): string {
     return `https://${ENV.AWS_S3_BUCKET_NAME}.s3.${ENV.AWS_REGION}.amazonaws.com/${key}`;
   },
 };
+
 

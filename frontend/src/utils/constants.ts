@@ -3,12 +3,15 @@ import { Category } from '../types/category.types';
 
 export const CITIES = [
   'Chennai',
+  'Puducherry',
   'Bangalore',
   'Mumbai',
   'Delhi NCR',
   'Hyderabad',
   'Pune',
   'Kolkata',
+  'Coimbatore',
+  'Madurai',
 ];
 
 export const CATEGORIES: Category[] = [
