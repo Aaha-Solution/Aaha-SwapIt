@@ -11,6 +11,7 @@ import { ProductDetails } from '../ProductDetails/ProductDetails';
 import { EmptyState } from '../../components/EmptyState/EmptyState';
 import { setSelectedCategory } from '../../store/slices/userSlice';
 import { Product } from '../../types/product.types';
+import { Hero } from '../../components/Hero/Hero';
 
 export const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -38,6 +39,9 @@ export const Home: React.FC = () => {
 
   return (
     <div style={{ width: '100%' }}>
+      {/* Marketplace Hero Banner */}
+      <Hero />
+
       {/* 1. Explore Categories Section */}
       <section className="categories-section" style={{ marginBottom: '32px' }}>
         <div className="section-title-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
