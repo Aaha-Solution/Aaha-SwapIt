@@ -7,9 +7,22 @@ import { inMemoryMessages, saveMessageToStore, updateMessageInStore, MOCK_USERS,
 import { addNotificationToStore, StoredNotification } from '../services/notification-service/notification.store.js';
 
 export const setupSocketIO = (httpServer: HttpServer) => {
+  const allowedOrigins = [ENV.CLIENT_URL, 'http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173'].filter(Boolean);
+
   const io = new Server(httpServer, {
     cors: {
-      origin: [ENV.CLIENT_URL, 'http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173'],
+      origin: (origin, callback) => {
+        if (
+          !origin ||
+          allowedOrigins.includes(origin) ||
+          process.env.NODE_ENV === 'development' ||
+          /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+)(:\d+)?$/.test(origin)
+        ) {
+          callback(null, true);
+        } else {
+          callback(new Error('Blocked by Socket CORS'));
+        }
+      },
       methods: ['GET', 'POST'],
       credentials: true,
     },

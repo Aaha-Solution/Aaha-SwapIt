@@ -106,7 +106,7 @@ export const s3Service = {
         throw new Error('Invalid file destination path');
       }
       fs.writeFileSync(localFilePath, fileBuffer);
-      const url = `http://localhost:${ENV.PORT}/uploads/${uniqueName}`;
+      const url = `/uploads/${uniqueName}`;
       logger.info({ url, localFilePath }, 'Saved file to local storage');
       return { url, key: uniqueName };
     } catch (localErr: any) {

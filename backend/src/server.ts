@@ -1,5 +1,6 @@
 import http from 'http';
 import path from 'path';
+import os from 'os';
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -52,7 +53,7 @@ app.use(
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
         imgSrc: ["'self'", "data:", "blob:", "https:", "http:"],
-        connectSrc: ["'self'", "ws:", "wss:", "http://localhost:*", "https:"],
+        connectSrc: ["'self'", "ws:", "wss:", "http:", "https:"],
       },
     },
     crossOriginEmbedderPolicy: false,
@@ -65,7 +66,7 @@ app.use(
   })
 );
 
-// Strict CORS Configuration
+// Strict CORS Configuration with Network IP & LAN support
 const allowedOrigins = [
   ENV.CLIENT_URL,
   'http://localhost:5173',
@@ -73,11 +74,21 @@ const allowedOrigins = [
   'http://127.0.0.1:5173',
 ].filter(Boolean);
 
+const isAllowedOrigin = (origin?: string): boolean => {
+  if (!origin) return true;
+  if (allowedOrigins.includes(origin)) return true;
+  if (process.env.NODE_ENV === 'development') return true;
+  // Allow LAN IPs (192.168.x.x, 10.x.x.x, 172.16-31.x.x, localhost, 127.0.0.1) on any port
+  if (/^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+)(:\d+)?$/.test(origin)) {
+    return true;
+  }
+  return false;
+};
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl) or if origin is in whitelist
-      if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
+      if (isAllowedOrigin(origin)) {
         callback(null, true);
       } else {
         callback(new Error('Blocked by CORS policy'));
@@ -176,11 +187,35 @@ app.use('/api/ratings', ratingRouter);
 // 11. Centralized Error Handling
 app.use(errorHandler);
 
-// 12. Start Unified Gateway Server
-httpServer.listen(ENV.PORT, () => {
-  logger.info(`🚀 DealKart Microservices API Gateway listening on port ${ENV.PORT}`);
-  logger.info(`📖 Swagger OpenAPI docs available at: http://localhost:${ENV.PORT}/api-docs`);
-  logger.info(`⚡ Socket.IO real-time hub initialized`);
+// Helper to detect IPv4 LAN IP addresses
+function getLocalIpAddresses(): string[] {
+  const interfaces = os.networkInterfaces();
+  const addresses: string[] = [];
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name] || []) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        addresses.push(iface.address);
+      }
+    }
+  }
+  return addresses;
+}
+
+// 12. Start Unified Gateway Server on all network interfaces
+const host = ENV.HOST || '0.0.0.0';
+httpServer.listen(ENV.PORT, host, () => {
+  const localIps = getLocalIpAddresses();
+  console.log(`\n  🚀 DealKart Backend API Gateway running:\n`);
+  console.log(`  ➜  Local:   http://localhost:${ENV.PORT}`);
+  localIps.forEach((ip) => {
+    console.log(`  ➜  Network: http://${ip}:${ENV.PORT}`);
+  });
+  console.log(`  ➜  Docs:    http://localhost:${ENV.PORT}/api-docs`);
+  if (localIps.length > 0) {
+    console.log(`  ➜  Network Docs: http://${localIps[0]}:${ENV.PORT}/api-docs`);
+  }
+  console.log(`  ⚡ Socket.IO real-time hub initialized\n`);
+  logger.info(`🚀 DealKart Microservices API Gateway listening on http://${host}:${ENV.PORT}`);
 });
 
 // Server instance
