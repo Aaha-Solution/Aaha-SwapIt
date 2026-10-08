@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useMemo } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Bell, Check, Sparkles } from 'lucide-react';
+import { Bell, Check, Sparkles, Eye, MapPin, X } from 'lucide-react';
 import { RootState } from '../../store/store';
 import { useProducts } from '../../hooks/useProducts';
 import { ProductCard } from '../../components/ProductCard/ProductCard';
@@ -9,6 +9,7 @@ import { ProductDetails } from '../ProductDetails/ProductDetails';
 import { Filter } from '../../components/Filter/Filter';
 import { SaveSearchModal } from '../../components/SaveSearchModal/SaveSearchModal';
 import { EmptyState } from '../../components/EmptyState/EmptyState';
+import { getRecentlyViewed } from '../../utils/recentlyViewed';
 import {
   setSelectedCategory,
   resetFilters,
@@ -47,6 +48,11 @@ export const Products: React.FC = () => {
   const [isSaveSearchModalOpen, setIsSaveSearchModalOpen] = useState(false);
   const [saveSuccessToast, setSaveSuccessToast] = useState(false);
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filterParam = searchParams.get('filter');
+  const isRecentlyViewedFilter = filterParam === 'recently-viewed';
+  const isNearbyFilter = filterParam === 'nearby';
+
   // Check if current search is already saved
   const isCurrentSearchSaved = savedSearches.some(
     (s) =>
@@ -55,7 +61,18 @@ export const Products: React.FC = () => {
       s.city === selectedCity
   );
 
+  const displayedProducts = useMemo(() => {
+    if (isRecentlyViewedFilter) {
+      return getRecentlyViewed();
+    }
+    return products;
+  }, [isRecentlyViewedFilter, products]);
+
   const handleCategorySelect = (catId: string) => {
+    if (filterParam) {
+      searchParams.delete('filter');
+      setSearchParams(searchParams);
+    }
     dispatch(setSelectedCategory(catId));
   };
 
@@ -70,20 +87,92 @@ export const Products: React.FC = () => {
       <nav className="view-breadcrumbs">
         <Link to="/" className="breadcrumb-link">Home</Link>
         <span className="breadcrumb-separator">/</span>
-        <span className="breadcrumb-current">All Products</span>
+        <span className="breadcrumb-current">
+          {isRecentlyViewedFilter ? 'Recently Viewed' : isNearbyFilter ? 'Nearby Deals' : 'All Products'}
+        </span>
       </nav>
+
+      {/* Special Quick Access Filter Banners */}
+      {isRecentlyViewedFilter && (
+        <div className="mb-4 p-3.5 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/80 flex items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center flex-shrink-0">
+              <Eye className="w-4 h-4" />
+            </div>
+            <div>
+              <h4 className="text-xs sm:text-sm font-bold text-blue-900">
+                Recently Viewed Listings ({displayedProducts.length})
+              </h4>
+              <p className="text-[11px] text-blue-700">
+                All pre-owned products and deals you recently explored on SwapIt
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              searchParams.delete('filter');
+              setSearchParams(searchParams);
+            }}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white text-blue-700 border border-blue-200 text-xs font-bold hover:bg-blue-50 transition-colors shadow-xs"
+          >
+            <span>View All Products</span>
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {isNearbyFilter && (
+        <div className="mb-4 p-3.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-between gap-3 shadow-md shadow-blue-500/10">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-white/20 text-white flex items-center justify-center flex-shrink-0">
+              <MapPin className="w-4 h-4 fill-white" />
+            </div>
+            <div>
+              <h4 className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
+                <span>Nearby Deals in {selectedCity || 'Puducherry'}</span>
+                <span className="bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">20+ Hot Listings</span>
+              </h4>
+              <p className="text-[11px] text-blue-100">
+                Verified sellers, discounted second-hand listings ready for instant local pickup
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              searchParams.delete('filter');
+              setSearchParams(searchParams);
+            }}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white text-blue-700 text-xs font-bold hover:bg-blue-50 transition-colors shadow-xs whitespace-nowrap"
+          >
+            <span>Reset Filter</span>
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* 2. View Header Bar */}
       <div className="view-header-bar products-header-bar flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="view-title flex items-center gap-2.5">
-            <span>Marketplace Products</span>
+            <span>
+              {isRecentlyViewedFilter
+                ? 'Recently Viewed Items'
+                : isNearbyFilter
+                ? `Deals Near ${selectedCity || 'You'}`
+                : 'Marketplace Products'}
+            </span>
             <span className="header-count-badge" id="productsTotalCount">
-              {products.length} {products.length === 1 ? 'item' : 'items'}
+              {displayedProducts.length} {displayedProducts.length === 1 ? 'item' : 'items'}
             </span>
           </h1>
           <p className="view-subtitle">
-            Explore verified second-hand items with smart filters, price ranges, and instant seller chat
+            {isRecentlyViewedFilter
+              ? 'Pick up where you left off. Fast access to items you were checking out.'
+              : isNearbyFilter
+              ? 'Find verified bargains and instant seller meetups right in your neighborhood.'
+              : 'Explore verified second-hand items with smart filters, price ranges, and instant seller chat'}
           </p>
         </div>
 
@@ -147,7 +236,7 @@ export const Products: React.FC = () => {
             <div key={i} style={{ height: '220px', background: '#f1f5f9', borderRadius: '14px' }}></div>
           ))}
         </div>
-      ) : products.length === 0 ? (
+      ) : displayedProducts.length === 0 ? (
         <EmptyState
           city={selectedCity}
           category={selectedCategory}
@@ -155,7 +244,7 @@ export const Products: React.FC = () => {
         />
       ) : (
         <div className="all-products-grid">
-          {products.map((product) => (
+          {displayedProducts.map((product) => (
             <ProductCard
               key={product.id}
               product={product}

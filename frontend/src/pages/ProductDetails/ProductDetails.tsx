@@ -25,6 +25,7 @@ import { RootState } from '../../store/store';
 import { togglePriceDropWatch } from '../../store/slices/alertSlice';
 import { Product } from '../../types/product.types';
 import { formatINR } from '../../utils/helpers';
+import { addRecentlyViewed } from '../../utils/recentlyViewed';
 import { productApi } from '../../api/product.api';
 import { ratingApi } from '../../api/rating.api';
 import { Review, RatingSummary } from '../../types/rating.types';
@@ -98,6 +99,7 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
       const res = await productApi.getProductById(id);
       if (res.success && res.data) {
         setProduct(res.data);
+        addRecentlyViewed(res.data);
         setActiveImageIndex(0);
         // Load seller ratings
         if (res.data.seller?.id) {

@@ -26,6 +26,7 @@ import { useWishlist } from '../../hooks/useWishlist';
 import { useAuth } from '../../hooks/useAuth';
 import { chatApi } from '../../api/chat.api';
 import { getSocket, joinUserRoom } from '../../api/socket';
+import { QuickAccess } from '../QuickAccess/QuickAccess';
 
 interface NavItem {
   id: string;
@@ -210,22 +211,6 @@ export const Navbar: React.FC = () => {
           );
         })}
 
-        {/* My Account Divider & Section */}
-        <div
-          style={{
-            fontSize: '10.5px',
-            fontWeight: 700,
-            color: '#94a3b8',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px',
-            padding: '14px 14px 4px',
-            marginTop: '6px',
-            borderTop: '1px solid #f1f5f9',
-          }}
-        >
-          My Account
-        </div>
-
         {/* Admin Portal Button (visible to Admin) */}
         {user?.role === 'admin' && (
           <button
@@ -240,7 +225,8 @@ export const Navbar: React.FC = () => {
               color: isAdminActive ? '#4338ca' : '#4f46e5',
               fontWeight: 700,
               cursor: 'pointer',
-              marginBottom: '4px',
+              marginTop: '6px',
+              marginBottom: '2px',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -262,94 +248,8 @@ export const Navbar: React.FC = () => {
           </button>
         )}
 
-        {/* My Ads */}
-        <button
-          type="button"
-          onClick={() => handleProtectedNav('/profile')}
-          className={`nav-item ${isMyAdsActive ? 'active' : ''}`}
-          style={{
-            width: '100%',
-            justifyContent: 'space-between',
-            border: 'none',
-            background: isMyAdsActive ? 'var(--sidebar-active-bg)' : 'transparent',
-            cursor: 'pointer',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Package className="nav-icon" />
-            <span>My Ads</span>
-          </div>
-          <span
-            style={{
-              fontSize: '11px',
-              color: isMyAdsActive ? 'var(--sidebar-active-text)' : '#94a3b8',
-              fontWeight: 600,
-            }}
-          >
-            {myAdsCount}
-          </span>
-        </button>
-
-        {/* Favorites */}
-        <button
-          type="button"
-          onClick={() => handleProtectedNav('/wishlist')}
-          className={`nav-item ${isFavoritesActive ? 'active' : ''}`}
-          style={{
-            width: '100%',
-            justifyContent: 'space-between',
-            border: 'none',
-            background: isFavoritesActive ? 'var(--sidebar-active-bg)' : 'transparent',
-            cursor: 'pointer',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Heart className="nav-icon" />
-            <span>Favorites</span>
-          </div>
-          <span
-            style={{
-              fontSize: '11px',
-              color: isFavoritesActive ? 'var(--sidebar-active-text)' : '#94a3b8',
-              fontWeight: 600,
-            }}
-          >
-            {wishlistCount}
-          </span>
-        </button>
-
-        {/* Messages */}
-        <button
-          type="button"
-          onClick={() => handleProtectedNav('/messages')}
-          className={`nav-item ${isMessagesActive ? 'active' : ''}`}
-          style={{
-            width: '100%',
-            justifyContent: 'space-between',
-            border: 'none',
-            background: isMessagesActive ? 'var(--sidebar-active-bg)' : 'transparent',
-            cursor: 'pointer',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <MessageSquare className="nav-icon" />
-            <span>Messages</span>
-          </div>
-          {messagesCount > 0 && (
-            <span
-              style={{
-                background: '#ef4444',
-                color: '#ffffff',
-                fontSize: '10px',
-                fontWeight: 700,
-                padding: '1px 6px',
-                borderRadius: '6px',
-              }}
-            >
-              {messagesCount}
-            </span>
-          )}
-        </button>
+        {/* Quick Access Card - Replacing My Account section as requested */}
+        <QuickAccess />
       </nav>
     </aside>
   );

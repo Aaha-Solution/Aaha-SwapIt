@@ -332,10 +332,11 @@ html, body {
 
 /* Left Sidebar */
 .app-sidebar {
-  width: 195px;
+  width: 220px;
   flex-shrink: 0;
   position: sticky;
   top: 84px;
+  z-index: 40;
 }
 
 .sidebar-nav {
