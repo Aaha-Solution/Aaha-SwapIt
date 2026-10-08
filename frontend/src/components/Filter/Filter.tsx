@@ -105,8 +105,8 @@ export const Filter: React.FC = () => {
             onChange={(e) => dispatch(setSelectedCity(e.target.value))}
             className="w-full bg-slate-50 border border-slate-200 text-xs font-medium text-slate-700 rounded-xl px-3 py-2 outline-none focus:border-indigo-500 focus:bg-white transition-colors cursor-pointer"
           >
-            <option value="all">All Cities</option>
-            {CITIES.map((city) => (
+            <option value="all">Puducherry</option>
+            {CITIES.filter((c) => c !== 'Puducherry').map((city) => (
               <option key={city} value={city}>
                 {city}
               </option>

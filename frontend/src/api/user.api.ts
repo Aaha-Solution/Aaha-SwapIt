@@ -33,7 +33,7 @@ export const userApi = {
       // Return 2 sample ads for the user matching prototype count
       return {
         success: true,
-        data: INITIAL_PRODUCTS.slice(0, 2),
+        data: [],
       };
     }
   },
