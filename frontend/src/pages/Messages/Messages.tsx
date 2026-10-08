@@ -167,7 +167,7 @@ export const Messages: React.FC = () => {
                 peerUser: {
                   id: queryUserId,
                   name: catalogProd?.seller?.name || 'Seller',
-                  location: catalogProd?.location || 'Chennai',
+                  location: catalogProd?.location || 'Puducherry',
                 },
                 lastMessage: 'Start a new conversation',
                 productId: queryProductId || catalogProd?.id,
@@ -612,8 +612,7 @@ export const Messages: React.FC = () => {
       meetTime: 'Today or Tomorrow by mutual convenience',
       handshakeCode: handshakePin,
       status: 'agreed',
-      productId: offer.productId,
-      productTitle: offer.productTitle || selectedConversation.product?.title,
+      productTitle: offer.productTitle || selectedConversation.product?.title || 'Listing',
     };
 
     handleSendDealAgreement(dealAgreement);
@@ -1391,7 +1390,7 @@ export const Messages: React.FC = () => {
         <WriteReviewModal
           targetUserId={selectedConversation.peerUser.id}
           targetUserName={selectedConversation.peerUser.name}
-          targetUserAvatar={selectedConversation.peerUser.avatarUrl}
+          targetUserAvatar={selectedConversation.peerUser.avatarUrl || undefined}
           productId={selectedConversation.productId || undefined}
           productTitle={selectedConversation.product?.title}
           onClose={() => setIsReviewModalOpen(false)}

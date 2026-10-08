@@ -4,7 +4,7 @@ import { ApiResponse } from '../types/api.types';
 import { INITIAL_PRODUCTS, CATEGORIES } from '../utils/constants';
 
 // Local cache for products when running standalone
-let localProducts: Product[] = [];
+let localProducts: Product[] = [...INITIAL_PRODUCTS];
 
 export const productApi = {
   getProducts: async (filters?: ProductFilterOptions): Promise<ApiResponse<Product[]>> => {
@@ -152,8 +152,8 @@ export const productApi = {
         price: productData.price || 0,
         description: productData.description || '',
         category: productData.category || 'electronics',
-        city: productData.city || 'Chennai',
-        location: `${productData.city || 'Chennai'} • Just now`,
+        city: productData.city || 'Puducherry',
+        location: `${productData.city || 'Puducherry'} • Just now`,
         postedAt: 'Just now',
         condition: productData.condition || 'Good',
         imageUrl: productData.imageUrl || '/images/laptop_macbook.png',

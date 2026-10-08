@@ -44,7 +44,7 @@ export const AdminPanel: React.FC = () => {
     name: '',
     email: '',
     phone: '',
-    location: 'Chennai',
+    location: 'Puducherry',
     password: 'Password@123',
   });
 
@@ -76,7 +76,7 @@ export const AdminPanel: React.FC = () => {
           name: 'Karthik Raja (Seller)',
           email: 'seller@swapit.com',
           phone: '+91 98401 23456',
-          location: 'Chennai',
+          location: 'Puducherry',
           verified: true,
           role: 'seller',
           memberSince: 'Oct 2024',
@@ -87,7 +87,7 @@ export const AdminPanel: React.FC = () => {
           name: 'Suresh Motors',
           email: 'suresh@example.com',
           phone: '+91 94441 55210',
-          location: 'Chennai',
+          location: 'Puducherry',
           verified: true,
           role: 'seller',
           memberSince: 'Nov 2024',
@@ -128,7 +128,7 @@ export const AdminPanel: React.FC = () => {
           name: '',
           email: '',
           phone: '',
-          location: 'Chennai',
+          location: 'Puducherry',
           password: 'Password@123',
         });
         fetchData();
@@ -506,7 +506,7 @@ export const AdminPanel: React.FC = () => {
                         {seller.phone || '—'}
                       </td>
                       <td className="py-3 px-3 text-slate-600">
-                        {seller.location || 'Chennai'}
+                        {seller.location || 'Puducherry'}
                       </td>
                       <td className="py-3 px-3">
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">

@@ -117,7 +117,7 @@ export const SaveSearchModal: React.FC<SaveSearchModalProps> = ({
               value={searchTitle}
               onChange={(e) => setSearchTitle(e.target.value)}
               className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-              placeholder="e.g. iPhone in Mumbai under 40k"
+              placeholder="e.g. iPhone in Puducherry under 40k"
               required
             />
           </div>

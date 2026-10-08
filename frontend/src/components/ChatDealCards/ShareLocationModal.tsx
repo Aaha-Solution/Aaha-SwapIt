@@ -9,34 +9,34 @@ interface ShareLocationModalProps {
 
 const PRESET_PLACES: LocationShare[] = [
   {
-    name: 'Phoenix Marketcity (Main Gate)',
-    address: '142, Velachery Main Rd, Indira Gandhi Nagar, Velachery',
-    landmark: 'Near Main Entrance Starbucks',
-    city: 'Chennai',
+    name: 'Promenade Beach (Gandhi Statue)',
+    address: 'Goubert Avenue, White Town',
+    landmark: 'Near Mahatma Gandhi Statue',
+    city: 'Puducherry',
   },
   {
-    name: 'Express Avenue Mall',
-    address: 'Club House Rd, Express Estate, Royapettah',
-    landmark: 'Central Atrium Floor 1',
-    city: 'Chennai',
+    name: 'Providence Mall (Main Atrium)',
+    address: 'Cuddalore Main Road, Orleanpet',
+    landmark: 'Central Atrium Ground Floor',
+    city: 'Puducherry',
   },
   {
-    name: 'Anna Nagar Tower Metro Station',
-    address: '2nd Avenue, Block Y, Anna Nagar',
-    landmark: 'Gate 2 Ticket Counter',
-    city: 'Chennai',
+    name: 'Sri Aurobindo Ashram',
+    address: 'Rue de la Marine, White Town',
+    landmark: 'Main Reception Area',
+    city: 'Puducherry',
   },
   {
-    name: 'Forum Vijaya Mall',
-    address: '183, Great Southern Trunk Rd, Arcot Rd, Vadapalani',
-    landmark: 'Near Food Court Level 3',
-    city: 'Chennai',
+    name: 'Puducherry Railway Station',
+    address: 'Subbiah Salai, Orleanpet',
+    landmark: 'Main Portico Entrance',
+    city: 'Puducherry',
   },
   {
-    name: 'T. Nagar Panagal Park',
-    address: 'Prakasam Rd, Parthasarathi Puram, T. Nagar',
-    landmark: 'Opposite GRT Jewellers',
-    city: 'Chennai',
+    name: 'Botanical Garden (Main Gate)',
+    address: 'Maraimalai Adigal Salai, Subbarayapillai Chathiram',
+    landmark: 'Opposite New Bus Stand Road',
+    city: 'Puducherry',
   },
 ];
 
@@ -62,7 +62,7 @@ export const ShareLocationModal: React.FC<ShareLocationModalProps> = ({
       name: customName.trim(),
       address: customAddress.trim(),
       landmark: customLandmark.trim() || undefined,
-      city: 'Chennai',
+      city: 'Puducherry',
     });
     onClose();
   };

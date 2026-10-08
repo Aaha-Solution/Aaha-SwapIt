@@ -19,19 +19,19 @@ export interface PeerUser {
 }
 
 export const MOCK_USERS: Record<string, PeerUser> = {
-  'usr-1': { id: 'usr-1', name: 'Karthik Raja', location: 'T. Nagar, Chennai' },
-  'usr-2': { id: 'usr-2', name: 'Vignesh M', location: 'Velachery, Chennai' },
-  'usr-3': { id: 'usr-3', name: 'Suresh Kumar', location: 'Anna Nagar, Chennai' },
-  'usr-4': { id: 'usr-4', name: 'Ananya Ramesh', location: 'Adyar, Chennai' },
-  'usr-5': { id: 'usr-5', name: 'Deepak Nathan', location: 'Koramangala, Bangalore' },
-  'usr-6': { id: 'usr-6', name: 'Apex Realtors', location: 'RS Puram, Coimbatore' },
-  'usr-7': { id: 'usr-7', name: 'Pravin Studio', location: 'T. Nagar, Chennai' },
-  'usr-8': { id: 'usr-8', name: 'Balaji S', location: 'Velachery, Chennai' },
-  'usr-9': { id: 'usr-9', name: 'Gowtham R', location: 'Chennai' },
-  'usr-10': { id: 'usr-10', name: 'Pooja V', location: 'Chennai' },
-  'usr-11': { id: 'usr-11', name: 'Aravind S', location: 'Chennai' },
-  'usr-12': { id: 'usr-12', name: 'CleanPro Services', location: 'Chennai' },
-  'usr-demo-iyyanar': { id: 'usr-demo-iyyanar', name: 'Iyyanar', location: 'Chennai' },
+  'usr-1': { id: 'usr-1', name: 'Karthik Raja', location: 'White Town, Puducherry' },
+  'usr-2': { id: 'usr-2', name: 'Vignesh M', location: 'Lawspet, Puducherry' },
+  'usr-3': { id: 'usr-3', name: 'Suresh Kumar', location: 'Muthialpet, Puducherry' },
+  'usr-4': { id: 'usr-4', name: 'Ananya Ramesh', location: 'Heritage Town, Puducherry' },
+  'usr-5': { id: 'usr-5', name: 'Deepak Nathan', location: 'Nellithope, Puducherry' },
+  'usr-6': { id: 'usr-6', name: 'Apex Realtors', location: 'Reddiarpalayam, Puducherry' },
+  'usr-7': { id: 'usr-7', name: 'Pravin Studio', location: 'Gorimedu, Puducherry' },
+  'usr-8': { id: 'usr-8', name: 'Balaji S', location: 'Mudaliarpet, Puducherry' },
+  'usr-9': { id: 'usr-9', name: 'Gowtham R', location: 'Ariyankuppam, Puducherry' },
+  'usr-10': { id: 'usr-10', name: 'Pooja V', location: 'Villiyanur, Puducherry' },
+  'usr-11': { id: 'usr-11', name: 'Aravind S', location: 'Thattanchavady, Puducherry' },
+  'usr-12': { id: 'usr-12', name: 'CleanPro Services', location: 'Kalapet, Puducherry' },
+  'usr-demo-iyyanar': { id: 'usr-demo-iyyanar', name: 'Iyyanar', location: 'Puducherry' },
 };
 
 export const MOCK_PRODUCTS: Record<string, any> = {
@@ -42,7 +42,7 @@ export const MOCK_PRODUCTS: Record<string, any> = {
     imageUrl: '/images/car_red.jpg',
     condition: 'Like New',
     status: 'active',
-    city: 'Chennai',
+    city: 'Puducherry',
   },
   'prod-2': {
     id: 'prod-2',
@@ -51,7 +51,7 @@ export const MOCK_PRODUCTS: Record<string, any> = {
     imageUrl: '/images/bike_yamaha.jpg',
     condition: 'Good',
     status: 'active',
-    city: 'Chennai',
+    city: 'Puducherry',
   },
   'prod-3': {
     id: 'prod-3',
@@ -60,7 +60,7 @@ export const MOCK_PRODUCTS: Record<string, any> = {
     imageUrl: '/images/phone_purple.jpg',
     condition: 'Like New',
     status: 'active',
-    city: 'Chennai',
+    city: 'Puducherry',
   },
   'prod-4': {
     id: 'prod-4',
@@ -69,7 +69,7 @@ export const MOCK_PRODUCTS: Record<string, any> = {
     imageUrl: '/images/sofa_brown.jpg',
     condition: 'Good',
     status: 'active',
-    city: 'Chennai',
+    city: 'Puducherry',
   },
   'prod-5': {
     id: 'prod-5',
@@ -78,7 +78,7 @@ export const MOCK_PRODUCTS: Record<string, any> = {
     imageUrl: '/images/laptop_macbook.jpg',
     condition: 'Like New',
     status: 'active',
-    city: 'Chennai',
+    city: 'Puducherry',
   },
   'prod-6': {
     id: 'prod-6',
@@ -87,7 +87,7 @@ export const MOCK_PRODUCTS: Record<string, any> = {
     imageUrl: '/images/apartment.jpg',
     condition: 'Brand New',
     status: 'active',
-    city: 'Chennai',
+    city: 'Puducherry',
   },
   'prod-7': {
     id: 'prod-7',
@@ -96,7 +96,7 @@ export const MOCK_PRODUCTS: Record<string, any> = {
     imageUrl: '/images/camera.jpg',
     condition: 'Like New',
     status: 'active',
-    city: 'Chennai',
+    city: 'Puducherry',
   },
   'prod-8': {
     id: 'prod-8',
@@ -105,7 +105,7 @@ export const MOCK_PRODUCTS: Record<string, any> = {
     imageUrl: '/images/bike_yamaha.jpg',
     condition: 'Good',
     status: 'active',
-    city: 'Chennai',
+    city: 'Puducherry',
   },
   'prod-9': {
     id: 'prod-9',
@@ -114,7 +114,7 @@ export const MOCK_PRODUCTS: Record<string, any> = {
     imageUrl: '/images/fashion.jpg',
     condition: 'Good',
     status: 'active',
-    city: 'Chennai',
+    city: 'Puducherry',
   },
   'prod-10': {
     id: 'prod-10',
@@ -123,7 +123,7 @@ export const MOCK_PRODUCTS: Record<string, any> = {
     imageUrl: '/images/pet.jpg',
     condition: 'Brand New',
     status: 'active',
-    city: 'Chennai',
+    city: 'Puducherry',
   },
   'prod-11': {
     id: 'prod-11',
@@ -132,7 +132,7 @@ export const MOCK_PRODUCTS: Record<string, any> = {
     imageUrl: '/images/books.jpg',
     condition: 'Good',
     status: 'active',
-    city: 'Chennai',
+    city: 'Puducherry',
   },
   'prod-12': {
     id: 'prod-12',
@@ -141,7 +141,7 @@ export const MOCK_PRODUCTS: Record<string, any> = {
     imageUrl: '/images/services.jpg',
     condition: 'Brand New',
     status: 'active',
-    city: 'Chennai',
+    city: 'Puducherry',
   },
 };
 
@@ -281,7 +281,7 @@ export function getSmartSellerReply(messageText: string, sellerName: string, pro
     return `The price is slightly negotiable. Click "Make an Offer" above to suggest your best price!`;
   }
   if (text.includes('meet') || text.includes('location') || text.includes('where') || text.includes('place')) {
-    return `I am available to meet in Chennai near the city center or Phoenix Marketcity. When are you free?`;
+    return `I am available to meet in Puducherry near White Town or Providence Mall. When are you free?`;
   }
   if (text.includes('condition') || text.includes('working') || text.includes('warranty') || text.includes('bill')) {
     return `It is in fantastic working condition without any defects. You are welcome to test it thoroughly before buying!`;

@@ -21,7 +21,7 @@ interface UserState {
 }
 
 const initialState: UserState = {
-  selectedCity: 'Chennai',
+  selectedCity: 'all',
   searchQuery: '',
   selectedCategory: 'all',
   priceRange: 'all',

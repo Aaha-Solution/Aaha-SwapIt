@@ -38,7 +38,7 @@ export const Filter: React.FC = () => {
     selectedCategory !== 'all' ||
     priceRange !== 'all' ||
     selectedCondition !== 'all' ||
-    (selectedCity !== 'all' && selectedCity !== 'Chennai') ||
+    selectedCity !== 'all' ||
     sortBy !== 'newest';
 
   const handleApplyCustomPrice = (e: React.FormEvent) => {
@@ -239,9 +239,9 @@ export const Filter: React.FC = () => {
             </span>
           )}
 
-          {selectedCity !== 'all' && selectedCity !== 'Chennai' && (
+          {selectedCity !== 'all' && (
             <span className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 text-xs font-medium px-2.5 py-1 rounded-full">
-              <span>City: {selectedCity}</span>
+              <span>Location: {selectedCity}</span>
               <button
                 type="button"
                 onClick={() => dispatch(clearFilter('city'))}

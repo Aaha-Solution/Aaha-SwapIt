@@ -56,7 +56,10 @@ export const productController = {
       }
 
       if (city && city !== 'all') {
-        where.city = { equals: city };
+        where.OR = [
+          { city: { equals: city } },
+          { location: { contains: city } },
+        ];
       }
 
       if (condition && condition !== 'all') {
@@ -369,7 +372,7 @@ export const productController = {
             email: authUser?.email || 'iyyanar@example.com',
             password: 'demo_password_hash',
             phone: phone || seller?.phone || '+91 98401 23456',
-            location: city || 'Chennai',
+            location: city || 'Puducherry',
             role: 'seller',
             verified: true,
             memberSince: 'Sep 2026',
@@ -427,8 +430,8 @@ export const productController = {
           categoryName: matchedCat?.slug || category || 'mobiles',
           categoryId: matchedCat?.id || null,
           condition: condition || 'Like New',
-          city: city || 'Chennai',
-          location: `${city || 'Chennai'} • Just now`,
+          city: city || 'Puducherry',
+          location: `${city || 'Puducherry'} • Just now`,
           postedAt: 'Just now',
           imageUrl: primaryImageUrl,
           images: processedImages,

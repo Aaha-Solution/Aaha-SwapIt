@@ -172,12 +172,21 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearchSubmit }) => {
         onClick={() => setIsCityDropdownOpen(!isCityDropdownOpen)}
       >
         <MapPin className="location-icon" />
-        <span>{selectedCity}</span>
+        <span>{selectedCity === 'all' ? 'All Puducherry' : selectedCity}</span>
         <ChevronDown className="chevron-icon" />
 
         {/* Dropdown Menu */}
         <div className="location-dropdown-menu">
-          <div className="dropdown-header">Select Location</div>
+          <div className="dropdown-header">Select Area in Puducherry</div>
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCitySelect('all');
+            }}
+            className={`dropdown-item ${selectedCity === 'all' ? 'active' : ''}`}
+          >
+            All Puducherry
+          </div>
           {CITIES.map((city) => (
             <div
               key={city}

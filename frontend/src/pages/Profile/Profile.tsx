@@ -239,7 +239,7 @@ export const Profile: React.FC = () => {
                 </span>
                 <span className="flex items-center gap-1.5">
                   <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                  {user?.location || 'Chennai'}
+                  {user?.location || 'Puducherry'}
                 </span>
                 <span className="flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5 text-slate-400" />
@@ -539,7 +539,7 @@ export const Profile: React.FC = () => {
                           <span>•</span>
                           <span className="flex items-center gap-1">
                             <MapPin className="w-3 h-3 text-slate-400" />
-                            {ad.city || 'Chennai'}
+                            {ad.city || 'Puducherry'}
                           </span>
                         </div>
 

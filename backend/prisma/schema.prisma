@@ -14,7 +14,7 @@ model User {
   name             String
   phone            String?
   avatarUrl        String?        @db.Text
-  location         String?        @default("Chennai")
+  location         String?        @default("Puducherry")
   verified         Boolean        @default(false)
   role             String         @default("user")
   memberSince      String?        @default("Sep 2026")
@@ -64,8 +64,8 @@ model Product {
   category     Category?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   categoryName String         @default("all")
   condition    String         @default("Good")
-  city         String         @default("Chennai")
-  location     String         @default("Chennai")
+  city         String         @default("Puducherry")
+  location     String         @default("Puducherry")
   postedAt     String         @default("Just now")
   imageUrl     String         @db.Text
   images       Json?

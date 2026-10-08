@@ -190,7 +190,7 @@ export const TermsConditions: React.FC = () => {
               <p style={{ margin: 0, fontWeight: 700, color: '#0f172a' }}>SwapIt Legal Department</p>
               <p style={{ margin: '2px 0', color: '#64748b' }}>SwapIt Technologies India Private Limited</p>
               <p style={{ margin: '2px 0', color: '#2563eb' }}>Email: legal@swapit.in | compliance@swapit.in</p>
-              <p style={{ margin: '2px 0 0', color: '#64748b' }}>Chennai, Tamil Nadu, India</p>
+              <p style={{ margin: '2px 0 0', color: '#64748b' }}>Puducherry, India</p>
             </div>
           </div>
         </section>

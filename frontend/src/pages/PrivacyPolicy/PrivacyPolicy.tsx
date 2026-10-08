@@ -141,7 +141,7 @@ export const PrivacyPolicy: React.FC = () => {
             </p>
             <ul style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <li>
-                <strong>Public Listings:</strong> Product details, asking price, general locality (e.g., Chennai or Bangalore), and public seller profile information are visible to other marketplace users.
+                <strong>Public Listings:</strong> Product details, asking price, general locality (e.g., White Town, Lawspet, or Puducherry), and public seller profile information are visible to other marketplace users.
               </li>
               <li>
                 <strong>Verified Service Providers:</strong> Secure infrastructure providers (hosting, database storage, SMS authentication, payment gateway partners) under strict confidentiality agreements.
@@ -204,7 +204,7 @@ export const PrivacyPolicy: React.FC = () => {
               <p style={{ margin: 0, fontWeight: 700, color: '#0f172a' }}>SwapIt Technologies India Pvt. Ltd.</p>
               <p style={{ margin: '2px 0', color: '#64748b' }}>Grievance Officer & Data Protection Desk</p>
               <p style={{ margin: '2px 0', color: '#2563eb' }}>Email: privacy@swapit.in | support@swapit.in</p>
-              <p style={{ margin: '2px 0 0', color: '#64748b' }}>Chennai, Tamil Nadu, India</p>
+              <p style={{ margin: '2px 0 0', color: '#64748b' }}>Puducherry, India</p>
             </div>
           </div>
         </section>

@@ -34,7 +34,7 @@ export const authController = {
           password: passwordHash,
           name: name.trim(),
           phone: phone || null,
-          location: city || 'Chennai',
+          location: city || 'Puducherry',
           verified: true,
           role: 'customer',
           memberSince: 'Just now',

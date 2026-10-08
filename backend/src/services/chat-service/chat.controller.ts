@@ -116,7 +116,7 @@ export const getConversations = async (req: Request, res: Response) => {
     for (const mem of userMemoryMessages) {
       if (!allMessages.some((m) => m.id === mem.id)) {
         const peerId = mem.senderId === currentUserId ? mem.receiverId : mem.senderId;
-        const mockPeer = MOCK_USERS[peerId] || { id: peerId, name: 'User', location: 'Chennai' };
+        const mockPeer = MOCK_USERS[peerId] || { id: peerId, name: 'User', location: 'Puducherry' };
 
         allMessages.push({
           ...mem,
@@ -137,7 +137,7 @@ export const getConversations = async (req: Request, res: Response) => {
       const peer = msg.senderId === currentUserId ? msg.receiver : msg.sender;
       const peerId = peer?.id || (msg.senderId === currentUserId ? msg.receiverId : msg.senderId);
 
-      const peerUserObj = peer || MOCK_USERS[peerId] || { id: peerId, name: 'Seller', location: 'Chennai' };
+      const peerUserObj = peer || MOCK_USERS[peerId] || { id: peerId, name: 'Seller', location: 'Puducherry' };
 
       if (!conversationMap.has(peerId)) {
         if (msg.productId) {

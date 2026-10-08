@@ -23,7 +23,7 @@ const router = Router();
  *               email: { type: string, example: "john@example.com" }
  *               password: { type: string, example: "SecurePass@123" }
  *               phone: { type: string, example: "+91 98401 23456" }
- *               city: { type: string, example: "Chennai" }
+ *               city: { type: string, example: "Puducherry" }
  *     responses:
  *       201:
  *         description: User registered successfully

@@ -23,7 +23,7 @@ export const Sell: React.FC<SellProps> = ({ isModal = false, onClose, onSuccess 
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('mobiles');
   const [price, setPrice] = useState('');
-  const [city, setCity] = useState(user?.location || 'Chennai');
+  const [city, setCity] = useState(user?.location || 'Puducherry');
   const [condition, setCondition] = useState<'Brand New' | 'Like New' | 'Good' | 'Fair'>('Like New');
   const [phone, setPhone] = useState(user?.phone || '+91 98401 23456');
   const [description, setDescription] = useState('');
