@@ -2,14 +2,19 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 import { ShieldCheck, MapPin, Leaf, Sparkles } from 'lucide-react';
 import { RootState } from '../../store/store';
+import heroBannerBg from '../../assets/images/hero_banner_full.png';
 import './Hero.css';
 
 export const Hero: React.FC = () => {
   const { selectedCity } = useSelector((state: RootState) => state.user);
-  const city = selectedCity || 'Pondicherry';
+  const city = selectedCity && selectedCity !== 'all' ? selectedCity : 'Pondicherry';
 
   return (
-    <section className="marketplace-hero-banner" aria-label="Marketplace Banner">
+    <section
+      className="marketplace-hero-banner"
+      style={{ backgroundImage: `url(${heroBannerBg})` }}
+      aria-label="Marketplace Banner"
+    >
       {/* Decorative ambient background accents */}
       <div className="hero-decor-orb-1" aria-hidden="true" />
       <div className="hero-decor-orb-2" aria-hidden="true" />
@@ -71,15 +76,12 @@ export const Hero: React.FC = () => {
         </div>
       </div>
 
-      {/* Right Column: Exact Visual Artwork from Uploaded Image */}
-      <div className="hero-right-col">
-        <div className="hero-artwork-frame">
-          <img
-            src="/images/hero_deals_artwork.png"
-            alt={`Great deals Closer to you in ${city}`}
-            className="hero-artwork-visual"
-            loading="eager"
-          />
+      {/* Right Column: Dynamic Callout text positioned over arch */}
+      <div className="hero-right-col" aria-hidden="true">
+        <div className="hero-callout-bubble">
+          <span className="hero-callout-line1">Great deals</span>
+          <span className="hero-callout-line2">Closer to you</span>
+          <span className="hero-callout-line3">in {city}</span>
         </div>
       </div>
     </section>

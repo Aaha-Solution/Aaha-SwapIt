@@ -5,17 +5,21 @@
 .marketplace-hero-banner {
   position: relative;
   width: 100%;
-  min-height: 275px;
-  background: linear-gradient(115deg, #e3f2fd 0%, #ebf5fe 42%, #f2f8fe 80%, #f6fafe 100%);
+  min-height: 290px;
+  background-color: #dff0fc;
+  background-image: url('/images/hero_banner_full.png');
+  background-repeat: no-repeat;
+  background-position: right center;
+  background-size: cover;
   border-radius: 24px;
-  padding: 30px 36px;
+  padding: 34px 44px;
   margin-bottom: 30px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   overflow: hidden;
-  box-shadow: 0 4px 20px -2px rgba(37, 99, 235, 0.06), 0 1px 3px rgba(0, 0, 0, 0.02);
-  border: 1px solid rgba(224, 242, 254, 0.7);
+  box-shadow: 0 4px 20px -2px rgba(37, 99, 235, 0.07), 0 1px 3px rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(214, 238, 255, 0.9);
 }
 
 /* Subtle atmospheric backdrop orbs */
@@ -50,7 +54,7 @@
   position: relative;
   z-index: 2;
   flex: 1;
-  max-width: 480px;
+  max-width: 490px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -158,38 +162,50 @@
   line-height: 1.2;
 }
 
-/* Right Column Artwork Visual */
+/* Right Column Spacer with City Callout */
 .hero-right-col {
   position: relative;
   z-index: 1;
   flex: 1.15;
   display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  height: 275px;
-  overflow: visible;
+  justify-content: flex-start;
+  align-items: flex-start;
+  min-height: 275px;
+  padding-top: 12px;
+  padding-left: 20px;
 }
 
-.hero-artwork-frame {
-  position: relative;
-  width: 100%;
-  height: 100%;
+.hero-callout-bubble {
   display: flex;
-  justify-content: flex-end;
-  align-items: flex-end;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transform: rotate(-6deg);
+  margin-top: 12px;
+  margin-left: 55px;
+  user-select: none;
+  pointer-events: none;
 }
 
-.hero-artwork-visual {
-  max-height: 275px;
-  width: auto;
-  object-fit: contain;
-  object-position: right bottom;
-  /* Smooth mask on the left edge ensures seamless blending with no text artifacts */
-  mask-image: linear-gradient(to right, transparent 0%, transparent 2.5%, black 6.5%, black 100%);
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, transparent 2.5%, black 6.5%, black 100%);
-  filter: drop-shadow(0 6px 12px rgba(15, 23, 42, 0.05));
-  pointer-events: none;
-  user-select: none;
+.hero-callout-line1 {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #2563eb;
+  line-height: 1.25;
+}
+
+.hero-callout-line2 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1d4ed8;
+  line-height: 1.25;
+}
+
+.hero-callout-line3 {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #1e40af;
+  line-height: 1.25;
 }
 
 /* ==========================================================================
@@ -200,6 +216,7 @@
   .marketplace-hero-banner {
     padding: 24px 28px;
     min-height: 260px;
+    background-position: 95% center;
   }
 
   .hero-main-title {
@@ -210,8 +227,8 @@
     gap: 14px;
   }
 
-  .hero-artwork-visual {
-    max-height: 240px;
+  .hero-callout-bubble {
+    margin-left: 25px;
   }
 }
 
@@ -219,8 +236,9 @@
   .marketplace-hero-banner {
     flex-direction: column;
     align-items: flex-start;
-    padding: 24px 22px 10px 22px;
+    padding: 24px 22px 20px 22px;
     min-height: auto;
+    background-position: right bottom;
   }
 
   .hero-left-col {
@@ -230,19 +248,12 @@
 
   .hero-right-col {
     width: 100%;
-    height: 220px;
-    justify-content: center;
+    min-height: 140px;
+    justify-content: flex-end;
   }
 
-  .hero-artwork-frame {
-    justify-content: center;
-  }
-
-  .hero-artwork-visual {
-    max-height: 210px;
-    object-position: center bottom;
-    mask-image: none;
-    -webkit-mask-image: none;
+  .hero-callout-bubble {
+    display: none;
   }
 }
 
