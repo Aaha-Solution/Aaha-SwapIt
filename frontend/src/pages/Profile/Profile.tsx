@@ -22,7 +22,13 @@ import {
   ShieldCheck,
   Star,
   Award,
+  Bell,
+  Tag,
+  SlidersHorizontal,
+  BellRing,
 } from 'lucide-react';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store/store';
 import { useAuth } from '../../hooks/useAuth';
 import { userApi } from '../../api/user.api';
 import { productApi } from '../../api/product.api';
@@ -30,7 +36,19 @@ import { ratingApi } from '../../api/rating.api';
 import { Product } from '../../types/product.types';
 import { Review, RatingSummary } from '../../types/rating.types';
 import { formatINR } from '../../utils/helpers';
-import { openPostAdModal, setMyAdsCount } from '../../store/slices/userSlice';
+import {
+  openPostAdModal,
+  setMyAdsCount,
+  setSelectedCategory,
+  setSearchQuery as setStoreSearchQuery,
+  setSelectedCity,
+} from '../../store/slices/userSlice';
+import {
+  removeSavedSearch,
+  toggleSavedSearchNotification,
+  removePriceDropWatch,
+} from '../../store/slices/alertSlice';
+import { useNotifications } from '../../hooks/useNotifications';
 import { EditProductModal } from '../../components/EditProductModal/EditProductModal';
 import { StarRating } from '../../components/Rating/StarRating';
 import { RatingBreakdown } from '../../components/Rating/RatingBreakdown';
@@ -41,13 +59,18 @@ export const Profile: React.FC = () => {
   const dispatch = useDispatch();
   const { user } = useAuth();
 
-  const [mainView, setMainView] = useState<'listings' | 'reviews'>('listings');
+  const [mainView, setMainView] = useState<'listings' | 'reviews' | 'alerts'>('listings');
   const [myAds, setMyAds] = useState<Product[]>([]);
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'sold'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+
+  // Alerts State from Redux
+  const { savedSearches, priceDropWatches } = useSelector((state: RootState) => state.alerts);
+  const { triggerTestAlert } = useNotifications();
+  const [testAlertSent, setTestAlertSent] = useState(false);
 
   // Reviews State
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -330,6 +353,19 @@ export const Profile: React.FC = () => {
         >
           <Star className="w-4 h-4" />
           <span>Reviews & Reputation ({totalReviewsCount})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setMainView('alerts')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
+            mainView === 'alerts'
+              ? 'bg-indigo-600 text-white shadow-sm'
+              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <Bell className="w-4 h-4" />
+          <span>Saved Searches & Alerts ({savedSearches.length + priceDropWatches.length})</span>
         </button>
       </div>
 
@@ -700,6 +736,229 @@ export const Profile: React.FC = () => {
               <div className="space-y-3">
                 {filteredReviews.map((rev) => (
                   <ReviewCard key={rev.id} review={rev} />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* VIEW 3: SAVED SEARCHES & PRICE DROP ALERTS */}
+      {mainView === 'alerts' && (
+        <div className="space-y-6">
+          {/* Saved Searches Section */}
+          <div className="bg-white rounded-3xl border border-slate-100 p-6 sm:p-8 shadow-sm space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-xs">
+                  <Bell className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-black text-slate-900 tracking-tight">
+                    Saved Searches & Deal Alerts ({savedSearches.length})
+                  </h2>
+                  <p className="text-xs text-slate-400">
+                    Get instant notifications whenever new items match your keywords or budget
+                  </p>
+                </div>
+              </div>
+
+              {/* Simulate Match / Test Alert Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  triggerTestAlert();
+                  setTestAlertSent(true);
+                  setTimeout(() => setTestAlertSent(false), 4000);
+                }}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                <span>{testAlertSent ? 'Alert Triggered!' : 'Test Live Notification'}</span>
+              </button>
+            </div>
+
+            {savedSearches.length === 0 ? (
+              <div className="text-center py-12 bg-slate-50 rounded-2xl border border-slate-100">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center mx-auto mb-2">
+                  <Search className="w-6 h-6" />
+                </div>
+                <h4 className="text-xs font-bold text-slate-800">No saved searches yet</h4>
+                <p className="text-[11px] text-slate-400 mt-0.5 max-w-sm mx-auto mb-4">
+                  Browse products, apply your preferred filters or keywords, and click "Save Search & Get Alerts".
+                </p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/products')}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+                >
+                  Explore Marketplace Products
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {savedSearches.map((search) => (
+                  <div
+                    key={search.id}
+                    className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 hover:border-indigo-200 transition-all space-y-3 flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+                          <h4 className="text-sm font-bold text-slate-900">
+                            {search.query ? `"${search.query}"` : 'All Categories'}
+                          </h4>
+                        </div>
+
+                        {/* Notification Toggle Switch */}
+                        <button
+                          type="button"
+                          onClick={() => dispatch(toggleSavedSearchNotification(search.id))}
+                          className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full border transition-all flex items-center gap-1 cursor-pointer ${
+                            search.notificationsEnabled
+                              ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                              : 'bg-slate-200 text-slate-600 border-slate-300'
+                          }`}
+                        >
+                          <BellRing className="w-3 h-3" />
+                          <span>{search.notificationsEnabled ? 'Alerts ON' : 'Paused'}</span>
+                        </button>
+                      </div>
+
+                      {/* Filter Tag Badges */}
+                      <div className="flex flex-wrap gap-1.5 text-xs">
+                        {search.city && search.city !== 'all' && (
+                          <span className="bg-blue-50 text-blue-700 font-semibold px-2 py-0.5 rounded-lg border border-blue-100 flex items-center gap-1 text-[11px]">
+                            <MapPin className="w-3 h-3" /> {search.city}
+                          </span>
+                        )}
+                        {search.category && search.category !== 'all' && (
+                          <span className="bg-purple-50 text-purple-700 font-semibold px-2 py-0.5 rounded-lg border border-purple-100 flex items-center gap-1 text-[11px]">
+                            <Tag className="w-3 h-3" /> {search.category}
+                          </span>
+                        )}
+                        {search.maxPrice && (
+                          <span className="bg-amber-50 text-amber-700 font-semibold px-2 py-0.5 rounded-lg border border-amber-100 text-[11px]">
+                            Under {formatINR(search.maxPrice)}
+                          </span>
+                        )}
+                        {search.condition && search.condition !== 'all' && (
+                          <span className="bg-slate-100 text-slate-700 font-semibold px-2 py-0.5 rounded-lg text-[11px]">
+                            {search.condition}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Actions Row */}
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-200/60 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (search.category) dispatch(setSelectedCategory(search.category));
+                          if (search.query) dispatch(setStoreSearchQuery(search.query));
+                          if (search.city) dispatch(setSelectedCity(search.city));
+                          navigate('/products');
+                        }}
+                        className="text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                      >
+                        <span>Run Search Now</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => dispatch(removeSavedSearch(search.id))}
+                        className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
+                        title="Delete saved search"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Price Drop Watches Section */}
+          <div className="bg-white rounded-3xl border border-slate-100 p-6 sm:p-8 shadow-sm space-y-6">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-5">
+              <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-xs">
+                <Tag className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-black text-slate-900 tracking-tight">
+                  Price Drop Watchlist ({priceDropWatches.length})
+                </h2>
+                <p className="text-xs text-slate-400">
+                  Items you're tracking for discount alerts and price reductions
+                </p>
+              </div>
+            </div>
+
+            {priceDropWatches.length === 0 ? (
+              <div className="text-center py-10 bg-slate-50 rounded-2xl border border-slate-100">
+                <p className="text-xs text-slate-500">No active price drop watches.</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Click "Alert on Drop" on any product detail page to start tracking!
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {priceDropWatches.map((watch) => (
+                  <div
+                    key={watch.productId}
+                    className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3 hover:border-amber-200 transition-all"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      {watch.imageUrl ? (
+                        <img
+                          src={watch.imageUrl}
+                          alt={watch.productTitle}
+                          className="w-12 h-12 rounded-xl object-cover border border-slate-200"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-700 font-bold flex items-center justify-center">
+                          <Tag className="w-5 h-5" />
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <h4 className="text-xs font-bold text-slate-900 truncate">
+                          {watch.productTitle}
+                        </h4>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-xs font-extrabold text-amber-700">
+                            Tracked at {formatINR(watch.originalPrice)}
+                          </span>
+                          <span className="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-1.5 py-0.5 rounded border border-emerald-200">
+                            Active
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/products/${watch.productId}`)}
+                        className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors cursor-pointer"
+                        title="View Product"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => dispatch(removePriceDropWatch(watch.productId))}
+                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
+                        title="Remove alert"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}

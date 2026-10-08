@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Mail, CheckCircle2 } from 'lucide-react';
+import { RootState } from '../../store/store';
 import { CATEGORIES } from '../../utils/constants';
 import { useProducts } from '../../hooks/useProducts';
 import { CategoryCard } from '../../components/CategoryCard/CategoryCard';
 import { ProductCard } from '../../components/ProductCard/ProductCard';
 import { ProductDetails } from '../ProductDetails/ProductDetails';
+import { EmptyState } from '../../components/EmptyState/EmptyState';
 import { setSelectedCategory } from '../../store/slices/userSlice';
 import { Product } from '../../types/product.types';
 
@@ -14,6 +16,7 @@ export const Home: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { products, isLoading } = useProducts();
+  const { selectedCity } = useSelector((state: RootState) => state.user);
 
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
@@ -98,31 +101,9 @@ export const Home: React.FC = () => {
       {/* 2. Latest Listings Section */}
       <section className="listings-section" style={{ marginBottom: '24px' }}>
         <div className="section-title-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <h2 className="section-title" style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.3px' }}>
-              Latest Listings
-            </h2>
-            <button
-              type="button"
-              onClick={() => navigate('/products?view=map')}
-              style={{
-                fontSize: '11px',
-                fontWeight: 700,
-                color: '#db2777',
-                background: '#fdf2f8',
-                border: '1px solid #fbcfe8',
-                padding: '3px 10px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                boxShadow: '0 1px 3px rgba(219, 39, 119, 0.1)',
-              }}
-            >
-              <span>📍 Deals Near Me (Map)</span>
-            </button>
-          </div>
+          <h2 className="section-title" style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.3px' }}>
+            Latest Listings
+          </h2>
           <button
             type="button"
             onClick={() => navigate('/products')}
@@ -135,20 +116,26 @@ export const Home: React.FC = () => {
         </div>
 
         <div className="listings-wrapper">
-          {/* 12 Listing Cards (6 cols x 2 rows) */}
-          <div className="listings-grid">
-            {isLoading
-              ? Array.from({ length: 12 }).map((_, i) => (
-                  <div key={i} style={{ height: '190px', background: '#f1f5f9', borderRadius: '14px' }}></div>
-                ))
-              : products.slice(0, 12).map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    onClick={(p) => setSelectedProduct(p)}
-                  />
-                ))}
-          </div>
+          {/* Listings Grid or Empty State */}
+          {isLoading ? (
+            <div className="listings-grid">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <div key={i} style={{ height: '190px', background: '#f1f5f9', borderRadius: '14px' }}></div>
+              ))}
+            </div>
+          ) : products.length === 0 ? (
+            <EmptyState city={selectedCity} />
+          ) : (
+            <div className="listings-grid">
+              {products.slice(0, 12).map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onClick={(p) => setSelectedProduct(p)}
+                />
+              ))}
+            </div>
+          )}
 
           {/* Newsletter Subscribe Card (Right 220px) */}
           <div className="newsletter-card">
@@ -200,23 +187,7 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* 3. Strip Banner: Home Explore More Bar */}
-      <div className="home-explore-more-bar">
-        <div className="explore-info">
-          <h4>Looking for more variety & great deals?</h4>
-          <p>Explore all 12+ verified pre-owned items across categories with instant filters</p>
-        </div>
 
-        <button
-          type="button"
-          onClick={() => navigate('/products')}
-          className="btn-explore-products"
-          style={{ border: 'none', cursor: 'pointer' }}
-        >
-          <span>Explore All Products (12+)</span>
-          <span>&rarr;</span>
-        </button>
-      </div>
 
       {/* Quick Details Modal */}
       {selectedProduct && (

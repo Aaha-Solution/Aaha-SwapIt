@@ -8,7 +8,7 @@ interface ChatOfferCardProps {
   isSender: boolean;
   onAcceptOffer?: (offer: ChatOffer) => void;
   onDeclineOffer?: (offer: ChatOffer) => void;
-  onCounterOffer?: () => void;
+  onCounterOffer?: (amount?: number) => void;
   onPayAgreedPrice?: (offer: ChatOffer) => void;
 }
 
@@ -170,7 +170,7 @@ export const ChatOfferCard: React.FC<ChatOfferCardProps> = ({
 
       {/* Seller Actions (If received by seller & pending) */}
       {!isSender && isPending && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '12px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 0.8fr', gap: '6px', marginTop: '12px' }}>
           <button
             type="button"
             onClick={() => onAcceptOffer && onAcceptOffer(offer)}
@@ -178,20 +178,42 @@ export const ChatOfferCard: React.FC<ChatOfferCardProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '6px',
-              padding: '8px 12px',
-              borderRadius: '12px',
+              gap: '4px',
+              padding: '7px 8px',
+              borderRadius: '10px',
               background: '#16a34a',
               color: '#ffffff',
-              fontSize: '11.5px',
+              fontSize: '11px',
               fontWeight: 700,
               border: 'none',
               cursor: 'pointer',
               boxShadow: '0 2px 6px rgba(22, 163, 74, 0.25)',
             }}
           >
-            <Check style={{ width: '13px', height: '13px' }} />
-            <span>Accept Offer</span>
+            <Check style={{ width: '12px', height: '12px' }} />
+            <span>Accept</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onCounterOffer && onCounterOffer(offer.amount)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '4px',
+              padding: '7px 8px',
+              borderRadius: '10px',
+              background: '#eef2ff',
+              color: '#4f46e5',
+              border: '1px solid #c7d2fe',
+              fontSize: '11px',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            <ArrowRight style={{ width: '12px', height: '12px' }} />
+            <span>Counter</span>
           </button>
 
           <button
@@ -201,18 +223,18 @@ export const ChatOfferCard: React.FC<ChatOfferCardProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '6px',
-              padding: '8px 12px',
-              borderRadius: '12px',
+              gap: '4px',
+              padding: '7px 8px',
+              borderRadius: '10px',
               background: '#ffffff',
               color: '#dc2626',
               border: '1px solid #fca5a5',
-              fontSize: '11.5px',
+              fontSize: '11px',
               fontWeight: 700,
               cursor: 'pointer',
             }}
           >
-            <X style={{ width: '13px', height: '13px' }} />
+            <X style={{ width: '12px', height: '12px' }} />
             <span>Decline</span>
           </button>
         </div>
@@ -252,7 +274,7 @@ export const ChatOfferCard: React.FC<ChatOfferCardProps> = ({
         <div style={{ marginTop: '10px' }}>
           <button
             type="button"
-            onClick={onCounterOffer}
+            onClick={() => onCounterOffer(offer.amount)}
             style={{
               width: '100%',
               display: 'flex',

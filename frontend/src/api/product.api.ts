@@ -4,7 +4,7 @@ import { ApiResponse } from '../types/api.types';
 import { INITIAL_PRODUCTS, CATEGORIES } from '../utils/constants';
 
 // Local cache for products when running standalone
-let localProducts: Product[] = [...INITIAL_PRODUCTS];
+let localProducts: Product[] = [];
 
 export const productApi = {
   getProducts: async (filters?: ProductFilterOptions): Promise<ApiResponse<Product[]>> => {

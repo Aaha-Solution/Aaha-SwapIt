@@ -5,7 +5,7 @@ import { s3Service } from '../../shared/s3.js';
 import { logger } from '../../shared/logger.js';
 import { FALLBACK_PRODUCTS, FallbackProduct } from './fallback.data.js';
 
-let localProductStore: FallbackProduct[] = [...FALLBACK_PRODUCTS];
+let localProductStore: FallbackProduct[] = [];
 
 export const productController = {
   async getProducts(req: Request, res: Response) {
@@ -145,7 +145,7 @@ export const productController = {
           total,
           page: pageNum,
           limit: limitNum,
-          totalPages: Math.ceil(total / limitNum),
+          totalPages: Math.ceil(total / limitNum) || 1,
         },
       };
 

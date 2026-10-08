@@ -6,9 +6,10 @@ import { formatINR } from '../../utils/helpers';
 interface ChatDealAgreedCardProps {
   deal: DealAgreement;
   isSender: boolean;
+  onCompleteAndReview?: () => void;
 }
 
-export const ChatDealAgreedCard: React.FC<ChatDealAgreedCardProps> = ({ deal, isSender }) => {
+export const ChatDealAgreedCard: React.FC<ChatDealAgreedCardProps> = ({ deal, isSender, onCompleteAndReview }) => {
   return (
     <div className="my-2 p-4 rounded-2xl bg-gradient-to-br from-emerald-50 via-teal-50/50 to-emerald-50/20 border-2 border-emerald-300/80 shadow-md max-w-[360px] text-slate-800 transition-all hover:shadow-lg">
       {/* Header */}
@@ -72,7 +73,7 @@ export const ChatDealAgreedCard: React.FC<ChatDealAgreedCardProps> = ({ deal, is
 
       {/* Handshake Verification Code */}
       {deal.handshakeCode && (
-        <div className="bg-emerald-600 text-white p-2.5 rounded-xl flex items-center justify-between mb-2 shadow-xs">
+        <div className="bg-emerald-600 text-white p-2.5 rounded-xl flex items-center justify-between mb-3 shadow-xs">
           <div className="flex items-center gap-2">
             <KeyRound className="w-4 h-4 text-emerald-200" />
             <span className="text-[11px] font-bold">Exchange Handshake OTP:</span>
@@ -81,6 +82,18 @@ export const ChatDealAgreedCard: React.FC<ChatDealAgreedCardProps> = ({ deal, is
             {deal.handshakeCode}
           </span>
         </div>
+      )}
+
+      {/* Complete & Review Action CTA */}
+      {onCompleteAndReview && (
+        <button
+          type="button"
+          onClick={onCompleteAndReview}
+          className="w-full mb-2.5 py-2.5 px-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+        >
+          <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+          <span>Mark Transaction Completed & Rate</span>
+        </button>
       )}
 
       {/* Safety Notice Footer */}

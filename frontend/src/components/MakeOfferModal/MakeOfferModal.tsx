@@ -11,6 +11,8 @@ interface MakeOfferModalProps {
     condition?: string;
   };
   sellerName?: string;
+  initialAmount?: number;
+  isCounterOffer?: boolean;
   onClose: () => void;
   onSubmitOffer: (amount: number, note?: string) => void;
 }
@@ -18,12 +20,17 @@ interface MakeOfferModalProps {
 export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
   product,
   sellerName = 'the seller',
+  initialAmount,
+  isCounterOffer = false,
   onClose,
   onSubmitOffer,
 }) => {
-  const [offerAmount, setOfferAmount] = useState<number>(() => Math.round(product.price * 0.9));
-  const [customInput, setCustomInput] = useState<string>(() => String(Math.round(product.price * 0.9)));
-  const [note, setNote] = useState<string>('Ready to pick up today!');
+  const defaultAmount = initialAmount || Math.round(product.price * 0.9);
+  const [offerAmount, setOfferAmount] = useState<number>(() => defaultAmount);
+  const [customInput, setCustomInput] = useState<string>(() => String(defaultAmount));
+  const [note, setNote] = useState<string>(
+    isCounterOffer ? 'Here is my counter-offer. Can we meet in the middle?' : 'Ready to pick up today!'
+  );
 
   const discountPercent = Math.round(((product.price - offerAmount) / product.price) * 100);
   const savings = product.price - offerAmount;
@@ -106,10 +113,10 @@ export const MakeOfferModal: React.FC<MakeOfferModalProps> = ({
             </div>
             <div>
               <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>
-                Make an Offer
+                {isCounterOffer ? 'Make a Counter-Offer' : 'Make an Offer'}
               </h3>
               <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>
-                Negotiate price directly with {sellerName}
+                {isCounterOffer ? `Propose a new counter-price to ${sellerName}` : `Negotiate price directly with ${sellerName}`}
               </p>
             </div>
           </div>

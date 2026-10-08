@@ -18,7 +18,11 @@ import {
   ChevronRight,
   Maximize2,
   Tag,
+  Bell,
 } from 'lucide-react';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../../store/store';
+import { togglePriceDropWatch } from '../../store/slices/alertSlice';
 import { Product } from '../../types/product.types';
 import { formatINR } from '../../utils/helpers';
 import { productApi } from '../../api/product.api';
@@ -65,6 +69,27 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
 
   const { isWishlisted, toggle } = useWishlist();
   const { isAuthenticated, openLoginModal } = useAuth();
+  const dispatch = useDispatch();
+  const { priceDropWatches } = useSelector((state: RootState) => state.alerts);
+  const isPriceAlertActive = product
+    ? priceDropWatches.some((w) => w.productId === product.id)
+    : false;
+
+  const handleTogglePriceAlert = () => {
+    if (!product) return;
+    if (!isAuthenticated) {
+      openLoginModal();
+      return;
+    }
+    dispatch(
+      togglePriceDropWatch({
+        productId: product.id,
+        productTitle: product.title,
+        price: product.price,
+        imageUrl: product.imageUrl,
+      })
+    );
+  };
 
   useEffect(() => {
     async function loadProduct() {
@@ -364,17 +389,34 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
               </span>
             </div>
 
-            {/* Price */}
-            <div className="mt-4 p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+            {/* Price & Price Alert */}
+            <div className="mt-4 p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between flex-wrap gap-2">
               <div>
                 <span className="text-[11px] text-slate-400 font-medium block">Asking Price</span>
                 <span className="text-2xl font-extrabold text-slate-900 tracking-tight">
                   {formatINR(product.price)}
                 </span>
               </div>
-              <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full">
-                {product.condition}
-              </span>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleTogglePriceAlert}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                    isPriceAlertActive
+                      ? 'bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs'
+                      : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 shadow-2xs'
+                  }`}
+                  title={isPriceAlertActive ? 'Price Drop alert active' : 'Get notified if price drops'}
+                >
+                  <Bell className={`w-3.5 h-3.5 ${isPriceAlertActive ? 'text-amber-600 fill-amber-500' : 'text-slate-400'}`} />
+                  <span>{isPriceAlertActive ? 'Alert Active' : 'Alert on Drop'}</span>
+                </button>
+
+                <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-1.5 rounded-xl">
+                  {product.condition}
+                </span>
+              </div>
             </div>
 
             {/* Description */}

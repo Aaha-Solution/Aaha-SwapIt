@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import { Bell, Check, Sparkles } from 'lucide-react';
 import { RootState } from '../../store/store';
 import { useProducts } from '../../hooks/useProducts';
 import { ProductCard } from '../../components/ProductCard/ProductCard';
 import { ProductDetails } from '../ProductDetails/ProductDetails';
 import { Filter } from '../../components/Filter/Filter';
+import { SaveSearchModal } from '../../components/SaveSearchModal/SaveSearchModal';
+import { EmptyState } from '../../components/EmptyState/EmptyState';
 import {
   setSelectedCategory,
   resetFilters,
@@ -29,11 +32,36 @@ const CATEGORY_PILLS = [
 export const Products: React.FC = () => {
   const dispatch = useDispatch();
   const { products, isLoading } = useProducts();
-  const { selectedCategory } = useSelector((state: RootState) => state.user);
+  const {
+    selectedCategory,
+    searchQuery,
+    selectedCity,
+    priceRange,
+    customMinPrice,
+    customMaxPrice,
+    selectedCondition,
+  } = useSelector((state: RootState) => state.user);
+  const { savedSearches } = useSelector((state: RootState) => state.alerts);
+
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isSaveSearchModalOpen, setIsSaveSearchModalOpen] = useState(false);
+  const [saveSuccessToast, setSaveSuccessToast] = useState(false);
+
+  // Check if current search is already saved
+  const isCurrentSearchSaved = savedSearches.some(
+    (s) =>
+      (s.query || '').toLowerCase() === (searchQuery || '').toLowerCase() &&
+      s.category === selectedCategory &&
+      s.city === selectedCity
+  );
 
   const handleCategorySelect = (catId: string) => {
     dispatch(setSelectedCategory(catId));
+  };
+
+  const handleSavedSearchSuccess = () => {
+    setSaveSuccessToast(true);
+    setTimeout(() => setSaveSuccessToast(false), 4000);
   };
 
   return (
@@ -57,6 +85,39 @@ export const Products: React.FC = () => {
           <p className="view-subtitle">
             Explore verified second-hand items with smart filters, price ranges, and instant seller chat
           </p>
+        </div>
+
+        {/* Save Search & Deal Alert Button */}
+        <div className="flex items-center gap-2">
+          {saveSuccessToast && (
+            <span className="text-xs bg-emerald-50 text-emerald-700 font-bold px-3 py-1.5 rounded-xl border border-emerald-200 flex items-center gap-1.5 animate-fadeIn">
+              <Check className="w-3.5 h-3.5" />
+              <span>Search Alert Saved!</span>
+            </span>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setIsSaveSearchModalOpen(true)}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer ${
+              isCurrentSearchSaved
+                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 hover:border-indigo-300'
+            }`}
+            title="Save this search and receive alerts when new items match"
+          >
+            {isCurrentSearchSaved ? (
+              <>
+                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Search Alert Active</span>
+              </>
+            ) : (
+              <>
+                <Bell className="w-3.5 h-3.5 text-indigo-600" />
+                <span>Save Search & Get Alerts</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
 
@@ -87,74 +148,11 @@ export const Products: React.FC = () => {
           ))}
         </div>
       ) : products.length === 0 ? (
-        <div
-          className="empty-state-box"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '48px 24px',
-            background: '#ffffff',
-            borderRadius: '18px',
-            border: '1px solid #f1f5f9',
-            boxShadow: '0 4px 12px -2px rgba(15, 23, 42, 0.05)',
-            textAlign: 'center',
-            margin: '20px 0',
-          }}
-        >
-          <div
-            className="empty-icon-wrap"
-            style={{
-              width: '64px',
-              height: '64px',
-              borderRadius: '50%',
-              background: '#f1f5f9',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#94a3b8',
-              marginBottom: '16px',
-            }}
-          >
-            <svg
-              style={{ width: '32px', height: '32px' }}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-            >
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              <line x1="8" y1="11" x2="14" y2="11"></line>
-            </svg>
-          </div>
-          <h3 style={{ margin: '0 0 8px', fontSize: '17px', fontWeight: 700, color: '#0f172a' }}>
-            No products found
-          </h3>
-          <p style={{ margin: '0 0 20px', fontSize: '13.5px', color: '#64748b', maxWidth: '440px', lineHeight: 1.5 }}>
-            We couldn't find any listings matching your current category or filters. Try adjusting your filters or search terms.
-          </p>
-          <button
-            type="button"
-            onClick={() => dispatch(resetFilters())}
-            className="btn-primary-action"
-            style={{
-              padding: '10px 24px',
-              borderRadius: '10px',
-              background: '#2563eb',
-              color: '#ffffff',
-              fontSize: '13px',
-              fontWeight: 600,
-              border: 'none',
-              cursor: 'pointer',
-              boxShadow: '0 4px 14px rgba(37, 99, 235, 0.25)',
-              transition: 'all 0.2s ease',
-            }}
-          >
-            Clear All Filters
-          </button>
-        </div>
+        <EmptyState
+          city={selectedCity}
+          category={selectedCategory}
+          searchQuery={searchQuery}
+        />
       ) : (
         <div className="all-products-grid">
           {products.map((product) => (
@@ -165,6 +163,22 @@ export const Products: React.FC = () => {
             />
           ))}
         </div>
+      )}
+
+      {/* Save Search Alert Modal */}
+      {isSaveSearchModalOpen && (
+        <SaveSearchModal
+          currentFilters={{
+            query: searchQuery || undefined,
+            category: selectedCategory,
+            city: selectedCity,
+            minPrice: customMinPrice,
+            maxPrice: customMaxPrice,
+            condition: selectedCondition,
+          }}
+          onClose={() => setIsSaveSearchModalOpen(false)}
+          onSaved={handleSavedSearchSuccess}
+        />
       )}
 
       {/* Quick Details Modal */}

@@ -48,6 +48,8 @@ import { ChatLocationCard } from '../../components/ChatDealCards/ChatLocationCar
 import { ChatImageCard } from '../../components/ChatDealCards/ChatImageCard';
 import { AgreeDealModal } from '../../components/ChatDealCards/AgreeDealModal';
 import { ShareLocationModal } from '../../components/ChatDealCards/ShareLocationModal';
+import { DealPipelineBar, DealStage } from '../../components/DealPipeline/DealPipelineBar';
+import { WriteReviewModal } from '../../components/Rating/WriteReviewModal';
 
 const QUICK_INQUIRIES = [
   'Is this still available?',
@@ -78,8 +80,11 @@ export const Messages: React.FC = () => {
 
   // Modals & interactive panels
   const [isMakeOfferOpen, setIsMakeOfferOpen] = useState(false);
+  const [isCounterOfferMode, setIsCounterOfferMode] = useState(false);
+  const [counterOfferAmount, setCounterOfferAmount] = useState<number | undefined>(undefined);
   const [isAgreeDealOpen, setIsAgreeDealOpen] = useState(false);
   const [isShareLocationOpen, setIsShareLocationOpen] = useState(false);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState<string | null>(null); // messageId or null
 
   // Typing state
@@ -513,6 +518,56 @@ export const Messages: React.FC = () => {
     });
   };
 
+  // Compute latest offer & deal status for the selected conversation
+  const { latestOffer, latestDeal, dealStage } = React.useMemo(() => {
+    let foundOffer: ChatOffer | null = null;
+    let foundDeal: DealAgreement | null = null;
+    let isCompleted = false;
+
+    // Scan backwards
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const msg = messages[i];
+      if (!foundDeal) {
+        const { deal } = parseDealAgreedFromMessage(msg.message);
+        if (deal) {
+          foundDeal = deal;
+          if (deal.status === 'completed') isCompleted = true;
+        }
+      }
+      if (!foundOffer) {
+        const { offer } = parseOfferFromMessage(msg.message);
+        if (offer) {
+          foundOffer = offer;
+        }
+      }
+    }
+
+    let stage: DealStage = 'inquiry';
+    if (isCompleted) {
+      stage = 'completed';
+    } else if (foundDeal || foundOffer?.status === 'accepted') {
+      stage = 'deal_agreed';
+    } else if (foundOffer && foundOffer.status === 'pending') {
+      stage = 'offer_pending';
+    }
+
+    return { latestOffer: foundOffer, latestDeal: foundDeal, dealStage: stage };
+  }, [messages]);
+
+  // Open Standard Offer Modal
+  const handleOpenStandardOffer = () => {
+    setCounterOfferAmount(undefined);
+    setIsCounterOfferMode(false);
+    setIsMakeOfferOpen(true);
+  };
+
+  // Open Counter-Offer Modal
+  const handleOpenCounterOffer = (amount?: number) => {
+    setCounterOfferAmount(amount);
+    setIsCounterOfferMode(true);
+    setIsMakeOfferOpen(true);
+  };
+
   // Handle Offer creation
   const handleSendOffer = (amount: number, note?: string) => {
     if (!selectedConversation?.product) return;
@@ -530,6 +585,56 @@ export const Messages: React.FC = () => {
     }`;
 
     handleSendMessage(offerMessage);
+  };
+
+  // Handle Offer Acceptance
+  const handleAcceptOffer = (offer: ChatOffer) => {
+    if (!user?.id || !selectedConversation) return;
+    const socket = getSocket();
+
+    const targetMsg = messages.find(
+      (m) => m.message.includes('[OFFER:') && m.message.includes(`"amount":${offer.amount}`)
+    );
+    if (targetMsg) {
+      socket.emit('update_offer_status', {
+        messageId: targetMsg.id,
+        newStatus: 'accepted',
+        senderId: user.id,
+        receiverId: selectedConversation.peerUser.id,
+      });
+    }
+
+    // Auto-create a Deal Agreement with a generated 4-digit handshake pin
+    const handshakePin = Math.floor(1000 + Math.random() * 9000).toString();
+    const dealAgreement: DealAgreement = {
+      agreedPrice: offer.amount,
+      meetLocation: selectedConversation.peerUser.location || 'Central Metro / Public Mall',
+      meetTime: 'Today or Tomorrow by mutual convenience',
+      handshakeCode: handshakePin,
+      status: 'agreed',
+      productId: offer.productId,
+      productTitle: offer.productTitle || selectedConversation.product?.title,
+    };
+
+    handleSendDealAgreement(dealAgreement);
+  };
+
+  // Handle Offer Decline
+  const handleDeclineOffer = (offer: ChatOffer) => {
+    if (!user?.id || !selectedConversation) return;
+    const socket = getSocket();
+    const targetMsg = messages.find(
+      (m) => m.message.includes('[OFFER:') && m.message.includes(`"amount":${offer.amount}`)
+    );
+    if (targetMsg) {
+      socket.emit('update_offer_status', {
+        messageId: targetMsg.id,
+        newStatus: 'declined',
+        senderId: user.id,
+        receiverId: selectedConversation.peerUser.id,
+      });
+    }
+    handleSendMessage(`Offer of ${formatINR(offer.amount)} declined. Feel free to make a counter-offer.`);
   };
 
   // Quick Preset Offers (-5%, -10%, -15%)
@@ -581,54 +686,6 @@ export const Messages: React.FC = () => {
         }
       };
       reader.readAsDataURL(file);
-    }
-  };
-
-  const handleAcceptOffer = (offer: ChatOffer) => {
-    const msg = messages.find((m) => m.message.includes(`"amount":${offer.amount}`));
-    if (msg && selectedConversation) {
-      const socket = getSocket();
-      socket.emit('update_offer_status', {
-        messageId: msg.id,
-        newStatus: 'accepted',
-        senderId: user?.id,
-        receiverId: selectedConversation.peerUser.id,
-      });
-
-      setMessages((prev) =>
-        prev.map((m) => {
-          if (m.id === msg.id) {
-            const acceptedOffer = { ...offer, status: 'accepted' as const };
-            const updatedMsg = m.message.replace(/\[OFFER:.*?\]/, `[OFFER:${JSON.stringify(acceptedOffer)}]`);
-            return { ...m, message: updatedMsg };
-          }
-          return m;
-        })
-      );
-    }
-  };
-
-  const handleDeclineOffer = (offer: ChatOffer) => {
-    const msg = messages.find((m) => m.message.includes(`"amount":${offer.amount}`));
-    if (msg && selectedConversation) {
-      const socket = getSocket();
-      socket.emit('update_offer_status', {
-        messageId: msg.id,
-        newStatus: 'declined',
-        senderId: user?.id,
-        receiverId: selectedConversation.peerUser.id,
-      });
-
-      setMessages((prev) =>
-        prev.map((m) => {
-          if (m.id === msg.id) {
-            const declinedOffer = { ...offer, status: 'declined' as const };
-            const updatedMsg = m.message.replace(/\[OFFER:.*?\]/, `[OFFER:${JSON.stringify(declinedOffer)}]`);
-            return { ...m, message: updatedMsg };
-          }
-          return m;
-        })
-      );
     }
   };
 
@@ -912,6 +969,18 @@ export const Messages: React.FC = () => {
                 </div>
               </div>
 
+              {/* Real-Time Deal & Offer Stepper Bar */}
+              <DealPipelineBar
+                stage={dealStage}
+                latestOffer={latestOffer}
+                dealAgreement={latestDeal}
+                isSeller={selectedConversation.peerUser.id !== user?.id}
+                onMakeOffer={handleOpenStandardOffer}
+                onCounterOffer={handleOpenCounterOffer}
+                onLockDeal={() => setIsAgreeDealOpen(true)}
+                onCompleteAndReview={() => setIsReviewModalOpen(true)}
+              />
+
               {/* Product Reference Sticky Banner */}
               {selectedConversation.product && (
                 <div className="px-6 py-2.5 bg-indigo-50/50 border-b border-indigo-100/70 flex items-center justify-between flex-wrap gap-2">
@@ -957,7 +1026,7 @@ export const Messages: React.FC = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setIsMakeOfferOpen(true)}
+                      onClick={handleOpenStandardOffer}
                       className="text-[11px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1 rounded-lg transition-colors cursor-pointer shadow-xs flex items-center gap-1"
                     >
                       <Tag className="w-3 h-3" />
@@ -1068,12 +1137,18 @@ export const Messages: React.FC = () => {
                             isSender={isMine}
                             onAcceptOffer={handleAcceptOffer}
                             onDeclineOffer={handleDeclineOffer}
-                            onCounterOffer={() => setIsMakeOfferOpen(true)}
+                            onCounterOffer={handleOpenCounterOffer}
                           />
                         )}
 
                         {/* Rich Deal Agreement Card */}
-                        {deal && <ChatDealAgreedCard deal={deal} isSender={isMine} />}
+                        {deal && (
+                          <ChatDealAgreedCard
+                            deal={deal}
+                            isSender={isMine}
+                            onCompleteAndReview={() => setIsReviewModalOpen(true)}
+                          />
+                        )}
 
                         {/* Rich Location Card */}
                         {location && <ChatLocationCard location={location} />}
@@ -1286,6 +1361,8 @@ export const Messages: React.FC = () => {
         <MakeOfferModal
           product={selectedConversation.product}
           sellerName={selectedConversation.peerUser.name}
+          initialAmount={counterOfferAmount}
+          isCounterOffer={isCounterOfferMode}
           onClose={() => setIsMakeOfferOpen(false)}
           onSubmitOffer={handleSendOffer}
         />
@@ -1306,6 +1383,22 @@ export const Messages: React.FC = () => {
         <ShareLocationModal
           onClose={() => setIsShareLocationOpen(false)}
           onShareLocation={handleSendLocation}
+        />
+      )}
+
+      {/* Deal Completed & Write Review Modal */}
+      {isReviewModalOpen && selectedConversation && (
+        <WriteReviewModal
+          targetUserId={selectedConversation.peerUser.id}
+          targetUserName={selectedConversation.peerUser.name}
+          targetUserAvatar={selectedConversation.peerUser.avatarUrl}
+          productId={selectedConversation.productId || undefined}
+          productTitle={selectedConversation.product?.title}
+          onClose={() => setIsReviewModalOpen(false)}
+          onSuccess={() => {
+            setIsReviewModalOpen(false);
+            handleSendMessage('🎉 Deal completed and verified review submitted! Thank you for the smooth swap.');
+          }}
         />
       )}
     </div>
