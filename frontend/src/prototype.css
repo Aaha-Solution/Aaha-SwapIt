@@ -58,9 +58,9 @@ html, body {
 
 .header-container {
   width: 100%;
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 0 32px;
+  max-width: 100%;
+  margin: 0;
+  padding: 0 clamp(16px, 2vw, 40px);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -322,9 +322,9 @@ html, body {
    ========================================================================== */
 .main-layout {
   width: 100%;
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 20px 32px 48px;
+  max-width: 100%;
+  margin: 0;
+  padding: 16px clamp(16px, 2vw, 40px) 48px;
   display: flex;
   gap: 24px;
   align-items: flex-start;
@@ -710,6 +710,24 @@ html, body {
   gap: 14px;
 }
 
+@media (max-width: 1300px) {
+  .categories-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 860px) {
+  .categories-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .categories-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 .category-card {
   border-radius: 16px;
   padding: 12px 6px;
@@ -896,11 +914,11 @@ html, body {
   width: 100%;
 }
 
-/* Listing Cards Grid (4 columns across full content width) */
+/* Listing Cards Grid (auto-fill responsive columns across full width) */
 .listings-grid {
   width: 100%;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
   gap: 16px;
 }
 
@@ -1779,9 +1797,9 @@ html, body {
 
 .footer-container {
   width: 100%;
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 48px 32px 24px;
+  max-width: 100%;
+  margin: 0;
+  padding: 48px clamp(16px, 2vw, 40px) 24px;
   display: flex;
   flex-direction: column;
   gap: 40px;

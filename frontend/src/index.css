@@ -3,12 +3,12 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Additional utility overrides */
+/* Modern fluid full-width layout without empty side margins */
 .main-layout {
   width: 100%;
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 20px 32px 48px;
+  max-width: 100%;
+  margin: 0;
+  padding: 16px clamp(16px, 2vw, 40px) 48px;
   display: flex;
   gap: 24px;
   align-items: flex-start;
@@ -16,9 +16,9 @@
 
 .header-container {
   width: 100%;
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 0 32px;
+  max-width: 100%;
+  margin: 0;
+  padding: 0 clamp(16px, 2vw, 40px);
   display: flex;
   align-items: center;
   justify-content: space-between;

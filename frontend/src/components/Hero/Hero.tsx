@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { ShieldCheck, MapPin, Leaf, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { RootState } from '../../store/store';
 import heroBannerBg from '../../assets/images/hero_banner_full.png';
 import './Hero.css';
@@ -19,7 +19,7 @@ export const Hero: React.FC = () => {
       <div className="hero-decor-orb-1" aria-hidden="true" />
       <div className="hero-decor-orb-2" aria-hidden="true" />
 
-      {/* Left Column: Heading, Subtitle & Trust Badges */}
+      {/* Left Column: Heading & Subtitle */}
       <div className="hero-left-col">
         {/* Top Location / Trust Pill Badge */}
         <div className="hero-trust-pill">
@@ -38,52 +38,10 @@ export const Hero: React.FC = () => {
           Buy, sell or swap from cars, bikes, mobiles, laptops, properties,
           furniture and more — all in your city.
         </p>
-
-        {/* 3 Trust & Value Badges in Horizontal Row */}
-        <div className="hero-features-row">
-          {/* Badge 1: Trusted Community */}
-          <div className="hero-feature-item">
-            <div className="hero-feature-icon-box blue-box">
-              <ShieldCheck size={18} className="text-blue-600" />
-            </div>
-            <div className="hero-feature-text">
-              <span className="hero-feature-title">Trusted Community</span>
-              <span className="hero-feature-sub">Safe &amp; secure deals</span>
-            </div>
-          </div>
-
-          {/* Badge 2: Local Listings */}
-          <div className="hero-feature-item">
-            <div className="hero-feature-icon-box blue-box">
-              <MapPin size={18} className="text-blue-600" />
-            </div>
-            <div className="hero-feature-text">
-              <span className="hero-feature-title">Local Listings</span>
-              <span className="hero-feature-sub">Find great deals near you</span>
-            </div>
-          </div>
-
-          {/* Badge 3: Buy • Sell • Reuse */}
-          <div className="hero-feature-item">
-            <div className="hero-feature-icon-box green-box">
-              <Leaf size={18} className="text-emerald-600" />
-            </div>
-            <div className="hero-feature-text">
-              <span className="hero-feature-title">Buy • Sell • Reuse</span>
-              <span className="hero-feature-sub">A greener tomorrow</span>
-            </div>
-          </div>
-        </div>
       </div>
 
-      {/* Right Column: Dynamic Callout text positioned over arch */}
-      <div className="hero-right-col" aria-hidden="true">
-        <div className="hero-callout-bubble">
-          <span className="hero-callout-line1">Great deals</span>
-          <span className="hero-callout-line2">Closer to you</span>
-          <span className="hero-callout-line3">in {city}</span>
-        </div>
-      </div>
+      {/* Right Column Spacer: Keeps the background artwork & 'Local Deals Stronger Communities' unobstructed */}
+      <div className="hero-right-col" aria-hidden="true" />
     </section>
   );
 };

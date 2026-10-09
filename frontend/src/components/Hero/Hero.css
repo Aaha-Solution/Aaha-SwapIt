@@ -12,10 +12,10 @@
   background-position: right center;
   background-size: cover;
   border-radius: 24px;
-  padding: 34px 44px;
+  padding: 28px 44px;
   margin-bottom: 30px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   overflow: hidden;
   box-shadow: 0 4px 20px -2px rgba(37, 99, 235, 0.07), 0 1px 3px rgba(0, 0, 0, 0.02);
@@ -57,26 +57,24 @@
   max-width: 490px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
-/* Top Pill Badge */
+/* Top Trust Text (No white background padding) */
 .hero-trust-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   align-self: flex-start;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(191, 219, 254, 0.85);
-  border-radius: 9999px;
-  padding: 4.5px 13px;
-  font-size: 12px;
-  font-weight: 600;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 700;
   color: #1d4ed8;
-  box-shadow: 0 2px 6px -1px rgba(37, 99, 235, 0.08);
-  margin-bottom: 14px;
+  letter-spacing: -0.1px;
+  margin-bottom: 12px;
 }
 
 .hero-pill-icon {
@@ -107,105 +105,17 @@
   font-weight: 450;
   color: #475569;
   line-height: 1.5;
-  margin: 0 0 24px 0;
+  margin: 0;
   max-width: 420px;
 }
 
-/* Trust Badges Row */
-.hero-features-row {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  flex-wrap: wrap;
-}
-
-.hero-feature-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.hero-feature-icon-box {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.hero-feature-icon-box.blue-box {
-  background: #dbeafe;
-}
-
-.hero-feature-icon-box.green-box {
-  background: #dcfce7;
-}
-
-.hero-feature-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.hero-feature-title {
-  font-size: 12px;
-  font-weight: 700;
-  color: #0f172a;
-  line-height: 1.25;
-}
-
-.hero-feature-sub {
-  font-size: 10.5px;
-  font-weight: 500;
-  color: #64748b;
-  line-height: 1.2;
-}
-
-/* Right Column Spacer with City Callout */
+/* Right Column Spacer: Keeps the background artwork & 'Local Deals Stronger Communities' unobstructed */
 .hero-right-col {
   position: relative;
   z-index: 1;
-  flex: 1.15;
-  display: flex;
-  justify-content: flex-start;
-  align-items: flex-start;
+  flex: 1;
   min-height: 275px;
-  padding-top: 12px;
-  padding-left: 20px;
-}
-
-.hero-callout-bubble {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  transform: rotate(-6deg);
-  margin-top: 12px;
-  margin-left: 55px;
-  user-select: none;
-  pointer-events: none;
-}
-
-.hero-callout-line1 {
-  font-size: 13.5px;
-  font-weight: 700;
-  color: #2563eb;
-  line-height: 1.25;
-}
-
-.hero-callout-line2 {
-  font-size: 14px;
-  font-weight: 700;
-  color: #1d4ed8;
-  line-height: 1.25;
-}
-
-.hero-callout-line3 {
-  font-size: 14.5px;
-  font-weight: 800;
-  color: #1e40af;
-  line-height: 1.25;
+  height: 100%;
 }
 
 /* ==========================================================================
@@ -221,14 +131,6 @@
 
   .hero-main-title {
     font-size: 34px;
-  }
-
-  .hero-features-row {
-    gap: 14px;
-  }
-
-  .hero-callout-bubble {
-    margin-left: 25px;
   }
 }
 
@@ -251,20 +153,10 @@
     min-height: 140px;
     justify-content: flex-end;
   }
-
-  .hero-callout-bubble {
-    display: none;
-  }
 }
 
 @media (max-width: 580px) {
   .hero-main-title {
     font-size: 28px;
-  }
-
-  .hero-features-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
   }
 }
