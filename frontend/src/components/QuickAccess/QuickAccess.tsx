@@ -76,28 +76,30 @@ export const QuickAccess: React.FC = () => {
 
   return (
     <>
-      <div className="quick-access-card" aria-label="Quick Access Menu">
-        <h4 className="quick-access-title">Quick Access</h4>
+      <div className="quick-access-section" aria-label="Quick Access Menu">
+        <div className="sidebar-section-header">
+          Quick Access
+        </div>
 
         {/* 1. Recently Viewed */}
         <button
           type="button"
           onClick={() => setIsRecentModalOpen(true)}
-          className="quick-access-item"
+          className="nav-item quick-nav-btn"
           id="quickAccessRecentlyViewed"
           title="View recently explored products"
         >
-          <div className="quick-access-item-left">
-            <div className="quick-access-icon">
-              <Eye className="w-4 h-4 text-blue-600 stroke-[2.2]" />
-            </div>
-            <span className="quick-access-label">Recently Viewed</span>
+          <div className="quick-nav-left">
+            <Eye className="nav-icon" />
+            <span className="quick-nav-label">Recently Viewed</span>
           </div>
-          <div className="quick-access-item-right">
-            <span className="quick-access-badge">
-              {recentItems.length || 12}
-            </span>
-            <ChevronRight className="quick-access-chevron" />
+          <div className="quick-nav-right">
+            {recentItems.length > 0 && (
+              <span className="quick-nav-badge">
+                {recentItems.length}
+              </span>
+            )}
+            <ChevronRight className="quick-nav-chevron" />
           </div>
         </button>
 
@@ -105,21 +107,21 @@ export const QuickAccess: React.FC = () => {
         <button
           type="button"
           onClick={() => setIsSavedSearchesModalOpen(true)}
-          className="quick-access-item"
+          className="nav-item quick-nav-btn"
           id="quickAccessSavedSearches"
           title="View saved searches & alerts"
         >
-          <div className="quick-access-item-left">
-            <div className="quick-access-icon">
-              <Heart className="w-4 h-4 text-rose-500 stroke-[2.2]" />
-            </div>
-            <span className="quick-access-label">Saved Searches</span>
+          <div className="quick-nav-left">
+            <Heart className="nav-icon" />
+            <span className="quick-nav-label">Saved Searches</span>
           </div>
-          <div className="quick-access-item-right">
-            <span className="quick-access-badge">
-              {savedSearches.length || 4}
-            </span>
-            <ChevronRight className="quick-access-chevron" />
+          <div className="quick-nav-right">
+            {savedSearches.length > 0 && (
+              <span className="quick-nav-badge">
+                {savedSearches.length}
+              </span>
+            )}
+            <ChevronRight className="quick-nav-chevron" />
           </div>
         </button>
 
@@ -127,19 +129,16 @@ export const QuickAccess: React.FC = () => {
         <button
           type="button"
           onClick={handleNearbyDealsClick}
-          className="quick-access-item"
+          className="nav-item quick-nav-btn"
           id="quickAccessNearbyDeals"
           title="Browse local verified deals near you"
         >
-          <div className="quick-access-item-left">
-            <div className="quick-access-icon">
-              <MapPin className="w-4 h-4 text-blue-600 fill-blue-600" />
-            </div>
-            <span className="quick-access-label">Nearby Deals</span>
+          <div className="quick-nav-left">
+            <MapPin className="nav-icon" />
+            <span className="quick-nav-label">Nearby Deals</span>
           </div>
-          <div className="quick-access-item-right">
-            <span className="quick-access-badge">20+</span>
-            <ChevronRight className="quick-access-chevron" />
+          <div className="quick-nav-right">
+            <ChevronRight className="quick-nav-chevron" />
           </div>
         </button>
 
@@ -147,18 +146,16 @@ export const QuickAccess: React.FC = () => {
         <button
           type="button"
           onClick={() => setIsHelpCenterOpen(true)}
-          className="quick-access-item"
+          className="nav-item quick-nav-btn"
           id="quickAccessHelpCenter"
-          title="Get help, FAQs and buyer/seller safety tips"
+          title="Get help, FAQs and safety tips"
         >
-          <div className="quick-access-item-left">
-            <div className="quick-access-icon">
-              <HelpCircle className="w-4 h-4 text-blue-600 stroke-[2.2]" />
-            </div>
-            <span className="quick-access-label">Help Center</span>
+          <div className="quick-nav-left">
+            <HelpCircle className="nav-icon" />
+            <span className="quick-nav-label">Help Center</span>
           </div>
-          <div className="quick-access-item-right">
-            <ChevronRight className="quick-access-chevron" />
+          <div className="quick-nav-right">
+            <ChevronRight className="quick-nav-chevron" />
           </div>
         </button>
       </div>

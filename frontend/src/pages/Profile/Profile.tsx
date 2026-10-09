@@ -193,9 +193,9 @@ export const Profile: React.FC = () => {
   // KPI Metrics calculation
   const totalActive = myAds.filter((a) => a.status !== 'sold').length;
   const totalSold = myAds.filter((a) => a.status === 'sold').length;
-  const totalViews = myAds.reduce((acc, a) => acc + (a.views || 48), 0);
-  const totalInquiries = Math.max(12, totalActive * 4 + totalSold * 6);
-  const avgRatingDisplay = ratingSummary?.averageRating || 4.9;
+  const totalViews = myAds.reduce((acc, a) => acc + (a.views || 0), 0);
+  const totalInquiries = totalActive > 0 || totalSold > 0 ? (totalActive * 2 + totalSold * 3) : 0;
+  const avgRatingDisplay = ratingSummary?.averageRating ?? 0;
   const totalReviewsCount = ratingSummary?.totalReviews ?? reviews.length;
 
   return (
@@ -220,22 +220,22 @@ export const Profile: React.FC = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                  {user?.name || 'Iyyanar'}
+                  {user?.name || 'User'}
                 </h1>
                 <span className="bg-indigo-50 text-indigo-700 text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 border border-indigo-100/60">
                   <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
-                  Verified Seller
+                  Verified Member
                 </span>
               </div>
 
               <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 mt-2">
                 <span className="flex items-center gap-1.5">
                   <Mail className="w-3.5 h-3.5 text-slate-400" />
-                  {user?.email || 'iyyanar@example.com'}
+                  {user?.email || 'user@example.com'}
                 </span>
                 <span className="flex items-center gap-1.5">
                   <Phone className="w-3.5 h-3.5 text-slate-400" />
-                  {user?.phone || '+91 98401 98765'}
+                  {user?.phone || 'No phone set'}
                 </span>
                 <span className="flex items-center gap-1.5">
                   <MapPin className="w-3.5 h-3.5 text-slate-400" />
@@ -243,7 +243,7 @@ export const Profile: React.FC = () => {
                 </span>
                 <span className="flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                  Member since {user?.memberSince || 'Sep 2024'}
+                  Member since {user?.memberSince || '2026'}
                 </span>
               </div>
             </div>
@@ -279,22 +279,22 @@ export const Profile: React.FC = () => {
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                Total Impressions
+                Total Views
               </span>
               <Eye className="w-4 h-4 text-slate-400" />
             </div>
             <span className="text-2xl font-black text-slate-900 mt-1 block">
               {totalViews}
             </span>
-            <span className="text-[10px] text-emerald-600 font-semibold mt-0.5 flex items-center gap-0.5">
-              <TrendingUp className="w-3 h-3" /> +18% this week
+            <span className="text-[10px] text-slate-500 mt-0.5 block">
+              Total listing views
             </span>
           </div>
 
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                Buyer Inquiries
+                Inquiries
               </span>
               <MessageSquare className="w-4 h-4 text-slate-400" />
             </div>
@@ -302,7 +302,7 @@ export const Profile: React.FC = () => {
               {totalInquiries}
             </span>
             <span className="text-[10px] text-slate-500 mt-0.5 block">
-              Via Real-Time Chat
+              Via In-App Chat
             </span>
           </div>
 
@@ -318,10 +318,10 @@ export const Profile: React.FC = () => {
               <Sparkles className="w-4 h-4 text-amber-500" />
             </div>
             <span className="text-2xl font-black text-amber-600 mt-1 block">
-              {avgRatingDisplay.toFixed(1)} ★
+              {totalReviewsCount > 0 ? `${avgRatingDisplay.toFixed(1)} ★` : 'New'}
             </span>
             <span className="text-[10px] text-slate-500 mt-0.5 block">
-              {totalReviewsCount} Reviews Received
+              {totalReviewsCount} {totalReviewsCount === 1 ? 'Review' : 'Reviews'}
             </span>
           </button>
         </div>

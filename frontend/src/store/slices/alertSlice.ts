@@ -34,68 +34,27 @@ const STORAGE_KEY_PRICE_WATCHES = 'swapit_price_watches';
 const loadSavedSearches = (): SavedSearch[] => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY_SEARCHES);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((s) => s && !s.id?.startsWith('search-default-'));
+      }
+    }
   } catch {}
-  return [
-    {
-      id: 'search-default-1',
-      query: 'iPhone 15 Pro',
-      category: 'mobiles',
-      city: 'Puducherry',
-      maxPrice: 65000,
-      notificationsEnabled: true,
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-      lastCheckedCount: 3,
-    },
-    {
-      id: 'search-default-2',
-      query: 'Royal Enfield Classic 350',
-      category: 'bikes',
-      city: 'Puducherry',
-      maxPrice: 160000,
-      notificationsEnabled: true,
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
-      lastCheckedCount: 5,
-    },
-    {
-      id: 'search-default-3',
-      query: 'MacBook Air M2',
-      category: 'electronics',
-      city: 'White Town',
-      maxPrice: 75000,
-      notificationsEnabled: true,
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-      lastCheckedCount: 2,
-    },
-    {
-      id: 'search-default-4',
-      query: '2 BHK Apartment Rental',
-      category: 'properties',
-      city: 'Lawspet',
-      maxPrice: 18000,
-      notificationsEnabled: false,
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(),
-      lastCheckedCount: 4,
-    },
-  ];
+  return [];
 };
 
 const loadPriceWatches = (): PriceDropWatch[] => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY_PRICE_WATCHES);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+    }
   } catch {}
-  return [
-    {
-      productId: 'prod-1',
-      productTitle: 'Apple iPhone 13 Pro 128GB Sierra Blue',
-      originalPrice: 52000,
-      currentPrice: 45999,
-      imageUrl: 'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=500&auto=format&fit=crop&q=80',
-      notificationsEnabled: true,
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(),
-    },
-  ];
+  return [];
 };
 
 const initialState: AlertState = {

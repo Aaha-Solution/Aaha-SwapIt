@@ -122,9 +122,11 @@ export const productApi = {
     }
   },
 
-  getProductById: async (id: string): Promise<ApiResponse<Product | null>> => {
+  getProductById: async (id: string, trackView?: boolean): Promise<ApiResponse<Product | null>> => {
     try {
-      const response = await api.get(`/products/${id}`);
+      const response = await api.get(`/products/${id}`, {
+        params: trackView ? { trackView: 'true' } : undefined,
+      });
       return response.data;
     } catch {
       const product = localProducts.find((p) => p.id === id) || null;

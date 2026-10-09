@@ -26,6 +26,7 @@ import { togglePriceDropWatch } from '../../store/slices/alertSlice';
 import { Product } from '../../types/product.types';
 import { formatINR } from '../../utils/helpers';
 import { addRecentlyViewed } from '../../utils/recentlyViewed';
+import { markProductViewedIfNew } from '../../utils/viewTracker';
 import { productApi } from '../../api/product.api';
 import { ratingApi } from '../../api/rating.api';
 import { Review, RatingSummary } from '../../types/rating.types';
@@ -96,7 +97,9 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
     async function loadProduct() {
       if (!id) return;
       setIsLoading(true);
-      const res = await productApi.getProductById(id);
+      // Only increment view if this user/browser hasn't viewed this ad yet
+      const isNewUniqueView = markProductViewedIfNew(id);
+      const res = await productApi.getProductById(id, isNewUniqueView);
       if (res.success && res.data) {
         setProduct(res.data);
         addRecentlyViewed(res.data);
@@ -242,7 +245,7 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
   }
 
   const wishlisted = isWishlisted(product.id);
-  const averageRating = sellerRatingSummary?.averageRating || product.seller.rating || 4.9;
+  const averageRating = sellerRatingSummary?.averageRating || product.seller.rating || 0;
   const totalReviewsCount = sellerRatingSummary?.totalReviews ?? sellerReviews.length;
   const galleryImages =
     product.images && product.images.length > 0 ? product.images : [product.imageUrl];
@@ -370,7 +373,7 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
               </span>
               <span className="flex items-center gap-1">
                 <Eye className="w-3.5 h-3.5" />
-                <span>{product.views || 120} views</span>
+                <span>{product.views ?? 0} views</span>
               </span>
             </div>
 
@@ -456,12 +459,18 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
               <button
                 type="button"
                 onClick={() => setIsReviewsModalOpen(true)}
-                className="flex items-center gap-1 text-xs font-extrabold text-amber-700 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-full border border-amber-200 transition-all cursor-pointer"
+                className="flex items-center gap-1 text-xs font-bold text-slate-600 bg-slate-50 hover:bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200 transition-all cursor-pointer"
                 title="View Seller Feedback & Reviews"
               >
-                <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-                <span>{averageRating.toFixed(1)}</span>
-                <span className="text-[10px] text-amber-600 font-semibold">({totalReviewsCount})</span>
+                {totalReviewsCount > 0 ? (
+                  <>
+                    <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                    <span className="font-extrabold text-amber-700">{averageRating.toFixed(1)}</span>
+                    <span className="text-[10px] text-amber-600 font-semibold">({totalReviewsCount})</span>
+                  </>
+                ) : (
+                  <span className="text-[11px] text-slate-500 font-medium">New Seller</span>
+                )}
               </button>
             </div>
 
@@ -550,9 +559,15 @@ export const ProductDetails: React.FC<ProductDetailsProps> = ({
           <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 text-center">
             <span className="text-[10px] uppercase font-bold text-slate-400 block">Rating Score</span>
             <div className="flex items-center justify-center gap-1 mt-1">
-              <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-              <span className="text-base font-black text-slate-900">{averageRating.toFixed(1)}</span>
-              <span className="text-[11px] text-slate-400">/ 5.0</span>
+              {totalReviewsCount > 0 ? (
+                <>
+                  <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                  <span className="text-base font-black text-slate-900">{averageRating.toFixed(1)}</span>
+                  <span className="text-[11px] text-slate-400">/ 5.0</span>
+                </>
+              ) : (
+                <span className="text-sm font-bold text-slate-500">No ratings</span>
+              )}
             </div>
           </div>
 

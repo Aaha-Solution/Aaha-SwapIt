@@ -136,7 +136,7 @@ export const productController = {
           phone: p.seller.phone || undefined,
           avatarUrl: p.seller.avatarUrl || undefined,
           memberSince: p.seller.memberSince || 'Active Member',
-          rating: 4.9,
+          rating: 0,
           verified: p.seller.verified,
         },
       }));
@@ -253,13 +253,21 @@ export const productController = {
         });
       }
 
-      // Increment view count asynchronously
-      prisma.product
-        .update({
-          where: { id },
-          data: { views: { increment: 1 } },
-        })
-        .catch(() => {});
+      // Increment view count only when explicitly tracking a new unique view
+      const shouldTrackView = req.query.trackView === 'true';
+      let currentViews = product.views;
+      if (shouldTrackView) {
+        try {
+          const updated = await prisma.product.update({
+            where: { id },
+            data: { views: { increment: 1 } },
+            select: { views: true },
+          });
+          currentViews = updated.views;
+        } catch {
+          currentViews = product.views + 1;
+        }
+      }
 
       const formatted = {
         id: product.id,
@@ -277,7 +285,7 @@ export const productController = {
         featured: product.featured,
         badge: product.badge,
         badgeText: product.badgeText,
-        views: product.views + 1,
+        views: currentViews,
         status: product.status,
         seller: {
           id: product.seller.id,
@@ -285,7 +293,7 @@ export const productController = {
           phone: product.seller.phone || undefined,
           avatarUrl: product.seller.avatarUrl || undefined,
           memberSince: product.seller.memberSince || 'Member',
-          rating: 5.0,
+          rating: 0,
           verified: product.seller.verified,
         },
       };
@@ -490,7 +498,7 @@ export const productController = {
           phone: sellerPhone || newProduct.seller.phone || undefined,
           avatarUrl: newProduct.seller.avatarUrl || undefined,
           memberSince: newProduct.seller.memberSince || 'Just now',
-          rating: 5.0,
+          rating: 0,
           verified: newProduct.seller.verified,
         },
       };
